@@ -679,7 +679,7 @@ NVIDIA 공식 페이지에 따르면 Groq 3 LPX 랙은 LPU 256개, SRAM
 반복 주제(디코딩=메모리 대역폭 병목)를 하드웨어 레벨에서 직접 겨냥한
 설계입니다. Feynman의 LP40 LPU는 그 다음 세대 버전으로 보입니다.
 
-> **이미지 생성 프롬프트**: "Futuristic 3D semiconductor roadmap timeline from 2024 to 2028. Sequential GPU architectural generation blocks ascending horizontally over a timeline, with exponentially growing HBM memory bandwidth bars below. Parallel inference accelerator module track joining in later generations. Dark slate background, semiconductor industry tech poster style, glowing cyan and lime-green accent bars, crisp line art, no text"
+![NVIDIA 데이터센터 GPU 로드맵 타임라인 (2024–2028)](./assets/gpu_roadmap_timeline.jpg)
 
 Rubin R100/Vera Rubin NVL72 항목은 NVIDIA 공식 스펙 페이지로 직접
 확인했습니다(위 "Vera Rubin 플랫폼" 절 참고). H100/H200/B200/B300과
