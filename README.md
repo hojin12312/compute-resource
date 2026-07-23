@@ -1,4 +1,4 @@
-# Compute Resource
+# Compute Resource (이미지 및 내용 수정 중)
 
 LLM 컴퓨트 리소스 관련 잡상식을 얻어가는 자료입니다.
 
