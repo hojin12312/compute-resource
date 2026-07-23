@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-color-mode="dark" data-dark-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -39,6 +39,23 @@
             border: 1px solid #30363d;
             border-radius: 12px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+        
+        .markdown-body table tr {
+            background-color: #161b22 !important;
+            border-top: 1px solid #30363d;
+        }
+        .markdown-body table tr:nth-child(2n) {
+            background-color: #0d1117 !important;
+        }
+        .markdown-body table th, .markdown-body table td {
+            border: 1px solid #30363d !important;
+            color: #c9d1d9 !important;
+        }
+        .markdown-body table th {
+            background-color: #21262d !important;
+            color: #f0f6fc !important;
+            font-weight: 600;
         }
         .markdown-body img {
             max-width: 100%;
