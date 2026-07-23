@@ -16,9 +16,18 @@ def build():
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compute Resource 세미나</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.8.1/github-markdown.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, {{delimiters: [{{left: '$$', right: '$$', display: true}}, {{left: '$', right: '$', display: false}}, {{left: '\\\\(', right: '\\\\)', display: false}}, {{left: '\\\\[', right: '\\\\]', display: true}}]}});\"></script>
+    <script>
+    MathJax = {{
+      tex: {{
+        inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
+        displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']]
+      }},
+      svg: {{
+        fontCache: 'global'
+      }}
+    }};
+    </script>
+    <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
     <style>
         :root {{
             color-scheme: dark;
@@ -70,7 +79,7 @@ def build():
     with open('index.html', 'w', encoding='utf-8') as f:
         f.write(template)
 
-    print('Successfully generated index.html!')
+    print('Successfully generated index.html with MathJax 3!')
 
 if __name__ == '__main__':
     build()
