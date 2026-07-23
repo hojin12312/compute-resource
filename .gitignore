@@ -1,0 +1,15 @@
+# Local build and server files
+build.py
+index.html
+
+# Master JPG files (kept locally)
+assets/*.jpg
+
+# Unreferenced intermediate WebP images (kept locally)
+assets/decoding_bandwidth_bound.webp
+assets/kv_cache_desk_korean.webp
+assets/kv_cache_desk_metaphor.webp
+assets/kv_cache_mechanism.webp
+assets/kv_cache_scaling.webp
+assets/memory_footprint_gpu.webp
+assets/prefill_compute_bound.webp
