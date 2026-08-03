@@ -295,7 +295,7 @@
     </div>
   </div>
 
-  <div class="foot">36개 레이어는 길이와 무관한 상태만 유지하고, <b>12개 Attention 레이어만 원본 KV를 쌓습니다.</b></div>
+  <div class="foot">상태 갱신이 토큰당 <b>상수 시간</b>이라 전체 <b style="color:var(--c-22a7bd)">O(n) 선형 어텐션</b> (Attention은 O(n²)) — 12개 레이어만 원본 KV를 쌓습니다.</div>
 
 <script>
 /* 칸은 SVG rect입니다 — 좌표는 예전 flex/grid가 내던 값 그대로입니다.

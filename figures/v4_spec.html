@@ -46,17 +46,13 @@
   .mrow { display:grid; grid-template-columns:44px 1fr 150px; gap:9px; align-items:center; margin-top:4px; }
   .mname { font-size:11px; color:var(--c-8b96a3); text-align:right; }
   .mrow.pro .mname { color:var(--c-c3ccd6); font-weight:700; }
-  .track { position:relative; height:20px; border-radius:3px; background:var(--c-1b2027);
-           border:1px solid var(--c-333d47); overflow:hidden; }
+  .track { position:relative; height:20px; border-radius:3px; }
   .track i { display:block; height:100%; }
   .track i.p { background:var(--c-4d5661); }   /* 총 파라미터 = 규모 */
   .track i.w { background:var(--c-c47d15); }   /* 가중치 = 용량 청구서 */
   .track i.k { background:var(--c-0e8fa3); }   /* KV캐시 = 시키는 값 */
   .track i.c { background:var(--c-8b6ff0); }   /* 단가 = 돈 */
-  /* B300 한 장(288GB) 칸. 채움 위에 얹어야 몇 칸을 먹는지 셀 수 있습니다.
-     트랙 전체가 4장(1,152GB)이므로 칸 경계는 25% 간격입니다. */
-  .slots { position:absolute; inset:0; background-image:repeating-linear-gradient(to right,
-    transparent 0, transparent calc(25% - 1px), var(--c-c3ccd6) calc(25% - 1px), var(--c-c3ccd6) 25%); }
+  .slots { display:none; }
   .mval { font-size:12px; color:var(--c-e6edf3); text-align:right; white-space:nowrap; }
   .mval span { color:var(--c-9aa7b4); font-weight:400; }
   .mval b { font:700 12.5px "IBM Plex Mono", "Pretendard Variable", monospace; }
@@ -80,7 +76,7 @@
   <div class="legend" style="margin-top:12px; gap:20px; font-size:12px">
     <div><span class="sw" style="background:var(--c-4d5661)"></span>규모 &middot; 맥락 <span style="color:var(--c-7d8896)">(점수 · 파라미터)</span></div>
     <div><span class="sw amber"></span>용량 청구서 <span style="color:var(--c-7d8896)">(가중치 GB)</span></div>
-    <div><span class="sw cyan"></span>KV캐시 청구서 <span style="color:var(--c-7d8896)">(1M · 사용자 1명)</span></div>
+    <div><span class="sw cyan"></span>KV캐시 청구서 <span style="color:var(--c-7d8896)">(1M · 동시 사용자 20명)</span></div>
     <div><span class="sw violet"></span>돈 <span style="color:var(--c-7d8896)">(출력 1M 단가)</span></div>
   </div>
 
@@ -110,13 +106,13 @@
       </div>
 
       <div class="mgrp">
-        <div class="mcap"><span><span class="dot w"></span>가중치를 올리는 데</span><em>칸 하나 = B300 한 장 &middot; HBM3e 288GB</em></div>
+        <div class="mcap"><span><span class="dot w"></span>가중치 + 1M KV캐시(20명)</span><em>1칸 = B300 1장(288GB) &middot; <b>전체 = 4장 공간(1,152GB)</b></em></div>
         <div class="mrow"><span class="mname">Flash</span>
-          <span class="track"><i class="w" style="width:13.85%"></i><span class="slots"></span></span>
-          <span class="mval"><b>159.6</b> <span>GB &middot; 1장</span></span></div>
+          <div class="track" id="v4-flash-track"><span class="slots"></span></div>
+          <span class="mval"><b>159.6</b> <span>GB <span style="color:var(--c-22a7bd)">(+114GB KV)</span></span></span></div>
         <div class="mrow pro"><span class="mname">Pro</span>
-          <span class="track"><i class="w" style="width:75.06%"></i><span class="slots"></span></span>
-          <span class="mval"><b>864.7</b> <span>GB &middot; 4장</span></span></div>
+          <div class="track" id="v4-pro-track"><span class="slots"></span></div>
+          <span class="mval"><b>864.7</b> <span>GB <span style="color:var(--c-22a7bd)">(+124GB KV)</span></span></span></div>
       </div>
 
       <div class="sect">일 시키는 값 &mdash; 4장의 청구서와 돈</div>
@@ -195,6 +191,49 @@ for (const [name, score, price, hi] of rows) {
     + '</span>';
   host.appendChild(d);
 }
+
+/* 18번 슬라이드(vram.html) 스타일: B300 1장(288GB) 단위 독립 블록 조각 + 1M KV캐시 20명 몫(시안) 렌더링 */
+const B300 = 288, TOTAL_B300_GB = 1152, GAP_V4 = 3;
+
+function renderB300Blocks(vWeight, vKV, containerId) {
+  const container = document.getElementById(containerId);
+  const trackW = container.clientWidth || 470;
+  const pxPerGB_V4 = (trackW - 3 * GAP_V4) / TOTAL_B300_GB;
+  const pitch_V4 = B300 * pxPerGB_V4 + GAP_V4;
+
+  const full = Math.floor(vWeight / B300);
+  const rem = vWeight - full * B300;
+  let currentStart = 0;
+
+  for (let i = 0; i < full; i++) {
+    const s = Math.round(i * pitch_V4);
+    const w = Math.round((i + 1) * pitch_V4) - GAP_V4 - s;
+    const block = document.createElement('i');
+    block.className = 'w';
+    block.style.cssText = `position:absolute; top:0; height:100%; left:${s}px; width:${w}px; z-index:1; border-radius:2px;`;
+    container.appendChild(block);
+    currentStart = s + w;
+  }
+  if (rem > 0) {
+    const s = Math.round(full * pitch_V4);
+    const w = Math.max(Math.round(rem * pxPerGB_V4), 2);
+    const block = document.createElement('i');
+    block.className = 'w';
+    block.style.cssText = `position:absolute; top:0; height:100%; left:${s}px; width:${w}px; z-index:1; border-radius:2px;`;
+    container.appendChild(block);
+    currentStart = s + w;
+  }
+  if (vKV > 0) {
+    const kvStart = currentStart + 2;
+    const kvWidth = Math.max(Math.round(vKV * pxPerGB_V4), 3);
+    const kvBlock = document.createElement('i');
+    kvBlock.className = 'k';
+    kvBlock.style.cssText = `position:absolute; top:0; height:100%; left:${kvStart}px; width:${kvWidth}px; z-index:1; border-radius:2px;`;
+    container.appendChild(kvBlock);
+  }
+}
+renderB300Blocks(159.6, 114.0, 'v4-flash-track');
+renderB300Blocks(864.7, 124.0, 'v4-pro-track');
 </script>
 </body>
 </html>

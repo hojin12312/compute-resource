@@ -883,49 +883,17 @@
     가운데가 <b>갱신식</b>인데 읽으실 필요는 없습니다: <span class="num">v − Sk</span>가
     "새 값 − 기존 기억"이고 <span class="num">β</span>가 "얼마나 고쳐 쓸지"입니다.
     오른쪽이 <b>배합</b> — 48레이어를 넷씩 묶어 셋은 DeltaNet, 하나는 Gated Attention.
-    <b>다음 장에서 이름 풀이와 단서 하나를 붙입니다.</b>
-  </aside>
-</section>
-
-<section data-chapter="6.3 GDN">
-  <div class="eyebrow">6.3 · 그림에 붙이는 세 가지</div>
-  <h2>이름이 <span class="cy">동작</span>을 그대로 말합니다</h2>
-  <div class="body" style="margin-top:24px">
-    <div class="cols c3">
-      <div class="card cy-b">
-        <span class="k">이름 풀이 1</span>
-        <h4>Delta &mdash; 고쳐 쓰기</h4>
-        <p>누적이 아닙니다. 같은 키의 <b class="cy">옛 값을 지우고</b> 그 자리에 씁니다.<br><br>
-          덧쓰기만 하면 노트가 지저분해지니까요. 매 스텝이
-          <b>온라인 경사하강 한 스텝</b>과 같아 단순 누적보다 정보 검색이 정확합니다.</p>
-      </div>
-      <div class="card cy-b">
-        <span class="k">이름 풀이 2</span>
-        <h4>Gated &mdash; 능동적 망각</h4>
-        <p>감쇠 게이트가 <b class="cy">오래된 것의 영향을 줄입니다</b>(Mamba-2 스타일).<br><br>
-          노트 한 장이 고정 크기라 <b>무엇을 지울지</b>가 성능을 좌우합니다.</p>
-      </div>
-      <div class="card am-b">
-        <span class="k">단, 정직하게</span>
-        <h4>KV캐시가 0은 아닙니다</h4>
-        <p>"약 <b class="am">1/4</b>"은 전체 메모리가 1/4이라는 뜻이 아니라
-          <b>길이에 비례해 자라는 레이어가 12/48</b>이라는 뜻입니다.<br><br>
-          고정 크기 상태 36개분은 <b>그대로 남습니다.</b></p>
-      </div>
-    </div>
-    <div class="lead" style="margin-top:24px">상태 갱신이 <b>한 번</b>이라 토큰당 상수 시간이고, 전체가
-      <b class="cy">O(n)</b>입니다 &mdash; 그래서 <b>"선형 어텐션"</b>이라고 부릅니다.
-      Full Attention은 길이의 <b class="am">제곱</b>이었습니다.</div>
-  </div>
-  <div class="foot">이 <b>"고정 크기 상태"</b>라는 성질이 6.4에서 DeepSeek V4와 갈리는 지점입니다 &mdash; 기억해 두세요.</div>
-  <aside class="notes">
-    <b>수식은 읽을 필요가 없습니다.</b> 순수 선형 어텐션은
-    <span class="num">S_t = S_(t−1) + v_t k_t^T</span>로 그냥 더하는데,
-    DeltaNet은 <span class="num">S_t = S_(t−1)(I − β_t k_t k_t^T) + β_t v_t k_t^T</span>로
-    괄호가 하나 더 붙습니다 — 그 괄호가 <b>"같은 키로 저장된 옛 값을 먼저 지운다"</b>는 뜻입니다.
-    앞 장 그림의 <span class="num">S_t = S_(t−1) + β_t(v_t − S_(t−1)k_t)k_t^T</span>와 같은 식입니다.
+    <b>이름 풀이 두 가지.</b>
+    (1) <b>Delta = 고쳐 쓰기</b> — 누적이 아닙니다. 같은 키의 옛 값을 지우고 그 자리에 씁니다.
+    매 스텝이 온라인 경사하강 한 스텝과 같아 단순 누적보다 정보 검색이 정확합니다.
+    (2) <b>Gated = 능동적 망각</b> — 감쇠 게이트가 오래된 것의 영향을 줄입니다(Mamba-2 스타일).
+    노트 한 장이 고정 크기라 무엇을 지울지가 성능을 좌우합니다.
+    <b>단, KV캐시가 0은 아닙니다</b> — "약 1/4"은 전체 메모리가 1/4이라는 뜻이 아니라
+    길이에 비례해 자라는 레이어가 12/48이라는 뜻입니다.
+    고정 크기 상태 36개분은 그대로 남습니다.
     Gated Attention 12개는 <b>GQA</b>(Q 16 : KV 2, head_dim 256)입니다.
     상태 크기는 <b class="num">head_dim × head_dim</b>이라 컨텍스트와 무관합니다.
+    이 <b>"고정 크기 상태"</b>라는 성질이 6.4에서 DeepSeek V4와 갈리는 지점입니다 — 기억해 두세요.
     <b>6.4로 넘어가는 다리</b>: V4는 여기서 갈립니다 — 고정 크기 상태가 아니라
     <b>압축한 요약본을 개수만큼 쌓습니다.</b>
   </aside>
@@ -934,22 +902,45 @@
 <!-- 6.4 -->
 <section data-chapter="6.4 V4">
   <div class="eyebrow">6.4 DeepSeek V4 · Hybrid Attention (CSA + HCA)</div>
-  <blockquote>"이거보다 더 싸게 만들 수 있어?"</blockquote>
-  <div class="body" style="margin-top:34px">
+  <blockquote>"과거를 압축하고, 필요한 곳만 인덱스로 찾아 읽는다"</blockquote>
+  <div class="body" style="margin-top:26px">
     <div class="card cy-b" style="max-width:1000px">
-      <h4>아이디어는 한 문장입니다</h4>
-      <p style="font-size:24px; color:var(--fg)">과거를 <b>그대로 쌓지 않고</b>,
-        몇 개씩 묶어 <b class="cy">요약본 하나</b>로 줄여 둡니다.</p>
+      <h4>KV 캐시를 깎는 두 개의 축</h4>
+      <p style="font-size:23px; color:var(--fg); line-height:1.5">
+        과거 토큰을 그대로 쌓지 않고 <b class="cy">요약본으로 압축</b>하고,
+        필요한 것만 <b class="vi">인덱서로 찾아 읽어</b> KV 캐시를 대폭 줄입니다.
+      </p>
     </div>
-    <div class="lead" style="margin-top:26px">그 <b>줄이는 강도</b>를 두 가지로 나눠 레이어마다 번갈아 깝니다 &mdash;
-      <b class="cy">CSA</b>는 약하게, <b class="vi">HCA</b>는 세게.
-      <b>얼마나 줄어드는지 먼저 보겠습니다.</b></div>
+    <div class="cols c2" style="margin-top:22px">
+      <div>
+        <ul style="font-size:20px; line-height:1.6">
+          <li style="margin-bottom:14px">
+            <b class="cy">시퀀스 압축 (CSA · HCA)</b><br>
+            <span style="font-size:0.9em; color:var(--muted)">4토큰(25%), 128토큰(0.8%) 단위로 묶어 요약</span>
+          </li>
+          <li>
+            <b class="vi">선택적 인덱싱 (DSA)</b><br>
+            <span style="font-size:0.9em; color:var(--muted)">압축본 중 지금 필요한 상위 top-k만 선택 조회</span>
+          </li>
+        </ul>
+      </div>
+      <div class="card am-b" style="padding:18px 22px">
+        <span class="k">결과: KV 캐시 90% 이상 절감</span>
+        <h4 style="font-size:24px; margin-bottom:6px"><b class="cy">1M 토큰당 5.7 ~ 6.2 GB</b></h4>
+        <p style="font-size:17px">Flash <b>5.7 GB</b> · Pro <b>6.2 GB</b> (V3.2 대비 7~10%).<br>디스크 저장과 <b>99% 캐시 히트 할인</b>을 성립시킵니다.</p>
+      </div>
+    </div>
   </div>
-  <div class="foot cy-l">그림을 본 뒤 <b>비유 두 개</b>와 <b>실제 설정값</b>을 붙입니다.</div>
+  <div class="foot cy-l">
+    <b>압축(Compression) + 인덱싱(Indexing)</b> &mdash; 아키텍처 혁신이 극단적인 단가 인하로 이어집니다.
+  </div>
   <aside class="notes">
-    <b>여기서 CSA·HCA를 풀지 마세요 — 다음 장 그림이 압축 비율을 눈으로 보여줍니다.</b>
-    이름만 흘려 두고 넘어가시면 됩니다. 6.2가 <b>보는 범위</b>, 6.3이 <b>남기는 형태</b>였다면
-    6.4는 <b>남기는 해상도</b>를 바꿉니다 — 세 장의 축이 다릅니다.
+    6.4의 핵심 직관은 <b>"압축"과 "인덱싱"</b>입니다.
+    과거 토큰을 다 들고 있는 대신 4개/128개 단위로 묶어 압축(CSA/HCA)하고,
+    CSA 층에서는 DSA 인덱서가 필요한 압축본만 골라 읽습니다.
+    그 결과 실제 모델 전체 KV 캐시 바이트가 V3.2 대비 <b>7~10%</b> 수준으로 대폭 줄어들고,
+    이것이 디스크 저장(On-Disk KV)과 99% 캐시 히트 단가 할인의 원동력이 됩니다.
+    다음 장 그림에서 이 압축 비율과 KV 절감 수치를 눈으로 확인합니다.
   </aside>
 </section>
 
@@ -1092,27 +1083,32 @@
   </aside>
 </section>
 
-<section data-chapter="6.5 IndexShare">
-  <div class="eyebrow">6.5 GLM-5.2 · IndexShare</div>
-  <blockquote>"볼 곳을 고르는 일도 비용이다"</blockquote>
-  <h2 style="margin-top:24px">출시 당시 <span class="cy">오픈웨이트가 폐쇄 모델과 같은 표에</span> 올랐습니다</h2>
-  <div class="lead" style="margin-top:22px">2026년 오픈웨이트 코딩 모델 중 가장 널리 쓰이는 축입니다.
-    총 <b class="num">753B</b> · 토큰당 활성 약 <b class="num">40B</b> · 컨텍스트 <b class="num">1M</b> ·
-    라이선스 <b class="num cy">MIT</b>.</div>
-  <div class="body" style="margin-top:28px">
-    <div class="card cy-b" style="max-width:1000px">
-      <h4>이 장에서 볼 것은 둘입니다</h4>
-      <p style="font-size:23px; color:var(--fg)"><b class="cy">성적표</b>가 먼저,
-        그 성적을 <b>그 값에 내는 장치</b>가 다음입니다.</p>
+<section data-chapter="6.5 GLM-5.2">
+  <div class="eyebrow">6.5 GLM-5.2 · 강력한 성능의 오픈웨이트</div>
+  <blockquote>"적당히 효율적인 구조, 아주 강력한 성능"</blockquote>
+  <h2 style="margin-top:24px">폐쇄형 최상위 모델과 겨루는 <span class="cy">오픈웨이트의 최고 성능</span></h2>
+  <div class="lead" style="margin-top:20px">GLM-5.2의 본질은 기술적 기교 이전에 <b>"독점 프런티어 모델과 직접 맞붙는 오픈웨이트"</b>라는 점입니다.<br>
+    총 <b class="num">753B</b>(활성 <b class="num">40B</b>) · 컨텍스트 <b class="num">1M</b> · 라이선스 <b class="num cy">MIT</b>.</div>
+  <div class="body" style="margin-top:24px">
+    <div class="cols c2">
+      <div class="card cy-b">
+        <span class="k">핵심 1 · 강력한 성능</span>
+        <h4>독점 모델과 직접 경쟁</h4>
+        <p>수학·코딩 등 핵심 벤치마크에서 GPT-5.5·Opus 4.8과 대등하거나 넘어서며 <b>오픈웨이트 최상위권</b> 성능을 증명했습니다.</p>
+      </div>
+      <div class="card">
+        <span class="k">핵심 2 · 효율적 구조</span>
+        <h4>현실적인 서빙 단가</h4>
+        <p>MoE와 MLA 조합으로 753B 체급의 성능을 내면서도 토큰당 단가와 KV 캐시 부담을 적절히 통제했습니다.</p>
+      </div>
     </div>
   </div>
-  <div class="foot cy-l">성적과 스펙이 <b>한 카드</b>에 있습니다 &mdash; 먼저 그것부터 봅니다.</div>
+  <div class="foot cy-l">기술적 특이점(IndexShare)보다 먼저 봐야 할 것은 <b>"이 성능을 낸 오픈웨이트가 무료로 풀렸다"</b>는 사실입니다.</div>
   <aside class="notes">
-    <b>여기서 구조를 설명하지 마세요 — 다음 장 카드가 성적과 스펙을 함께 보여줍니다.</b>
-    어텐션은 <b>MLA</b>입니다(6.1에서 잡은 어휘) — 헤드별 K/V가 아니라 압축된 잠재 벡터를 캐시하므로
-    128K 한 사용자가 FP8로 <b>5.5GiB</b>뿐입니다. 같은 구성을 헤드별로 저장했다면 305GiB로 <b>56배</b>입니다.
-    수치는 HF config.json 원본에서 직접 확인했고, 2026-07-30에 MLA로 정정했습니다
-    (<span class="num">num_key_value_heads</span>만 보고 MHA로 읽었던 오류입니다).
+    GLM-5.2 소개에서 가장 중요한 포인트는 <b>"강력한 성능"과 "오픈웨이트"</b>입니다.
+    MoE(753B/40B)와 MLA 아키텍처로 서빙 비용을 현실적으로 잡으면서도,
+    수학(AIME 99.2, IMO 91.0)과 에이전트/코딩 영역에서 독점 프런티어 모델들과 대등하게 겨룹니다.
+    기술적 기교(IndexShare)보다 먼저 이 <b>강력한 성능</b>과 스펙표를 확인합니다.
   </aside>
 </section>
 

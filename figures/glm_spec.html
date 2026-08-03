@@ -42,18 +42,11 @@
            font-size:11px; color:var(--c-9aa7b4); }
   .whead b { font:700 12px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-e6edf3); }
   .whead b.cyv { color:var(--c-22a7bd); }
-  .wtrack { position:relative; height:40px; margin-top:6px; border-radius:3px;
-            background:var(--c-1b2027); border:1px solid var(--c-333d47); overflow:hidden; }
+  .wtrack { position:relative; height:40px; margin-top:6px; border-radius:3px; }
   .wtrack i { display:block; height:100%; }
   .wtrack i.bf { background:var(--c-3f6f7d); }
   .wtrack i.fp { background:var(--c-0e8fa3); }
-  /* H200 한 장(141GB) 칸. **트랙 전체가 8장 = 한 노드(1,128GB)** 이므로 경계는 12.5%마다입니다
-     (2026-07-31 변경 — 예전에는 BF16 원본에 맞춘 11장 트랙이었습니다. GPU는 8장이 기본 노드라
-     그 자를 쓰는 것이 맞고, FP8 753GB는 5칸을 조금 넘겨 채웁니다).
-     채움 위에 얹어야 몇 칸을 먹는지 셀 수 있습니다. */
-  .h200 { position:absolute; inset:0; background-image:repeating-linear-gradient(to right,
-    transparent 0, transparent calc(12.5% - 1px),
-    var(--c-c3ccd6) calc(12.5% - 1px), var(--c-c3ccd6) 12.5%); }
+  .h200 { display:none; }
 
   .tiles { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:18px; }
   .tile { padding:14px 13px; border-radius:7px; background:var(--c-1b2027);
@@ -113,8 +106,8 @@
       <div class="wcap"><span>가중치를 올리는 데</span>
         <span><b>칸 하나 = H200 한 장(141GB)</b> &middot; 트랙 전체 = <b>8장 한 노드 1,128GB</b></span></div>
       <div class="wrow">
-        <div class="whead"><span>FP8로 내려 서빙</span><span><b class="cyv">753.0</b> GB &middot; 8칸 중 <b class="cyv">5칸 조금 넘게</b></span></div>
-        <div class="wtrack"><i class="fp" style="width:66.76%"></i><span class="h200"></span></div>
+        <div class="whead"><span>FP8로 내려 서빙</span><span><b class="cyv">753.0</b> GB <span style="color:var(--c-22a7bd); font-size:11px">(+249.5GB KV &middot; 5명)</span></span></div>
+        <div class="wtrack" id="glm-fp8-track"><span class="h200"></span></div>
       </div>
 
       <div class="tiles">
@@ -202,6 +195,47 @@ for (const [name, sub, us, them, who, win] of rows) {
     + '</span>';
   host.appendChild(d);
 }
+
+/* 18번 슬라이드(vram.html) 스타일: H200 1장(141GB) 단위 독립 블록 조각 + 1M KV캐시(시안) 렌더링 */
+const H200 = 141, TOTAL_H200_GB = 1128, GAP_GLM = 3;
+const glmTrack = document.getElementById('glm-fp8-track');
+const TRACK_W_GLM = glmTrack.clientWidth || 410;
+const pxPerGB_GLM = (TRACK_W_GLM - 7 * GAP_GLM) / TOTAL_H200_GB;
+const pitch_GLM = H200 * pxPerGB_GLM + GAP_GLM;
+
+function renderH200Blocks(vWeight, vKV) {
+  const full = Math.floor(vWeight / H200);
+  const rem = vWeight - full * H200;
+  let currentStart = 0;
+
+  for (let i = 0; i < full; i++) {
+    const s = Math.round(i * pitch_GLM);
+    const w = Math.round((i + 1) * pitch_GLM) - GAP_GLM - s;
+    const block = document.createElement('i');
+    block.className = 'fp';
+    block.style.cssText = `position:absolute; top:0; height:100%; left:${s}px; width:${w}px; z-index:1; border-radius:2px;`;
+    glmTrack.appendChild(block);
+    currentStart = s + w;
+  }
+  if (rem > 0) {
+    const s = Math.round(full * pitch_GLM);
+    const w = Math.max(Math.round(rem * pxPerGB_GLM), 2);
+    const block = document.createElement('i');
+    block.className = 'fp';
+    block.style.cssText = `position:absolute; top:0; height:100%; left:${s}px; width:${w}px; z-index:1; border-radius:2px;`;
+    glmTrack.appendChild(block);
+    currentStart = s + w;
+  }
+  if (vKV > 0) {
+    const kvStart = currentStart + 2;
+    const kvWidth = Math.max(Math.round(vKV * pxPerGB_GLM), 3);
+    const kvBlock = document.createElement('i');
+    kvBlock.className = 'fp';
+    kvBlock.style.cssText = `position:absolute; top:0; height:100%; left:${kvStart}px; width:${kvWidth}px; z-index:1; border-radius:2px; background:var(--c-0e8fa3);`;
+    glmTrack.appendChild(kvBlock);
+  }
+}
+renderH200Blocks(753.0, 49.9);
 </script>
 </body>
 </html>
