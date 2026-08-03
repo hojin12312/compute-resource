@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:44px; }
+
+  /* ── 요청 하나의 시간 띠 ─────────────────────────────────────────────── */
+  .tl { display:flex; margin-top:24px; height:74px; border-radius:4px; overflow:hidden; }
+  .tl > * { flex-shrink:0; display:flex; align-items:center; justify-content:center;
+            font-size:13px; font-weight:700; color:var(--c-0d1117); }
+  .tlabs { display:flex; margin-top:11px; font-size:12.5px; color:var(--c-7d8896); }
+  .tlabs > * { flex-shrink:0; text-align:center; }
+
+  .kv { display:flex; align-items:baseline; gap:10px; margin-top:28px; font-size:13.5px; color:var(--c-8b96a3); }
+  .kv b { font-size:18px; font-weight:700; color:var(--c-c3ccd6); }
+
+  /* ── 초당 토큰 막대 ──────────────────────────────────────────────────── */
+  .bar { display:flex; align-items:center; gap:11px; margin-top:32px; }
+  .bar > * { flex-shrink:0; }
+  .blab { flex:0 0 62px; text-align:right; font-size:12.5px; color:var(--c-c3ccd6); }
+  .zero { flex:0 0 2px; background:var(--c-3d4650); height:54px; }
+  .track { flex:0 0 auto; height:54px; border-radius:0 3px 3px 0; }
+  .bval { flex:0 0 auto; font-size:19px; font-weight:700; white-space:nowrap; }
+
+  .gap { margin-top:34px; border:1px solid var(--c-17505c); background:var(--c-0f2930);
+         border-radius:8px; padding:19px 18px; }
+  .gaptop { font-size:12.5px; color:var(--c-8b96a3); }
+  .gapbig { margin-top:7px; font-size:38px; font-weight:700; letter-spacing:-.02em; color:var(--c-22a7bd); }
+
+  /* ── 동시성 표 ───────────────────────────────────────────────────────── */
+  .row { display:flex; align-items:baseline; gap:8px; margin-top:30px;
+         padding-bottom:26px; border-bottom:1px solid var(--c-21262d); }
+  .rlab { flex:0 0 118px; font-size:12.5px; color:var(--c-8b96a3); line-height:1.3; }
+  .rone { font-size:15px; font-weight:700; color:var(--c-c3ccd6); white-space:nowrap; }
+  .rarr { font-size:13px; color:var(--c-5d6773); }
+  .rmany { font-size:15px; font-weight:700; white-space:nowrap; }
+  .rmul { margin-left:auto; font-size:12px; color:var(--c-7d8896); white-space:nowrap; }
+
+  .note { margin-top:22px; font-size:12.5px; color:var(--c-7d8896); line-height:1.75; }
+  .note b { color:var(--c-c3ccd6); font-weight:700; }
+</style>
+</head>
+<body>
+  <h1>실측 &mdash; <span class="cy">입력은 초당 2천 토큰</span>, <span class="am">출력은 초당 133 토큰</span></h1>
+  <div class="sub">H200 8장 한 노드 &middot; GLM-5 FP8 &middot; TP8 &middot; SGLang 공식 쿡북 &middot; 입력·출력 각 1,000토큰 요청 &mdash; <b style="color:var(--c-c3ccd6)">먼저 배치 1</b>, 즉 사용자 한 명이 쓸 때입니다.</div>
+
+  <div class="legend">
+    <div><span class="sw cyan"></span>프리필 &mdash; 입력을 삼키는 구간</div>
+    <div><span class="sw amber"></span>디코딩 &mdash; 출력을 뱉는 구간</div>
+  </div>
+
+  <div class="panels" style="margin-top:30px; gap:30px">
+
+    <div class="panel" style="width:434px">
+      <div class="ptitle">요청 하나에 쓴 시간</div>
+      <div class="pdesc">10회 요청 합계 35.78초를 두 구간으로 나누면</div>
+
+      <div class="tl">
+        <div class="cyan" style="width:35px"></div>
+        <div class="amber" style="width:385px">32.9초</div>
+      </div>
+      <div class="tlabs">
+        <div style="width:35px">2.9초</div>
+        <div style="width:385px">벽시계의 <b style="color:var(--c-c3ccd6)">91.9%</b>가 디코딩</div>
+      </div>
+
+      <div class="kv"><span>삼킨 입력</span><b>6,101 토큰</b><span style="margin-left:auto">2.9초</span></div>
+      <div class="kv"><span>뱉은 출력</span><b>4,220 토큰</b><span style="margin-left:auto">32.9초</span></div>
+
+      <div class="note" style="margin-top:28px; padding-top:20px; border-top:1px solid var(--c-21262d)">
+        입력이 <b>1.4배 많은데</b> 시간은 <b>1/11</b>입니다 &mdash; 방향이 다르면 같은 연산도 이렇게 갈립니다.
+      </div>
+    </div>
+
+    <div class="panel" style="width:366px">
+      <div class="ptitle">그래서 초당 몇 토큰인가</div>
+      <div class="pdesc">같은 노드, 같은 요청, 같은 모델</div>
+
+      <div class="bar">
+        <div class="blab">프리필</div>
+        <div class="zero"></div><div class="track cyan" style="width:200px"></div>
+        <div class="bval cy">2,097</div>
+      </div>
+      <div class="bar">
+        <div class="blab">디코딩</div>
+        <div class="zero"></div><div class="track amber" style="width:12.7px"></div>
+        <div class="bval am">133</div>
+      </div>
+
+      <div class="gap">
+        <div class="gaptop">토큰 하나를 만드는 데 드는 시간의 차이</div>
+        <div class="gapbig">16배</div>
+      </div>
+
+      <div class="note" style="margin-top:30px">
+        디코딩 쪽은 이미 <b>투기적 디코딩이 켜진</b> 값입니다(수락 길이 3.48).
+        끄면 더 내려갑니다 &mdash; 5.4장이 그 이야기입니다.
+      </div>
+    </div>
+
+    <div class="panel" style="width:400px">
+      <div class="ptitle">동시 사용자를 100명으로</div>
+      <div class="pdesc">같은 노드에 요청만 몰아넣으면</div>
+
+      <div class="row">
+        <div class="rlab">노드 전체 출력</div>
+        <div class="rone">118</div><div class="rarr">&rarr;</div>
+        <div class="rmany cy">1,215 tok/s</div>
+        <div class="rmul">10.3배</div>
+      </div>
+      <div class="row">
+        <div class="rlab">한 사람이 받는 속도</div>
+        <div class="rone">133</div><div class="rarr">&rarr;</div>
+        <div class="rmany am">26 tok/s</div>
+        <div class="rmul">1/5</div>
+      </div>
+      <div class="row">
+        <div class="rlab">첫 토큰까지</div>
+        <div class="rone">0.29초</div><div class="rarr">&rarr;</div>
+        <div class="rmany am">20.6초</div>
+        <div class="rmul">71배</div>
+      </div>
+
+      <div class="note">
+        노드 총량은 배치로 살 수 있지만, 값은 <b>한 사람의 체감</b>으로 치릅니다.
+        서빙 설정이 늘 이 둘 사이의 선택인 이유입니다.
+      </div>
+
+      <div class="note" style="margin-top:26px; padding-top:20px; border-top:1px solid var(--c-21262d)">
+        GLM-5.2도 같은 자리입니다 &mdash; 8장 H200 단일 스트림에서
+        <b>75 &rarr; 118 tok/s</b>(투기적 디코딩), 에이전틱 트레이스 동시 32에서
+        사용자당 <b>52 tok/s</b>.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="foot">
+    프리필은 <b>초당 수천</b>, 디코딩은 <b>초당 수백</b> &mdash; 추론에서 시간을 쓰는 쪽은 언제나 출력입니다.
+  </div>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:52px; }
+
+  /* ── 위: 초안 → 검증 → 확정 ─────────────────────────────────────────── */
+  .flow { display:flex; align-items:stretch; margin-top:26px; }
+  .step { height:170px; background:var(--c-161b22); padding:16px 20px; border-radius:4px;
+          display:flex; flex-direction:column; }
+  /* 세 칸 + 화살표 둘 = 1264px(본문 폭).
+     1·2번 칸은 같은 폭이어야 "작은 가중치 ×5 vs 큰 가중치 ×1"이 같은 자에 놓입니다.
+     한 행 = 라벨 64 + 12 + 이전 맥락 62 + 12 + 토큰 5칸 244 = 394 ≤ 403(내부 폭). */
+  .draft { width:443px; } .verify { width:443px; } .accept { width:290px; }
+  .arrow { width:44px; display:flex; align-items:center; justify-content:center;
+           color:var(--c-5d6773); font-size:24px; }
+  .stephead { display:flex; align-items:center; gap:10px; }
+  .badge { width:24px; height:24px; border-radius:3px; background:var(--c-2b333d); color:var(--c-c3ccd6);
+           display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; }
+  .steptitle { font-size:16px; font-weight:700; }
+  .stepdesc { margin-top:6px; color:var(--c-8b96a3); font-size:12.5px; }
+
+  .viz { margin-top:auto; }               /* 세 카드의 시각 요소를 같은 바닥선에 맞춥니다 */
+  .tokens { display:flex; gap:6px; }
+  .tok { width:44px; height:44px; border-radius:3px; display:flex; align-items:center;
+         justify-content:center; font-size:14px; font-weight:700; }
+  .proposed, .accepted { background:var(--c-0e8fa3); color:var(--c-0d1117); }
+  .rejected { background:var(--c-2b333d); color:var(--c-7d8896); text-decoration:line-through; }
+  /* 앰버 = 읽어야 하는 가중치. 두 카드가 **같은 색, 다른 크기**여야
+     "작은 모델을 다섯 번 vs 큰 모델을 한 번"이 눈으로 읽힙니다.
+     그래서 1번 카드의 막대는 토큰 한 칸 폭(44px)에 높이만 14px입니다. */
+  .weight { height:36px; border-radius:3px; background:var(--c-c47d15); color:var(--c-0d1117);
+            display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; }
+  .wtiny { width:44px; height:14px; border-radius:3px; background:var(--c-c47d15); }
+  /* 앞서 확정된 맥락 — 초안도 본 모델도 이걸 읽고 다음 토큰을 냅니다.
+     ctxpad는 같은 폭의 투명 칸이라 '읽기' 행의 막대가 새 토큰 열에 그대로 맞습니다. */
+  .ctx { width:62px; height:44px; border-radius:3px; background:var(--c-2b333d); color:var(--c-8b96a3);
+         display:flex; align-items:center; justify-content:center;
+         font-size:10.5px; font-weight:700; flex-shrink:0; }
+  .ctxpad { width:62px; flex-shrink:0; }
+  .verifyline { display:flex; align-items:center; gap:12px; margin-top:10px; }
+  .verifyline:first-child { margin-top:0; }
+  .vlabel { width:64px; flex-shrink:0; color:var(--c-7d8896); font-size:11.5px; }
+  .vlabel b { color:var(--c-e0912a); font-size:12.5px; }
+  .acceptout { display:flex; align-items:center; gap:14px; }
+  .gain { font-size:30px; font-weight:700; color:var(--c-22a7bd); letter-spacing:-.02em; }
+
+  /* ── 아래: 발표된 디코딩 속도 배수 ───────────────────────────────────── */
+  .divider { margin-top:24px; border-top:1px solid var(--c-21262d); padding-top:18px;
+             display:flex; align-items:baseline; justify-content:space-between; }
+  .dtitle { font-size:17px; font-weight:700; }
+  .dnote { font-size:12px; color:var(--c-7d8896); }
+
+  .chart { margin-top:12px; }
+  .axis { position:relative; width:720px; height:15px; margin-left:150px;
+          color:var(--c-7d8896); font-size:11px; }
+  .axis span { position:absolute; top:0; transform:translateX(-50%); }
+  .axis span.zero { transform:none; }
+  .axis span.base { color:var(--c-c3ccd6); font-weight:700; }
+
+  .row { display:flex; align-items:center; height:58px; }
+  .label { width:150px; flex-shrink:0; }
+  .mname { font-size:16px; font-weight:700; }
+  .model { display:block; margin-top:3px; color:var(--c-7d8896); font-size:11px; }
+  .plot { position:relative; width:720px; height:40px; flex-shrink:0;
+          background:var(--c-161b22); border-radius:3px; }
+  .bar { position:absolute; left:0; top:0; height:40px; border-radius:3px 0 0 3px;
+         background:var(--c-0e8fa3); }
+  .range { position:absolute; top:0; height:40px; background:var(--c-2f6b78); }
+  .tick { position:absolute; top:0; bottom:0; width:1px; background:var(--c-0d1117); }
+  .tick.base { width:2px; }
+  .val { position:absolute; top:11px; color:var(--c-22a7bd); font-size:14px; font-weight:700; }
+  .more { position:absolute; top:11px; color:var(--c-2f6b78); font-size:15px; font-weight:700;
+          letter-spacing:3px; }
+  .meta { width:340px; margin-left:24px; color:var(--c-8b96a3); font-size:11.5px; line-height:1.45; }
+  .meta b { color:var(--c-c3ccd6); font-size:12px; }
+  .axisnote { margin-left:150px; margin-top:8px; color:var(--c-7d8896); font-size:11px; }
+  .axisnote b { color:var(--c-c3ccd6); }
+</style>
+</head>
+<body>
+  <h1>투기적 디코딩 &mdash; <span class="cy">가중치를 한 번 읽고, 토큰 여러 개를 건집니다</span></h1>
+  <div class="sub">빠른 초안이 앞을 찍으면 본 모델은 초안 전체를 병렬로 채점하고, 맞은 데까지만 확정합니다.</div>
+
+  <div class="flow">
+    <div class="step draft">
+      <div class="stephead"><span class="badge">1</span><span class="steptitle">작은 모델이 빠르게 초안</span></div>
+      <div class="stepdesc">한 토큰씩 순서대로 &mdash; 대신 읽는 가중치가 작습니다</div>
+      <div class="viz">
+        <div class="verifyline">
+          <span class="vlabel">읽기 <b>&times;5</b></span>
+          <span class="ctxpad"></span>
+          <div class="tokens">
+            <div class="wtiny"></div><div class="wtiny"></div><div class="wtiny"></div>
+            <div class="wtiny"></div><div class="wtiny"></div>
+          </div>
+        </div>
+        <div class="verifyline">
+          <span class="vlabel">토큰 제안</span>
+          <div class="ctx">이전 토큰</div>
+          <div class="tokens">
+            <div class="tok proposed">A</div><div class="tok proposed">B</div>
+            <div class="tok proposed">C</div><div class="tok proposed">D</div>
+            <div class="tok proposed">E</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">&rarr;</div>
+
+    <div class="step verify">
+      <div class="stephead"><span class="badge">2</span><span class="steptitle">본 모델이 한꺼번에 검증</span></div>
+      <div class="stepdesc">가중치를 한 번만 읽고 5개를 동시에 채점</div>
+      <div class="viz">
+        <div class="verifyline">
+          <span class="vlabel">읽기 <b>&times;1</b></span>
+          <div class="weight" style="flex:1">본 모델 가중치</div>
+        </div>
+        <div class="verifyline">
+          <span class="vlabel">병렬 채점</span>
+          <div class="ctx">이전 토큰</div>
+          <div class="tokens">
+            <div class="tok accepted">&#10003;</div><div class="tok accepted">&#10003;</div>
+            <div class="tok accepted">&#10003;</div><div class="tok rejected">&times;</div>
+            <div class="tok rejected">&times;</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">&rarr;</div>
+
+    <div class="step accept">
+      <div class="stephead"><span class="badge">3</span><span class="steptitle">맞은 데까지 확정</span></div>
+      <div class="stepdesc">처음 틀린 자리 뒤는 버리고 다시 시작</div>
+      <div class="viz">
+        <div class="acceptout">
+          <div class="gain">3토큰</div>
+          <div class="tokens">
+            <div class="tok accepted">A</div><div class="tok accepted">B</div><div class="tok accepted">C</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cap" style="margin-top:13px">
+    <b class="am">앰버</b>는 읽어야 하는 가중치입니다. 초안 모델이 작아서 <b>여러 번 읽어도</b> 본 모델 <b>한 번</b>보다 싸기 때문에 이 거래가 성립합니다.
+    회색은 앞서 확정된 토큰 &mdash; 초안도 본 모델도 <b>이 맥락을 읽고</b> 다음을 냅니다.
+  </div>
+
+  <div class="divider">
+    <div class="dtitle">실제로 디코딩은 얼마나 빨라졌나</div>
+    <div class="dnote">각 발표의 기준선 대비 디코딩 속도 배수</div>
+  </div>
+
+  <div class="chart">
+    <div class="axis">
+      <span class="zero" style="left:0">0</span>
+      <span class="base" style="left:102.9px">1&times;</span>
+      <span style="left:205.7px">2&times;</span>
+      <span style="left:308.6px">3&times;</span>
+      <span style="left:411.4px">4&times;</span>
+      <span style="left:514.3px">5&times;</span>
+      <span style="left:617.1px">6&times;</span>
+      <span style="left:720px">7&times;</span>
+    </div>
+
+    <div class="row">
+      <div class="label"><div class="mname">MTP</div><span class="model">GLM-5.2</span></div>
+      <div class="plot">
+        <div class="bar" style="width:161.5px"></div>
+        <i class="tick base" style="left:102.9px"></i>
+        <i class="tick" style="left:205.7px"></i><i class="tick" style="left:308.6px"></i>
+        <i class="tick" style="left:411.4px"></i><i class="tick" style="left:514.3px"></i>
+        <i class="tick" style="left:617.1px"></i>
+        <span class="val" style="left:173px">1.57&times;</span>
+      </div>
+      <div class="meta"><b>75 &rarr; 118 tok/s</b><br>자기회귀 기준 · 8&times;H200 단일 스트림</div>
+    </div>
+
+    <div class="row">
+      <div class="label"><div class="mname">DSpark</div><span class="model">DeepSeek V4</span></div>
+      <div class="plot">
+        <div class="bar" style="width:164.6px"></div>
+        <div class="range" style="left:164.6px; width:25.7px"></div>
+        <i class="tick base" style="left:102.9px"></i>
+        <i class="tick" style="left:205.7px"></i><i class="tick" style="left:308.6px"></i>
+        <i class="tick" style="left:411.4px"></i><i class="tick" style="left:514.3px"></i>
+        <i class="tick" style="left:617.1px"></i>
+        <span class="val" style="left:202px">1.60~1.85&times;</span>
+      </div>
+      <div class="meta"><b>사용자당 생성 속도</b><br>MTP-1 기준 · <b>노드 총처리량은 같게 고정</b>한 실서비스 비교</div>
+    </div>
+
+    <div class="row">
+      <div class="label"><div class="mname">DFlash</div><span class="model">Block Diffusion</span></div>
+      <div class="plot">
+        <div class="bar" style="width:617.1px"></div>
+        <i class="tick base" style="left:102.9px"></i>
+        <i class="tick" style="left:205.7px"></i><i class="tick" style="left:308.6px"></i>
+        <i class="tick" style="left:411.4px"></i><i class="tick" style="left:514.3px"></i>
+        <span class="more" style="left:625px">&rsaquo;&rsaquo;&rsaquo;</span>
+        <span class="val" style="left:658px">6&times;&nbsp;이상</span>
+      </div>
+      <div class="meta"><b>무손실 디코딩 가속</b><br>자기회귀 기준 · 논문 모델·과제</div>
+    </div>
+
+    <div class="axisnote">굵은 눈금이 <b>1&times; 기준선</b> · 옅은 구간은 <b>발표된 범위</b>, <b>&rsaquo;&rsaquo;&rsaquo;</b>는 그 이상 &mdash; 기준 모델과 측정 환경은 오른쪽에 병기</div>
+  </div>
+
+  <div class="foot">
+    <b>수락 길이는 속도 배수가 아닙니다.</b> 초안 비용·검증 비용·배치·컨텍스트까지 포함한 실제 tok/s로 봐야 합니다.
+  </div>
+</body>
+</html>

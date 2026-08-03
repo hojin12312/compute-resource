@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:52px; }
+
+  /* flex-shrink:0 필수 — 없으면 긴 막대 행만 눌려 0선과 막대 길이가 함께 틀어집니다 */
+  .bar { display:flex; align-items:center; gap:10px; margin-top:24px; }
+  .bar > * { flex-shrink:0; }
+  .zero { flex:0 0 2px; background:var(--c-3d4650); }
+  .track { flex:0 0 auto; border-radius:0 4px 4px 0; }
+  .bval { flex:0 0 auto; font-weight:700; white-space:nowrap; }
+
+  /* 좌 패널 — 계약가 상승률 */
+  .qlab { flex:0 0 116px; text-align:right; font-size:13px; color:var(--c-c3ccd6); line-height:1.35; }
+  .qlab span { display:block; font-size:11px; color:var(--c-7d8896); margin-top:2px; }
+  .qbar .zero, .qbar .track { height:44px; }
+  .qbar .bval { font-size:16px; }
+
+  .axis { display:flex; margin-top:8px; padding-left:128px; font-size:11.5px; color:var(--c-5d6773); }
+  .axis span { flex:0 0 auto; width:120px; }
+  .axis span:last-child { width:auto; }
+
+  .fc { margin-top:36px; border:1px solid var(--c-21262d); border-radius:8px; padding:16px 18px; }
+  .fctop { font-size:12px; color:var(--c-7d8896); }
+  .fcbig { font-size:25px; font-weight:700; color:var(--c-e0912a); margin-top:8px; letter-spacing:-.02em; }
+  .fcsub { font-size:12.5px; color:var(--c-8b96a3); margin-top:8px; line-height:1.6; }
+
+  /* 우 패널 — 실제 인상률 */
+  .plab { flex:0 0 168px; text-align:right; font-size:13px; color:var(--c-e6edf3); line-height:1.35; }
+  .plab span { display:block; font-size:11.5px; color:var(--c-7d8896); margin-top:2px;
+               font-variant-numeric:tabular-nums; }
+  .pbar .zero, .pbar .track { height:45px; }
+  .pbar .bval { font-size:14.5px; }
+  .pnote { margin-top:26px; font-size:12.5px; color:var(--c-7d8896); line-height:1.65; }
+</style>
+</head>
+<body>
+  <h1>그 수요는 <span class="am">기기 가격표</span>에 도착했습니다</h1>
+  <div class="sub">추론용 메모리가 비싸지자 완제품 값이 실제로 올랐습니다. 미국 기준 정가이며 값은 전부 실측치입니다.</div>
+
+  <div class="legend">
+    <div><span class="sw amber"></span>발표된 실적</div>
+    <div><span class="sw amber" style="opacity:.42"></span>전망치</div>
+  </div>
+
+  <div class="panels" style="margin-top:20px; gap:48px">
+
+    <div class="panel" style="width:460px">
+      <div class="ptitle">1. 메모리 계약가</div>
+      <div class="pdesc">일반 DRAM 계약가의 분기 대비 상승률. 왼쪽 끝이 0이고, 막대는 범위의 하한입니다</div>
+
+      <div class="bar qbar">
+        <div class="qlab">2026년 1분기<span>실적</span></div>
+        <div class="zero"></div>
+        <div class="track amber" style="width:223px"></div>
+        <div class="bval am">+93~98%</div>
+      </div>
+      <div class="bar qbar">
+        <div class="qlab">2026년 2분기<span>전망</span></div>
+        <div class="zero"></div>
+        <div class="track amber" style="width:139px; opacity:.42"></div>
+        <div class="bval am" style="opacity:.8">+58~63%</div>
+      </div>
+
+      <div class="axis">
+        <span>0</span><span>+50%</span><span>+100%</span>
+      </div>
+
+      <div class="fc">
+        <div class="fctop">1분기 메모리 산업 매출</div>
+        <div class="fcbig">970억 달러 &nbsp;<span style="font-size:16px">분기 대비 +81%</span></div>
+        <div class="fcsub">
+          다만 <b style="color:var(--c-c3ccd6)">HBM 계약가는 2026년 오히려 하락</b>했습니다.
+          오른 것은 일반 DRAM입니다.
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="width:740px">
+      <div class="ptitle">2. 실제로 오른 가격표</div>
+      <div class="pdesc">인상 전후 정가와 인상률 &mdash; 두 회사 모두 사유로 메모리 공급 부족을 명시했습니다</div>
+
+      <div class="bar pbar">
+        <div class="plab">iPad Air 128GB<span>$599 &rarr; $749</span></div>
+        <div class="zero"></div><div class="track amber" style="width:200px"></div>
+        <div class="bval am">+25.0%</div>
+      </div>
+      <div class="bar pbar">
+        <div class="plab">iPad Pro Wi-Fi 256GB<span>$999 &rarr; $1,199</span></div>
+        <div class="zero"></div><div class="track amber" style="width:160px"></div>
+        <div class="bval am">+20.0%</div>
+      </div>
+      <div class="bar pbar">
+        <div class="plab">MacBook Air<span>$1,099 &rarr; $1,299</span></div>
+        <div class="zero"></div><div class="track amber" style="width:146px"></div>
+        <div class="bval am">+18.2%</div>
+      </div>
+      <div class="bar pbar">
+        <div class="plab">MacBook Pro<span>$1,699 &rarr; $1,999</span></div>
+        <div class="zero"></div><div class="track amber" style="width:142px"></div>
+        <div class="bval am">+17.7%</div>
+      </div>
+      <div class="bar pbar">
+        <div class="plab">NVIDIA DGX Spark<span>$3,999 &rarr; $4,699</span></div>
+        <div class="zero"></div><div class="track amber" style="width:140px"></div>
+        <div class="bval am">+17.5%</div>
+      </div>
+      <div class="bar pbar">
+        <div class="plab">MacBook Neo<span>$599 &rarr; $699</span></div>
+        <div class="zero"></div><div class="track amber" style="width:134px"></div>
+        <div class="bval am">+16.7%</div>
+      </div>
+
+      <div class="pnote">
+        DGX Spark는 2026년 2월, Apple 제품은 6월 인상입니다.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="foot">
+    Gartner는 2026년 말까지 DRAM&middot;SSD 합산 <b>130%</b> 상승과 그에 따른 PC 평균가 <b>+17%</b> &middot; 스마트폰 <b>+13%</b>를 전망합니다.
+  </div>
+</body>
+</html>

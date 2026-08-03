@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  .flow { display:grid; grid-template-columns:1fr 56px 1fr 56px 1.18fr; gap:12px;
+          align-items:stretch; margin-top:30px; }
+  .box { border:1px solid var(--c-333d47); border-radius:11px; background:var(--c-161b22); padding:22px; }
+  .box.mix { border-color:var(--c-17505c); background:var(--c-0f2930); }
+  .arrow { display:flex; align-items:center; justify-content:center; color:var(--c-5d6773); font-size:30px; }
+  .tag { font:700 11px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-8b96a3); letter-spacing:.08em; }
+  .box h2 { font-size:21px; margin-top:9px; }
+  .box p { color:var(--c-9aa7b4); font-size:13px; line-height:1.65; margin-top:12px; }
+  .chips { display:flex; flex-wrap:wrap; gap:7px; margin-top:18px; }
+  .chip { padding:7px 10px; border-radius:5px; background:var(--c-2b333d); color:var(--c-c3ccd6);
+          font:700 12px "IBM Plex Mono", "Pretendard Variable", monospace; }
+  .chip.am { background:var(--c-c47d15); color:var(--c-0d1117); }
+  .chip.cy { background:var(--c-0e8fa3); color:var(--c-0d1117); }
+  .families { margin-top:28px; display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+  .fam { height:150px; border-top:3px solid var(--c-333d47); background:var(--c-161b22); padding:18px 20px; }
+  .fam.k { border-color:var(--c-0e8fa3); }
+  .fam.i { border-color:var(--c-8b6ff0); }
+  .fam h3 { font-size:17px; }
+  .fam p { margin-top:8px; color:var(--c-8b96a3); font-size:12.5px; line-height:1.55; }
+</style>
+</head>
+<body>
+  <h1>모델 양자화 지도 &mdash; <span class="cy">포맷, 보정, 비트 배분은 다른 층입니다</span></h1>
+  <div class="sub">이름이 많아 보이는 이유는 하나의 문제를 서로 다른 높이에서 풀기 때문입니다.</div>
+
+  <div class="flow">
+    <div class="box">
+      <div class="tag">1 · 숫자 그릇</div>
+      <h2>정밀도 포맷</h2>
+      <p>숫자 하나를 몇 비트와 어떤 눈금으로 저장할지 정합니다.</p>
+      <div class="chips"><span class="chip">BF16</span><span class="chip">FP8</span><span class="chip am">FP4</span></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="box">
+      <div class="tag">2 · 오차 줄이기</div>
+      <h2>보정 방법</h2>
+      <p>같은 비트 안에서 중요한 값의 오차를 더 작게 만듭니다.</p>
+      <div class="chips"><span class="chip">AWQ</span><span class="chip">AutoRound</span><span class="chip">imatrix</span></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="box mix">
+      <div class="tag">3 · 예산 배분</div>
+      <h2><span class="cy">혼합 정밀도</span></h2>
+      <p>민감한 텐서에는 비트를 더 주고, 둔감한 곳에서 회수해 목표 평균 BPW를 맞춥니다.</p>
+      <div class="chips"><span class="chip cy">Q4_K_M</span><span class="chip cy">EXL2</span><span class="chip cy">Dynamic 2.0</span></div>
+    </div>
+  </div>
+
+  <div class="families">
+    <div class="fam">
+      <h3>레거시 Q-quants</h3>
+      <p><b>Q4_0 · Q8_0</b><br>블록마다 균일한 정수 눈금</p>
+    </div>
+    <div class="fam k">
+      <h3><span class="cy">K-quants</span></h3>
+      <p><b>Q4_K_M</b><br>슈퍼블록 이중 스케일 + 텐서별 혼합</p>
+    </div>
+    <div class="fam i">
+      <h3><span class="vi">I-quants</span></h3>
+      <p><b>IQ4_XS · IQ3_XXS</b><br>비선형 코드북/격자의 패턴 번호를 저장</p>
+    </div>
+  </div>
+  <div class="foot"><b>I-quants의 핵심은 비선형 코드북입니다.</b> LUT는 복원 구현이고, imatrix는 어느 계열에도 얹을 수 있는 오차 가중 장치입니다.</div>
+</body>
+</html>

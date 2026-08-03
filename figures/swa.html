@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:45px; }
+  h1 { font-size:31px; }
+  .story {
+    display:grid;
+    grid-template-columns:2fr 1fr;
+    gap:18px;
+    margin-top:26px;
+  }
+  .card {
+    height:310px;
+    padding:20px 22px;
+    border:1px solid var(--c-333d47);
+    border-radius:11px;
+    background:var(--c-161b22);
+  }
+  .window-card { border-color:var(--c-17505c); background:var(--c-0f2930); }
+  .mix-card { border-color:var(--c-4a3a1c); background:var(--c-221a0d); }
+  .eyebrow {
+    font:700 10.5px "IBM Plex Mono", "Pretendard Variable", monospace;
+    color:var(--c-8b96a3);
+    letter-spacing:.08em;
+  }
+  .card h2 { margin-top:6px; font-size:20px; letter-spacing:-.02em; }
+  .timelines { margin-top:29px; display:grid; gap:24px; }
+  .timeline-row {
+    display:grid;
+    grid-template-columns:69px 1fr;
+    align-items:center;
+    gap:9px;
+  }
+  .row-label {
+    color:var(--c-8b96a3);
+    font-size:11px;
+    font-weight:700;
+  }
+  .flow {
+    display:grid;
+    grid-template-columns:616px 24px 48px;
+    align-items:center;
+    gap:8px;
+  }
+  .history {
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:4px;
+    width:616px;
+    height:46px;
+    padding:0 6px;
+  }
+  .token {
+    width:34px;
+    height:28px;
+    flex:0 0 34px;
+    border-radius:3px;
+    background:var(--c-2b333d);
+  }
+  .token.on { background:var(--c-0e8fa3); }
+  .window {
+    position:absolute;
+    top:0;
+    width:160px;
+    height:46px;
+    border-radius:6px;
+    pointer-events:none;
+  }
+  .window.before {
+    left:228px;
+    border:2px dashed var(--c-3f6f7d);
+  }
+  .window.now {
+    right:0;
+    border:2px solid var(--c-22a7bd);
+  }
+  .flow-arrow { color:var(--c-8b96a3); font-size:21px; text-align:center; }
+  .current {
+    width:48px;
+    height:48px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    background:var(--c-0e8fa3);
+    color:var(--c-e6edf3);
+    font-size:10px;
+    font-weight:800;
+    line-height:1.2;
+    text-align:center;
+  }
+  .window-note {
+    display:flex;
+    justify-content:space-between;
+    margin:25px 80px 0 78px;
+    color:var(--c-8b96a3);
+    font-size:11.5px;
+  }
+  .window-note strong { color:var(--c-22a7bd); }
+  .layers {
+    display:grid;
+    gap:4px;
+    margin-top:15px;
+  }
+  .layer {
+    height:22px;
+    display:flex;
+    align-items:center;
+    padding:0 10px;
+    border-radius:4px;
+    color:var(--c-0d1117);
+    font-size:10.5px;
+    font-weight:800;
+  }
+  .cycle {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-top:15px;
+    color:var(--c-9aa7b4);
+    font-size:11.5px;
+  }
+  .cycle strong { color:var(--c-e6edf3); font-size:14px; }
+  .saving {
+    height:145px;
+    display:grid;
+    grid-template-columns:1fr 176px;
+    gap:22px;
+    margin-top:18px;
+    padding:17px 21px;
+    border:1px solid var(--c-333d47);
+    border-radius:11px;
+    background:var(--c-161b22);
+  }
+  .saving-title {
+    font-size:15px;
+    font-weight:750;
+  }
+  .saving-title span {
+    margin-left:8px;
+    color:var(--c-8b96a3);
+    font-size:11.5px;
+    font-weight:400;
+  }
+  .bars { margin-top:11px; display:grid; gap:9px; }
+  .bar-row {
+    display:grid;
+    grid-template-columns:176px 1fr 58px;
+    align-items:center;
+    gap:10px;
+    color:var(--c-9aa7b4);
+    font-size:11.5px;
+  }
+  .bar-track {
+    height:20px;
+    border-radius:4px;
+  }
+  .bar-track.full { width:100%; background:var(--c-c47d15); }
+  .bar-track.actual { width:17.1%; min-width:14px; background:var(--c-0e8fa3); }
+  .bar-value { color:var(--c-e6edf3); font-size:15px; font-weight:750; }
+  .ratio {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    border-left:1px solid var(--c-333d47);
+    color:var(--c-8b96a3);
+    font-size:11px;
+  }
+  .ratio strong { color:var(--c-22a7bd); font-size:32px; letter-spacing:-.04em; }
+  .ratio span { margin-top:4px; }
+  .foot { bottom:22px; }
+</style>
+</head>
+<body>
+  <h1>슬라이딩 윈도우 &mdash; <span class="cy">최근 것만 직접 봅니다</span></h1>
+  <div class="sub">Gemma 4 31B · 창문 1024토큰 · 슬라이딩 5 : Full Attention 1</div>
+
+  <div class="story">
+    <div class="card window-card">
+      <div class="eyebrow">1 · WINDOW</div>
+      <h2>창문이 현재 토큰을 따라 이동합니다</h2>
+
+      <div class="timelines">
+        <div class="timeline-row">
+          <div class="row-label">이전 위치</div>
+          <div class="history">
+            <span class="token"></span><span class="token"></span><span class="token"></span><span class="token"></span>
+            <span class="token"></span><span class="token"></span><span class="token"></span><span class="token"></span>
+            <span class="token"></span><span class="token"></span><span class="token"></span><span class="token"></span>
+            <span class="token"></span><span class="token"></span><span class="token"></span><span class="token"></span>
+            <span class="window before"></span>
+          </div>
+        </div>
+        <div class="timeline-row">
+          <div class="row-label">현재 위치</div>
+          <div class="flow">
+            <div class="history">
+              <span class="token"></span><span class="token"></span><span class="token"></span><span class="token"></span>
+              <span class="token"></span><span class="token"></span><span class="token"></span><span class="token"></span>
+              <span class="token"></span><span class="token"></span><span class="token"></span><span class="token"></span>
+              <span class="token on"></span><span class="token on"></span><span class="token on"></span><span class="token on"></span>
+              <span class="window now"></span>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="current">현재<br>토큰</div>
+          </div>
+        </div>
+      </div>
+      <div class="window-note">
+        <span>먼 과거는 이 레이어에서 보지 않음</span>
+        <strong>최근 1024토큰만 직접 봄</strong>
+      </div>
+    </div>
+
+    <div class="card mix-card">
+      <div class="eyebrow">2 · LAYERS</div>
+      <h2>다섯 번 가까이, 한 번 멀리</h2>
+      <div class="layers">
+        <div class="layer amber">6 · Full Attention · 전체 문맥</div>
+        <div class="layer cyan">5 · Sliding · 최근 1024</div>
+        <div class="layer cyan">4 · Sliding · 최근 1024</div>
+        <div class="layer cyan">3 · Sliding · 최근 1024</div>
+        <div class="layer cyan">2 · Sliding · 최근 1024</div>
+        <div class="layer cyan">1 · Sliding · 최근 1024</div>
+      </div>
+      <div class="cycle">
+        <span>이 6개 묶음을 ×10</span>
+        <strong><span class="cy">슬라이딩 50</span> + <span class="am">Full 10</span></strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="saving">
+    <div>
+      <div class="saving-title">3 · KV캐시 <span>256K 컨텍스트 기준</span></div>
+      <div class="bars">
+        <div class="bar-row">
+          <span>60층 모두 Full이라면</span>
+          <span class="bar-track full"></span>
+          <span class="bar-value">240GB</span>
+        </div>
+        <div class="bar-row">
+          <span>슬라이딩 50 + Full 10</span>
+          <span class="bar-track actual"></span>
+          <span class="bar-value cy">41GB</span>
+        </div>
+      </div>
+    </div>
+    <div class="ratio">
+      <strong>약 1/6</strong>
+      <span>슬라이딩 50층은 고정</span>
+    </div>
+  </div>
+
+  <div class="foot">컨텍스트와 함께 커지는 것은 <b>Full Attention 10개 레이어뿐</b>입니다.</div>
+</body>
+</html>

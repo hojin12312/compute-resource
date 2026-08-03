@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  .panels { gap:30px; margin-top:28px; }
+  .panel { padding:19px 20px 16px; border:1px solid var(--c-333d47); border-radius:11px;
+           background:var(--c-161b22); }
+  .panel.on { background:var(--c-0f2930); border-color:var(--c-17505c); }
+
+  .srow { display:flex; align-items:center; gap:11px; margin-top:19px; }
+  .sname { width:96px; font-size:12px; color:var(--c-9aa7b4); flex-shrink:0; line-height:1.35; }
+  .sbar { height:30px; border-radius:3px; flex-shrink:0; display:flex; align-items:center;
+          justify-content:flex-end; padding-right:9px;
+          font:700 12.5px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-0d1117); }
+  .sbar.gr { background:var(--c-2b333d); color:var(--c-c3ccd6); }
+  .sbar.vi { background:var(--c-8b6ff0); }
+  .sbar.am { background:var(--c-c47d15); }
+  .sbar.cy { background:var(--c-0e8fa3); }
+  .free { margin-top:16px; padding:11px 13px; border-radius:8px; background:var(--c-12333a);
+          border:1px solid var(--c-17505c); font-size:12px; color:var(--c-c3ccd6); line-height:1.6; }
+
+  .util { display:flex; gap:30px; margin-top:18px; }
+  .ucol { text-align:center; }
+  .ubars { display:flex; gap:9px; align-items:flex-end; height:178px; }
+  .ub { width:36px; border-radius:3px 3px 0 0; position:relative; }
+  .ub span { position:absolute; top:-19px; left:-11px; right:-11px; text-align:center;
+             font:700 10.5px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-c3ccd6); }
+  .ub.hbm { background:var(--c-0e8fa3); }
+  .ub.sm { background:var(--c-c47d15); }
+  .utag { margin-top:8px; font-size:11.5px; color:var(--c-9aa7b4); }
+  .utag b { display:block; font-size:13px; color:var(--c-e6edf3); margin-bottom:2px; }
+
+  .wl { margin-top:16px; }
+  .wrow { display:flex; align-items:baseline; gap:10px; padding:17px 0;
+          border-bottom:1px solid var(--c-1b2027); }
+  .wrow:last-child { border-bottom:0; }
+  .wname { width:132px; font-size:12px; color:var(--c-c3ccd6); line-height:1.45; }
+  .wgain { width:62px; font:700 15px "IBM Plex Mono", "Pretendard Variable", monospace; }
+  .wans { font-size:11.5px; color:var(--c-8b96a3); line-height:1.5; }
+</style>
+</head>
+<body>
+  <h1>섞을까 나눌까 &mdash; <span class="cy">처리량은 섞는 쪽, 지연은 나누는 쪽</span></h1>
+  <div class="sub">혼합 배치는 <b>가중치를 한 번만 읽어</b> 두 일을 끝냅니다. 그래서 처리량 문제가 아니라 <b>예측성 문제</b>입니다.</div>
+  <div class="legend">
+    <div><span class="sw cyan"></span>대역폭(HBM)이 정하는 몫</div>
+    <div><span class="sw amber"></span>연산(SM)이 정하는 몫</div>
+    <div><span class="sw violet"></span>둘을 섞은 결과</div>
+  </div>
+
+  <div class="panels">
+    <div class="panel on" style="width:392px">
+      <div class="ptitle">한 스텝에 섞으면 가중치를 한 번만 읽습니다</div>
+      <div class="pdesc">가중치 100GB · 대역폭 3TB/s 가정 &mdash; 조명용 계산</div>
+      <div class="srow"><span class="sname">디코드 전용<br>(배치 64)</span>
+        <div class="sbar cy" style="width:96px">33ms</div></div>
+      <div class="srow"><span class="sname">프리필 전용<br>(청크 2,048)</span>
+        <div class="sbar am" style="width:116px">40ms</div></div>
+      <div class="srow"><span class="sname">한 스텝에<br>둘을 함께</span>
+        <div class="sbar vi" style="width:119px">41ms</div></div>
+      <div class="free">
+        따로 하면 <b>73ms</b>, 섞으면 <b class="vi">41ms</b>. 디코드 64토큰이 얹혀 가는 값은 1ms뿐이고
+        <b>가중치 읽기 33ms 한 번이 사라집니다.</b>
+      </div>
+      <div class="cap" style="margin-top:12px; line-height:1.65">
+        청크가 <b>1,700토큰까지는 추가 시간이 0</b>입니다 &mdash; 대역폭 시간 안에 들어오니까요.
+        넘긴 만큼만 지연을 냅니다.
+      </div>
+    </div>
+
+    <div class="panel" style="width:352px">
+      <div class="ptitle">두 단계는 다른 자원을 씁니다</div>
+      <div class="pdesc">8×H200 실측 &mdash; 추론 워크로드 텔레메트리</div>
+      <div class="util">
+        <div class="ucol">
+          <div class="ubars">
+            <div class="ub hbm" style="height:53px"><span>20~30%</span></div>
+            <div class="ub sm" style="height:152px"><span>높음</span></div>
+          </div>
+          <div class="utag"><b>프리필</b>HBM / SM 점유</div>
+        </div>
+        <div class="ucol">
+          <div class="ubars">
+            <div class="ub hbm" style="height:152px"><span>65~85%</span></div>
+            <div class="ub sm" style="height:50px"><span>낮음</span></div>
+          </div>
+          <div class="utag"><b>디코딩</b>HBM / SM 점유</div>
+        </div>
+      </div>
+      <div class="cap" style="margin-top:20px; line-height:1.65">
+        논문 표현으로 <b>"두 대의 서로 다른 기계처럼 동작한다"</b>.
+        프리필 중에는 4.8TB/s가 남고, 디코딩 중에는 연산이 남습니다.
+      </div>
+      <div class="cap" style="margin-top:10px; line-height:1.65">
+        나눠 두면 각자 자기 병목에서 포화하지만, <b class="am">클러스터 전체로는 두 자원이 모두
+        부분적으로 놉니다.</b>
+      </div>
+    </div>
+
+    <div class="panel" style="width:410px">
+      <div class="ptitle">그래서 워크로드가 답을 정합니다</div>
+      <div class="pdesc">혼합의 이득은 출력 대 입력의 비율에 붙습니다</div>
+      <div class="wl">
+        <div class="wrow">
+          <span class="wname">짧고 균일한 오프라인 배치<br>입력 2,000 : 출력 500</span>
+          <span class="wgain vi">1.8배</span>
+          <span class="wans"><b>혼합</b><br>격리를 살 이유가 없습니다</span>
+        </div>
+        <div class="wrow">
+          <span class="wname">장문 에이전틱<br>입력 64,000 : 출력 400</span>
+          <span class="wgain am">1.02배</span>
+          <span class="wans"><b>분리</b><br>숨길 디코드가 없습니다</span>
+        </div>
+      </div>
+      <div class="cap" style="margin-top:16px; line-height:1.65">
+        장문에서는 청크 수십 개가 상시로 디코드에 끼어들어 <b class="am">TPOT 열화가 정상 상태</b>가
+        됩니다. 사람이 안 보는 배치라면 그 열화는 값이 없습니다.
+      </div>
+      <div class="cap" style="margin-top:10px; line-height:1.65">
+        그리고 <b>캐시 히트율이 이 비율을 다시 움직입니다</b> &mdash; 히트가 오르면 프리필 몫이 줄어
+        두 풀의 비율도 바뀝니다.
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>분리가 사는 것은 처리량이 아니라 격리입니다.</b>
+    &mdash; 그 대가로 통계적 다중화를 잃습니다. 프리필 버스트가 디코딩 GPU를 빌릴 수 없으니까요.
+  </div>
+</body>
+</html>

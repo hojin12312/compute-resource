@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:40px; }
+  h1 { font-size:29px; }
+  .sub { margin-top:9px; font-size:13.5px; }
+
+  .panels { gap:40px; margin-top:16px; align-items:stretch; }
+  .panel { display:flex; flex-direction:column; padding:15px 18px; border-radius:12px;
+           border:1px solid var(--c-333d47); background:var(--c-161b22); }
+  .kicker { font:700 10px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-8b96a3); letter-spacing:.09em; }
+  .ptitle { margin-top:5px; font-size:16px; line-height:1.3; }
+  .pdesc { margin-top:3px; margin-bottom:0; font-size:10.5px; }
+
+  /* ── 계층 넷 — 이름과 대역폭만. 시스템 두 세대를 나란히 둡니다 ────────── */
+  .tiers { margin-top:10px; }
+  .tr { display:grid; grid-template-columns:32px 148px 1fr 1fr; gap:9px; align-items:center;
+        padding:6px 10px; border-radius:6px; background:var(--c-1b2027); margin-top:5px; }
+  .tr.g1 { background:var(--c-0f2930); }
+  .gb { text-align:center; padding:3px 0; border-radius:4px;
+        background:var(--c-233039); color:var(--c-c3ccd6); font:700 10.5px "IBM Plex Mono", "Pretendard Variable", monospace; }
+  .tr.g1 .gb { background:var(--c-17505c); color:var(--ink-on-cy-fill); }
+  .tn { font-size:12.5px; font-weight:700; color:var(--c-e6edf3); }
+  .tn em { display:block; font-style:normal; font-weight:400; font-size:9.5px; color:var(--c-7d8896); margin-top:1px; }
+  .tv { font-size:12px; color:var(--c-8b96a3); }
+  .tv b { display:block; font-size:13px; font-weight:700; color:var(--c-c3ccd6);
+          font-variant-numeric:tabular-nums; }
+
+  /* ── 대역폭 차트 — 로그 눈금 ─────────────────────────────────────────── */
+  .ch { margin-top:12px; padding-top:11px; border-top:1px solid var(--c-333d47); }
+  .chead { display:flex; align-items:baseline; justify-content:space-between; }
+  .chead b { font-size:13px; font-weight:700; color:var(--c-e6edf3); }
+  .chead span { font-size:10.5px; color:var(--c-7d8896); }
+  .crow { display:grid; grid-template-columns:150px 1fr 78px 52px; gap:9px;
+          align-items:center; margin-top:5px; }
+  .cl { font-size:11.5px; color:var(--c-c3ccd6); line-height:1.25; }
+  .cl em { font-style:normal; font-size:9.5px; color:var(--c-7d8896); display:block; margin-top:1px; }
+  .ctrack { position:relative; height:15px; }
+  .ctrack i { position:absolute; left:0; top:0; height:15px; border-radius:2px; }
+  .ctrack i.hbm { background:var(--c-0e8fa3); }
+  .ctrack i.link { background:var(--c-2f6b78); }
+  .ctrack i.slow { background:var(--c-c47d15); }
+  .cv { text-align:right; font-size:12.5px; font-weight:700; color:var(--c-c3ccd6);
+        font-variant-numeric:tabular-nums; }
+  .cx { text-align:right; font-size:11.5px; font-weight:700; }
+  .cx.up { color:var(--c-22a7bd); } .cx.base { color:var(--c-7d8896); } .cx.dn { color:var(--c-e0912a); }
+  .cax { display:grid; grid-template-columns:150px 1fr 78px 52px; gap:9px; margin-top:6px; }
+  .caxin { position:relative; height:13px; font-size:9.5px; color:var(--c-5d6773); }
+  .caxin span { position:absolute; top:0; transform:translateX(-50%); }
+
+  .keys { margin-top:auto; padding-top:11px; display:flex; flex-direction:column; gap:6px; }
+  .key { display:flex; gap:8px; align-items:baseline; font-size:11.5px; color:var(--c-8b96a3); }
+  .key b { color:var(--c-c3ccd6); font-weight:700; }
+  .kt { flex:0 0 auto; font-size:10px; font-weight:700; padding:2px 7px; border-radius:3px; }
+  .kt.cy { background:var(--a-36); color:var(--c-22a7bd); }
+  .kt.am { background:var(--a-37); color:var(--c-e0912a); }
+
+  /* ── 손익분기 ────────────────────────────────────────────────────────── */
+  .vsrow { margin-top:11px; }
+  .vslab { display:flex; justify-content:space-between; align-items:baseline;
+           font-size:11.5px; color:var(--c-8b96a3); }
+  .vslab b { font-size:15px; font-weight:700; }
+  .vslab .am { color:var(--c-e0912a); } .vslab .cy { color:var(--c-22a7bd); }
+  .vsbar { margin-top:5px; height:20px; border-radius:3px; background:var(--c-1b2027); }
+  .vsbar i { display:block; height:100%; border-radius:3px; }
+  .vsbar .fam { background:var(--c-c47d15); }
+  .vsbar .fcy { background:var(--c-0e8fa3); }
+  .gain { margin-top:12px; padding:10px 12px; border-radius:6px;
+          background:var(--a-36); border:1px solid var(--c-2f6b78);
+          font-size:11.5px; color:var(--c-9aa7b4); }
+  .gain b { color:var(--ink-on-cy-tint); font-weight:700; font-size:14px; }
+
+  /* 1M 프리픽스 표 — 용량을 막대로 함께 보여 줍니다(로그 눈금) */
+  .tb { margin-top:15px; }
+  .th, .row { display:grid; grid-template-columns:118px 60px 1fr 46px 46px; gap:7px; align-items:center; }
+  .th { font-size:9.5px; color:var(--c-7d8896); padding-bottom:6px;
+        border-bottom:1px solid var(--c-333d47); }
+  .th span:nth-child(n+2), .row span:nth-child(2), .row span:nth-child(4), .row span:nth-child(5) { text-align:right; }
+  .row { padding:8px 0; border-bottom:1px solid var(--c-21262d); font-size:11.5px; color:var(--c-8b96a3); }
+  .row:last-child { border-bottom:0; }
+  .rn { font-size:11.5px; font-weight:700; color:var(--c-c3ccd6); }
+  .rn em { font-style:normal; font-weight:400; font-size:9.5px; color:var(--c-7d8896); display:block; }
+  .gwrap { position:relative; height:15px; }
+  .gwrap i { position:absolute; left:0; top:0; height:15px; border-radius:2px; background:var(--c-0e8fa3); }
+  .gwrap i.big { background:var(--c-c47d15); }
+  .gwrap b { position:absolute; top:0; font-size:10.5px; font-weight:700; line-height:15px;
+             color:var(--c-c3ccd6); font-variant-numeric:tabular-nums; }
+  .row .warn { color:var(--c-e0912a); font-weight:700; }
+</style>
+</head>
+<body>
+  <h1>히트한 KV는 <span class="cy">계층으로 내려갑니다</span></h1>
+  <div class="sub">판단 기준은 "느린가"가 아닙니다 &mdash; <b style="color:var(--c-c3ccd6)">읽는 시간이 다시 계산하는 시간보다 짧은가</b>입니다.</div>
+
+  <div class="panels">
+
+    <div class="panel" style="width:716px">
+      <div class="kicker">계층 &middot; NVIDIA 이름</div>
+      <div class="ptitle">이름과 대역폭</div>
+      <div class="pdesc">시스템 두 세대 &middot; G1은 메모리 대역폭, G2–G3은 <b style="color:var(--c-c3ccd6)">제조사 표기(C2C는 양방향 합)</b></div>
+
+      <div class="tiers">
+        <div class="tr g1"><span class="gb">G1</span>
+          <span class="tn">GPU 메모리<em>HBM</em></span>
+          <span class="tv">Grace Blackwell<b>B300 8TB/s</b></span>
+          <span class="tv">Vera Rubin<b>22TB/s</b></span></div>
+        <div class="tr"><span class="gb">G2</span>
+          <span class="tn">호스트 CPU 메모리<em>노드 안 · 노드 사이</em></span>
+          <span class="tv">Grace C2C<b>900GB/s</b></span>
+          <span class="tv">Vera C2C<b>1.8TB/s</b></span></div>
+        <div class="tr"><span class="gb">G3</span>
+          <span class="tn">NVMe SSD<em>로컬 · 풀링</em></span>
+          <span class="tv">PCIe 5.0 x4<b>16GB/s</b></span>
+          <span class="tv">6.0 x4<b>32GB/s</b></span></div>
+        <div class="tr"><span class="gb">G4</span>
+          <span class="tn" style="grid-column:2/5; font-weight:400; font-size:11.5px; color:var(--c-8b96a3)">
+            <b style="color:var(--c-e6edf3); font-size:12.5px">원격 객체 스토리지</b> &mdash; 네트워크 뒤 · 내용을 들여다보지 않는 덩어리로 보관</span></div>
+      </div>
+
+      <div class="ch">
+        <div class="chead"><b>사다리가 아니라 그래프입니다</b><span>로그 눈금 &middot; <b style="color:var(--c-c3ccd6)">단방향으로 통일</b>(C2C는 표기의 절반) &middot; 오른쪽은 63GB/s 대비</span></div>
+        <div id="chart"></div>
+        <div class="cax"><span></span><div class="caxin" id="axis"></div><span></span><span></span></div>
+      </div>
+
+      <div class="keys">
+        <div class="key"><span class="kt cy">그래프</span><span><b>옆 GPU가 한 칸 아래보다 14배</b> &middot; 같은 G2 안에서도 <b>7배</b> &middot; 원격 DRAM과 로컬 SSD는 같은 급</span></div>
+        <div class="key"><span class="kt am">직행 없음</span><span>GPU &rarr; 디스크 경로가 없습니다 &mdash; <b>호스트 경유</b>. 그리고 위는 전부 <b>순차 피크</b>이고 실제 천장은 <b>I/O 개수</b>입니다</span></div>
+      </div>
+    </div>
+
+    <div class="panel" style="width:508px">
+      <div class="kicker">손익분기</div>
+      <div class="ptitle">읽는 편이 쌉니다</div>
+      <div class="pdesc">1M 프리픽스를 되살리는 두 방법 &middot; 막대는 같은 배율</div>
+
+      <div class="vsrow">
+        <div class="vslab"><span>다시 프리필</span><span><b class="am">477초</b></span></div>
+        <div class="vsbar"><i class="fam" style="width:100%"></i></div>
+      </div>
+      <div class="vsrow">
+        <div class="vslab"><span>디스크에서 읽기</span><span><b class="cy">0.2 ~ 12.5초</b></span></div>
+        <div class="vsbar"><i class="fcy" style="width:2.62%"></i></div>
+      </div>
+
+      <div class="gain">가장 불리한 칸조차 <b>37배</b> 빠릅니다</div>
+
+      <div class="tb">
+        <div class="th"><span>1M 프리픽스</span><span>토큰당</span><span>KV 용량 &middot; 로그 1~1,000GB</span><span>3.0</span><span>5.0</span></div>
+        <div class="row">
+          <span class="rn">V4 Flash<em>CSA + HCA</em></span><span>5.3KiB</span>
+          <span class="gwrap"><i style="width:26%"></i><b style="left:30%">5.7GB</b></span>
+          <span>1.4초</span><span>0.4초</span></div>
+        <div class="row">
+          <span class="rn">GLM-5.2<em>MLA + 인덱서</em></span><span>46.5KiB</span>
+          <span class="gwrap"><i style="width:57%"></i><b style="left:61%">49.9GB</b></span>
+          <span>12.5초</span><span>3.1초</span></div>
+        <div class="row">
+          <span class="rn">Llama 2 7B<em>압축 없는 MHA</em></span><span>512KiB</span>
+          <span class="gwrap"><i class="big" style="width:91%"></i><b style="left:56%; color:var(--c-0d1117)">550GB</b></span>
+          <span class="warn">137초</span><span>34초</span></div>
+      </div>
+
+      <div class="keys">
+        <div class="key"><span class="kt cy">압축이 넘겼다</span><span>규격 세대가 아닙니다 &mdash; GLM-5.2가 7B MHA의 <b>1/11</b>, V4 Flash가 <b>1/97</b></span></div>
+        <div class="key"><span class="kt am">7B는 졌다</span><span>작은 모델은 <b>프리필도 빠릅니다</b> &mdash; 압축 전에는 읽는 쪽이 더 느렸습니다</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="foot">
+    KV를 아래로 내려보내는 이유는 <b>싸서가 아니라, 다시 계산하는 것이 더 비싸서</b>입니다.
+  </div>
+
+<script>
+/* 대역폭 차트 — 로그 눈금. 10GB/s ~ 30,000GB/s(3.477 데케이드)를 폭 100%에 맞춥니다.
+   위치 = (log10(값) - 1) / 3.477. 값은 전부 이 문서가 이미 쓰는 것들입니다. */
+var LO = 1, HI = Math.log10(30000), SPAN = HI - LO;
+var pos = function (v) { return ((Math.log10(v) - LO) / SPAN * 100).toFixed(2); };
+var BASE = 63;   /* x86 한 칸 아래 — PCIe 5.0 x16 링크 */
+
+var ROWS = [
+  { n:'같은 GPU HBM',     s:'B300 · G1',            v:8000,  k:'hbm'  },
+  { n:'옆 GPU HBM',       s:'NVLink 5 단방향 · G1',   v:900,   k:'hbm'  },
+  { n:'Grace 호스트 DRAM', s:'NVLink-C2C 단방향 · G2', v:450,  k:'link' },
+  { n:'x86 호스트 DRAM',   s:'PCIe 5.0 x16 · G2',    v:63,    k:'slow' },
+  { n:'노드 밖 원격 DRAM', s:'RDMA · 그래도 G2',      v:50,    k:'slow' },
+  { n:'로컬 NVMe SSD',    s:'PCIe 6.0 제품 실측 · G3', v:28,   k:'slow' }
+];
+var host = document.getElementById('chart');
+ROWS.forEach(function (d) {
+  var x = d.v / BASE, xs, cls;
+  if (Math.abs(x - 1) < 0.01) { xs = '기준'; cls = 'base'; }
+  else if (x > 1) { xs = Math.round(x) + '배'; cls = 'up'; }
+  else { xs = '0.' + Math.round(x * 10) + '배'; cls = 'dn'; }
+  var val = d.v >= 1000 ? (d.v / 1000).toFixed(d.v % 1000 ? 1 : 0) + 'TB/s' : d.v + 'GB/s';
+  var r = document.createElement('div');
+  r.className = 'crow';
+  r.innerHTML =
+    '<span class="cl">' + d.n + '<em>' + d.s + '</em></span>' +
+    '<span class="ctrack"><i class="' + d.k + '" style="width:' + pos(d.v) + '%"></i></span>' +
+    '<span class="cv">' + val + '</span>' +
+    '<span class="cx ' + cls + '">' + xs + '</span>';
+  host.appendChild(r);
+});
+/* 눈금 — 10 · 100 · 1,000 · 10,000 GB/s */
+var ax = document.getElementById('axis');
+[[10, '10GB/s'], [100, '100GB/s'], [1000, '1TB/s'], [10000, '10TB/s']].forEach(function (t) {
+  var s = document.createElement('span');
+  s.style.left = pos(t[0]) + '%';
+  s.textContent = t[1];
+  ax.appendChild(s);
+});
+</script>
+</body>
+</html>

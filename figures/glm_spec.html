@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  .panels { gap:16px; margin-top:18px; align-items:stretch; }
+  .panel { display:flex; flex-direction:column;
+           padding:16px 18px 14px; border:1px solid var(--c-333d47); border-radius:11px;
+           background:var(--c-161b22); }
+
+  /* ── 좌: 벤치마크 짝 막대 (위 GLM-5.2 / 아래 같은 표의 최고 다른 모델) ── */
+  .grp { display:flex; align-items:center; gap:7px; padding:5px 4px; margin-bottom:4px;
+         border-radius:4px; }
+  .grp.win { background:var(--c-12333a); }
+  .gname { width:126px; flex-shrink:0; font-size:11px; color:var(--c-8b96a3);
+           text-align:right; line-height:1.25; }
+  .gname b { display:block; color:var(--c-c3ccd6); font-weight:700; font-size:10.5px; }
+  .grp.win .gname b { color:var(--c-e6edf3); }
+  .pair { display:flex; flex-direction:column; gap:2px; flex:1; min-width:0; }
+  .brow { display:flex; align-items:center; gap:5px; height:19px; }
+  .bar { height:19px; border-radius:2px; flex-shrink:0; min-width:2px; }
+  .bar.us { background:var(--c-0e8fa3); }
+  .bar.th { background:var(--c-c47d15); }
+  .val { font:700 10.5px "IBM Plex Mono", "Pretendard Variable", monospace; flex-shrink:0; white-space:nowrap;
+         color:var(--c-9aa7b4); }
+  .val.s { color:var(--ink-score-cy); }
+  .who { font:400 10px "Pretendard Variable", sans-serif; color:var(--c-7d8896);
+         flex-shrink:0; white-space:nowrap; }
+
+  /* ── 중: 스펙 ──
+     9행 표가 값마다 부제를 달아 글자 벽이 됐습니다. 가중치는 막대로 보여주고
+     나머지는 타일과 한 줄 행으로 나눠 훑을 수 있게 했습니다.
+     길게 설명해야 하는 것은 README 각주로 옮겼습니다. */
+  .mono { font-family:"IBM Plex Mono", "Pretendard Variable", monospace; font-size:.94em; }
+
+  .wcap { display:flex; justify-content:space-between; gap:10px; margin-top:12px;
+          font-size:10.5px; color:var(--c-8b96a3); }
+  .wcap b { color:var(--c-c3ccd6); font-weight:700; }
+  .wrow { margin-top:8px; }
+  .whead { display:flex; justify-content:space-between; align-items:baseline; gap:8px;
+           font-size:11px; color:var(--c-9aa7b4); }
+  .whead b { font:700 12px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-e6edf3); }
+  .whead b.cyv { color:var(--c-22a7bd); }
+  .wtrack { position:relative; height:40px; margin-top:6px; border-radius:3px;
+            background:var(--c-1b2027); border:1px solid var(--c-333d47); overflow:hidden; }
+  .wtrack i { display:block; height:100%; }
+  .wtrack i.bf { background:var(--c-3f6f7d); }
+  .wtrack i.fp { background:var(--c-0e8fa3); }
+  /* H200 한 장(141GB) 칸. **트랙 전체가 8장 = 한 노드(1,128GB)** 이므로 경계는 12.5%마다입니다
+     (2026-07-31 변경 — 예전에는 BF16 원본에 맞춘 11장 트랙이었습니다. GPU는 8장이 기본 노드라
+     그 자를 쓰는 것이 맞고, FP8 753GB는 5칸을 조금 넘겨 채웁니다).
+     채움 위에 얹어야 몇 칸을 먹는지 셀 수 있습니다. */
+  .h200 { position:absolute; inset:0; background-image:repeating-linear-gradient(to right,
+    transparent 0, transparent calc(12.5% - 1px),
+    var(--c-c3ccd6) calc(12.5% - 1px), var(--c-c3ccd6) 12.5%); }
+
+  .tiles { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:18px; }
+  .tile { padding:14px 13px; border-radius:7px; background:var(--c-1b2027);
+          border:1px solid var(--c-21262d); }
+  .tile span { display:block; font-size:10px; color:var(--c-8b96a3); }
+  .tile strong { display:block; margin-top:4px; font:700 15px "IBM Plex Mono", "Pretendard Variable", monospace;
+                 color:var(--c-22a7bd); letter-spacing:-.01em; }
+  .tile em { display:block; margin-top:3px; font-style:normal; font-size:9.5px;
+             color:var(--c-7d8896); line-height:1.4; }
+
+  .lines { margin-top:16px; border-top:1px solid var(--c-333d47); }
+  .line { display:grid; grid-template-columns:86px 1fr; gap:10px; padding:12px 0;
+          border-bottom:1px solid var(--c-21262d); font-size:11px; color:var(--c-9aa7b4); }
+  .line:last-child { border-bottom:0; }
+  .line > span:first-child { color:var(--c-8b96a3); }
+  .line b { font:700 11.5px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-e6edf3); }
+
+  /* ── 우: 특성 ──
+     2026-07-31에 줄였습니다. 예전에는 항목마다 두세 줄 산문이 붙어 카드가 장황했습니다.
+     지금은 **기법 이름 + 태그 + 짧은 출처 한 줄**뿐이고, 판정 근거는 README 각주
+     (`[^glm-spec]`·`[^glm-indexshare]`)에 있습니다.
+     행을 카드 높이에 고르게 펼쳐(space-between) 아래가 비지 않게 합니다. */
+  .own { margin-top:12px; flex:1; display:flex; flex-direction:column; justify-content:space-between; }
+  .oitem { padding:11px 0 12px; border-bottom:1px solid var(--c-1b2027); }
+  .oitem:last-child { border-bottom:0; }
+  .otop { display:flex; align-items:baseline; gap:8px; }
+  .oname { font:700 14px "Pretendard Variable", sans-serif; color:var(--c-e6edf3); }
+  .tag { margin-left:auto; font:700 9px "Pretendard Variable", sans-serif; padding:3px 7px;
+         border-radius:3px; letter-spacing:.02em; flex-shrink:0; }
+  .tag.mine { background:var(--c-12333a); color:var(--c-22a7bd); }
+  .tag.borrow { background:var(--c-221a0d); color:var(--c-e0912a); }
+  .tag.both { background:var(--c-232a33); color:var(--c-9aa7b4); }
+  .osrc { font-size:11px; color:var(--c-8b96a3); line-height:1.5; margin-top:6px; }
+  .osrc b { color:var(--c-c3ccd6); font-weight:700; }
+</style>
+</head>
+<body>
+  <h1>GLM-5.2 <span class="cy">&mdash; 스펙 한 장</span></h1>
+  <div class="sub">2026년 7월 공개된 MIT 라이선스 오픈웨이트. 왼쪽은 <b>폐쇄 모델과 같은 표에서의 성적</b>, 가운데는 <b>서빙에 필요한 것</b>, 오른쪽은 <b>그 기법이 누구 것인지</b>입니다.</div>
+
+  <div class="legend" style="margin-top:16px">
+    <div><span class="sw cyan"></span>GLM-5.2</div>
+    <div><span class="sw amber"></span>같은 표에서 가장 높은 다른 모델</div>
+  </div>
+
+  <div class="panels">
+    <div class="panel" style="width:448px">
+      <div class="ptitle">둘은 1위, 셋은 1점 안쪽</div>
+      <div class="pdesc">전부 <b>GLM-5.2 자체 발표표</b>의 값 · 8개 모델 비교 · 하네스는 항목마다 다름</div>
+      <div id="chart" style="margin-top:8px"></div>
+    </div>
+
+    <div class="panel" style="width:448px">
+      <div class="ptitle">주요 스펙</div>
+      <div class="pdesc">가중치는 배포된 safetensors 실측, 나머지는 <span class="mono">config.json</span>&middot;공식 가격표</div>
+
+      <div class="wcap"><span>가중치를 올리는 데</span>
+        <span><b>칸 하나 = H200 한 장(141GB)</b> &middot; 트랙 전체 = <b>8장 한 노드 1,128GB</b></span></div>
+      <div class="wrow">
+        <div class="whead"><span>FP8로 내려 서빙</span><span><b class="cyv">753.0</b> GB &middot; 8칸 중 <b class="cyv">5칸 조금 넘게</b></span></div>
+        <div class="wtrack"><i class="fp" style="width:66.76%"></i><span class="h200"></span></div>
+      </div>
+
+      <div class="tiles">
+        <div class="tile"><span>총 / 활성 파라미터</span><strong>753B / 40B</strong>
+          <em>전문가 256 중 8 + 공유 1 &middot; 활성 5.3%</em></div>
+        <div class="tile"><span>레이어 &middot; 어텐션</span><strong>78층 &middot; MLA + DSA</strong>
+          <em>앞 3층 dense &middot; 자체 인덱서는 21층뿐</em></div>
+        <div class="tile"><span>최대 컨텍스트</span><strong>1,048,576</strong>
+          <em>1M을 그대로 씁니다</em></div>
+        <div class="tile"><span>1M KV캐시 &middot; 1명 &middot; FP8</span><strong>46.5 GiB</strong>
+          <em>MLA 43.9 + 인덱서 키 2.6 &middot; 128K은 5.8</em></div>
+      </div>
+
+      <div class="lines">
+        <div class="line"><span>API 1M 토큰</span>
+          <span>입력 <b>$1.40</b> &middot; 캐시 히트 <b>$0.26</b> &middot; 출력 <b>$4.40</b>
+            &mdash; 히트가 입력가의 18.6%</span></div>
+        <div class="line"><span>최소 하드웨어</span>
+          <span>FP8 기준 <b>H200 6장</b> &middot; <b>B300 3장</b> &mdash; 한 노드(8장) 안에 들어갑니다</span></div>
+        <div class="line"><span>그 밖</span>
+          <span>MTP 초안 <b>1층</b> &middot; 라이선스 <b>MIT</b> &mdash; 지역 제한 없음</span></div>
+      </div>
+    </div>
+
+    <div class="panel" style="width:336px">
+      <div class="ptitle">특성</div>
+      <div class="pdesc">가져온 것과 자체 기여</div>
+      <div class="own">
+        <div class="oitem">
+          <div class="otop"><span class="oname">MLA</span><span class="tag borrow">가져온 것</span></div>
+          <div class="osrc">DeepSeek V2</div>
+        </div>
+        <div class="oitem">
+          <div class="otop"><span class="oname">DSA 인덱서</span><span class="tag borrow">가져온 것</span></div>
+          <div class="osrc">DeepSeek V3.2 &middot; Lightning Indexer</div>
+        </div>
+        <div class="oitem">
+          <div class="otop"><span class="oname">IndexShare</span><span class="tag mine">자체 기여</span></div>
+          <div class="osrc">논문 IndexCache &middot; 제출자가 GLM-5 리포트 저자</div>
+        </div>
+        <div class="oitem">
+          <div class="otop"><span class="oname">비동기 강화학습</span><span class="tag mine">자체 기여</span></div>
+          <div class="osrc">GLM-5의 <b>학습</b> 기법 &middot; 5.2가 물려받음</div>
+        </div>
+        <div class="oitem">
+          <div class="otop"><span class="oname">인덱스 재사용</span><span class="tag both">먼저 실은 것</span></div>
+          <div class="osrc">You Only Index Once &middot; 다른 팀 독립 제안 &mdash; 제품 적용은 GLM이 먼저 &middot; <b>1M FLOPs 2.9배</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>토대는 DeepSeek, 얹은 층은 자체</b> &mdash; MLA와 DSA를 받아 쓰고 그 위에 인덱서 공유를 올렸습니다.
+    그 결과가 MIT 라이선스로 1M 컨텍스트를 폐쇄 모델과 1점 차로 따라붙는 성적입니다.
+  </div>
+
+<script>
+/* [벤치마크, 부제, GLM-5.2, 최고 다른 모델 점수, 그 모델 이름, GLM이 1위인가] */
+const rows = [
+  ['AIME 2026',        '수학',        99.2, 98.3, 'GPT-5.5',      true],
+  ['IMOAnswerBench',   '수학 서술',    91.0, 90.0, 'Qwen3.7-Max',  true],
+  ['MCP-Atlas',        '도구 사용',    76.8, 77.8, 'Opus 4.8'],
+  ['Terminal-Bench 2.1', '터미널',    82.7, 83.4, 'GPT-5.5'],
+  ['FrontierSWE',      '우세도',      74.4, 75.1, 'Opus 4.8'],
+  ['SWE-bench Pro',    '저장소 수정',  62.1, 69.2, 'Opus 4.8'],
+  ['HLE',              '전문 지식',    40.5, 49.8, 'Opus 4.8'],
+  ['DeepSWE',          '장기 코딩',    46.2, 70.0, 'GPT-5.5'],
+];
+const host = document.getElementById('chart');
+const MAX = 100, BW = 176;
+for (const [name, sub, us, them, who, win] of rows) {
+  const d = document.createElement('div');
+  d.className = 'grp' + (win ? ' win' : '');
+  d.innerHTML = '<span class="gname"><b>' + name + '</b>' + sub + '</span>'
+    + '<span class="pair">'
+    +   '<span class="brow"><span class="bar us" style="width:'
+    +      (us / MAX * BW).toFixed(1) + 'px"></span>'
+    +      '<span class="val s">' + us.toFixed(1) + '</span>'
+    +      (win ? '<span class="who">1위</span>' : '') + '</span>'
+    +   '<span class="brow"><span class="bar th" style="width:'
+    +      (them / MAX * BW).toFixed(1) + 'px"></span>'
+    +      '<span class="val">' + them.toFixed(1) + '</span>'
+    +      '<span class="who">' + who + '</span></span>'
+    + '</span>';
+  host.appendChild(d);
+}
+</script>
+</body>
+</html>

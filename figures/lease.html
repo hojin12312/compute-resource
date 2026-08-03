@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:50px; }
+
+  .table { margin-top:38px; border-top:2px solid var(--c-3d4650); }
+  .tr { display:grid; grid-template-columns:190px 1fr 1fr; min-height:75px;
+        border-bottom:1px solid var(--c-21262d); }
+  .tr > div { display:flex; align-items:center; padding:15px 22px; }
+  .tr > div + div { border-left:1px solid var(--c-21262d); }
+
+  .thead { min-height:68px; background:var(--c-161b22); }
+  .thead .blank { color:var(--c-7d8896); font-size:12px; font-weight:700; }
+  .company { gap:11px; }
+  .company b { font-size:19px; }
+  .company span { color:var(--c-7d8896); font-size:12px; }
+
+  .label { color:var(--c-8b96a3); font-size:12.5px; font-weight:700; }
+  .cell { color:var(--c-c3ccd6); font-size:14px; line-height:1.45; }
+  .cell b { margin-left:4px; }
+  .cell strong { color:var(--c-22a7bd); font-size:20px; letter-spacing:-.01em; }
+  .cell .am { color:var(--c-e0912a); }
+  .cell small { display:block; margin-left:9px; color:var(--c-7d8896); font-size:11.5px; }
+
+  .point { margin-top:26px; display:flex; align-items:center; gap:17px;
+           padding:18px 22px; background:var(--c-161b22); border-left:3px solid var(--c-c47d15); }
+  .point .tag { flex:0 0 auto; color:var(--c-e0912a); font-size:12px; font-weight:700; }
+  .point .text { color:var(--c-c3ccd6); font-size:15px; line-height:1.5; }
+  .point b { color:var(--c-e6edf3); }
+
+  .note { margin-top:13px; color:var(--c-7d8896); font-size:11.5px; line-height:1.45; }
+</style>
+</head>
+<body>
+  <h1>자체 서버를 짓고도 <span class="am">외부 연산을 빌립니다</span></h1>
+  <div class="sub">2026년 공개된 두 계약을 같은 항목으로 정리했습니다. 숫자의 크기보다 외부 용량을 왜, 어떻게 더했는지가 핵심입니다.</div>
+
+  <div class="table">
+    <div class="tr thead">
+      <div class="blank">계약 항목</div>
+      <div class="company"><b>Anthropic</b><span>Colossus · Colossus II</span></div>
+      <div class="company"><b>Google</b><span>SpaceX 시설</span></div>
+    </div>
+
+    <div class="tr">
+      <div class="label">외부 용량의 역할</div>
+      <div class="cell">자체 서버에 더한 <b>장기 추론 용량</b></div>
+      <div class="cell">예상을 웃돈 Gemini Enterprise 수요를 메우는 <b>브리지 용량</b></div>
+    </div>
+
+    <div class="tr">
+      <div class="label">월 지출</div>
+      <div class="cell"><strong>12.5억 달러</strong></div>
+      <div class="cell"><strong>9.2억 달러</strong></div>
+    </div>
+
+    <div class="tr">
+      <div class="label">임대 자원</div>
+      <div class="cell"><strong class="am">약 32만 5천 장</strong><small>NVIDIA GPU · 스토리지·네트워크 포함</small></div>
+      <div class="cell"><strong class="am">약 11만 개</strong><small>GPU · CPU · 메모리 합계</small></div>
+    </div>
+
+    <div class="tr">
+      <div class="label">기간</div>
+      <div class="cell">지급 종료 <b>2029년 5월</b><small>최초 3개월 뒤 90일 통보 해지 가능</small></div>
+      <div class="cell"><b>2026년 10월 ~ 2029년 6월</b></div>
+    </div>
+  </div>
+
+  <div class="point">
+    <span class="tag">공통점</span>
+    <span class="text"><b>자체 인프라를 대체한 계약이 아닙니다.</b> 자체 데이터센터를 늘리면서 당장의 추론 수요를 외부 연산으로 보충했습니다.</span>
+  </div>
+
+  <div class="note">Anthropic은 GPU 장수, Google은 GPU·CPU·메모리를 합한 개수입니다. 공개 자료는 Google 물량을 특정 시설과 일대일로 연결하지 않습니다.</div>
+
+  <div class="foot">
+    두 수치는 서로의 우열을 가리는 비교값이 아니라, <b>서로 다른 외부 용량 확보 사례</b>입니다.
+  </div>
+</body>
+</html>

@@ -1,0 +1,53 @@
+# Local build and server files
+# 루트 한정입니다 — slides/index.html은 Pages로 배포되므로 커밋 대상입니다.
+/build.py
+/index.html
+
+# Agent/working docs (kept local — GitHub에는 읽을거리만 노출)
+CLAUDE.md
+CONTINUE.md
+AUTHORING_GUIDE.md
+SESSION_HISTORY.md
+RESEARCH.md
+KIMI_K3_RESEARCH.md
+QUANTIZATION_AND_ENGINE_RESEARCH.md
+DEEPSEEK_V4_FLASH_0731_RESEARCH.md
+README_IMPROVEMENT_PLAN.md
+.playwright-mcp/
+
+# Master image files (kept locally — README references webp only)
+assets/*.jpg
+assets/*.png
+
+# Playwright 캡처는 프로젝트 루트에 떨어집니다 (그림 재캡처·덱 검수 때 생김)
+/*.png
+
+# Unreferenced intermediate WebP images (kept locally)
+assets/decoding_bandwidth_bound.webp
+assets/kv_cache_desk_korean.webp
+assets/kv_cache_desk_metaphor.webp
+assets/kv_cache_mechanism.webp
+assets/kv_cache_scaling.webp
+assets/memory_footprint_gpu.webp
+assets/prefill_compute_bound.webp
+assets/gated_deltanet_pattern.webp
+assets/kimi_k3_components.webp
+assets/attention_lineage_comparison.webp
+assets/stock_market_shockwave.webp
+assets/token_consumption_growth.webp
+assets/vram_memory_breakdown.webp
+assets/kv_cache_desk_sleek.webp
+assets/prefill_parallel_compute.webp
+assets/decoding_sequential_bandwidth.webp
+assets/cache_hit_pricing.webp
+assets/moe_active_nodes.webp
+assets/kv_cache_hadamard_rotation.webp
+assets/ai_compute_sovereignty.webp
+assets/gpu_roadmap_timeline.webp
+
+# 그림 소스는 배포합니다 — /document/ 와 /slides/ 가 iframe으로 실시간 렌더하므로
+# Pages에 올라가야 합니다. README만 캡처된 webp를 씁니다(GitHub이 iframe을 지웁니다).
+# 캡처 산출물과 도구는 제외합니다.
+figures/.light/
+figures/snap.js
+figures/tovars.py

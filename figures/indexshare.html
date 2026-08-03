@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  .compare { display:flex; gap:24px; margin-top:28px; }
+  .box {
+    width:620px; height:446px; padding:22px 24px;
+    border:1px solid var(--c-333d47); border-radius:13px; background:var(--c-161b22);
+  }
+  .box.shared { border-color:var(--c-17505c); background:var(--c-0f2930); }
+  .box-head { display:flex; justify-content:space-between; align-items:flex-start; }
+  .box-title { font-size:20px; font-weight:700; letter-spacing:-.02em; }
+  .box-sub { margin-top:4px; font-size:12px; color:var(--c-8b96a3); }
+  .scan-count {
+    font:700 26px "IBM Plex Mono", "Pretendard Variable", monospace; letter-spacing:-.04em;
+    color:var(--c-e0912a);
+  }
+  .shared .scan-count { color:var(--c-22a7bd); }
+  .rows { margin-top:22px; display:flex; flex-direction:column; gap:11px; }
+  .scan-row {
+    height:60px; display:grid; grid-template-columns:48px 178px 24px 86px 24px 146px;
+    align-items:center;
+  }
+  .layer {
+    width:40px; height:40px; display:flex; align-items:center; justify-content:center;
+    border:1px solid var(--c-333d47); border-radius:7px; color:var(--c-c3ccd6);
+    font:600 12px "IBM Plex Mono", "Pretendard Variable", monospace;
+  }
+  .context {
+    height:34px; padding:0 10px; border-radius:6px; background:var(--c-2b333d);
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:11px; color:var(--c-9aa7b4);
+  }
+  .context b { color:var(--c-e6edf3); font:600 12px "IBM Plex Mono", "Pretendard Variable", monospace; }
+  .arrow { color:var(--c-5d6773); text-align:center; font-size:18px; }
+  .indexer {
+    height:38px; border-radius:7px; display:flex; align-items:center; justify-content:center;
+    background:var(--c-c47d15); color:var(--c-0d1117); font-size:12px; font-weight:700;
+  }
+  .picked {
+    height:34px; padding:0 10px; border-radius:6px; background:var(--c-0e8fa3); color:var(--c-0d1117);
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:11px; font-weight:700;
+  }
+  .picked b { font:700 12px "IBM Plex Mono", "Pretendard Variable", monospace; }
+  .context.off, .indexer.off, .picked.off {
+    border:1px dashed var(--c-3f6f7d);
+    background:var(--c-0f2930);
+    color:var(--c-8b96a3);
+  }
+  .indexer.off { font-weight:500; }
+  .picked.off {
+    color:var(--c-9aa7b4);
+    font-weight:500;
+  }
+  .picked.off b { color:var(--c-22a7bd); }
+  .shared-rows { position:relative; }
+.share-spine {
+  position:absolute;
+  z-index:0;
+  left:526px;
+  top:30px;
+  width:2px;
+  height:213px;
+  background:var(--c-3f6f7d);
+}
+.shared-rows .scan-row { position:relative; z-index:1; }
+.shared-rows .picked { position:relative; }
+.shared-rows .picked::after {
+  content:"";
+  position:absolute;
+  right:-20px;
+  top:50%;
+  width:20px;
+  height:2px;
+  background:var(--c-3f6f7d);
+  transform:translateY(-50%);
+}
+  .shared-rows .indexer:not(.off) { background:var(--c-0e8fa3); }
+  .result {
+    margin-top:15px; border-top:1px solid var(--c-333d47); padding-top:14px;
+    display:flex; justify-content:space-between; color:var(--c-9aa7b4); font-size:12px;
+  }
+  .result b { color:var(--c-e6edf3); font:700 16px "IBM Plex Mono", "Pretendard Variable", monospace; }
+</style>
+</head>
+<body>
+  <h1>IndexShare &mdash; <span class="cy">4층이 검색 결과 하나를 공유합니다</span></h1>
+  <div class="sub">V4는 CSA 레이어마다 전용 DSA 인덱서를 둡니다. GLM-5.2는 네 레이어가 인덱서 하나를 공유합니다.</div>
+
+  <div class="compare">
+    <div class="box">
+      <div class="box-head">
+        <div>
+          <div class="box-title">DeepSeek V4 · CSA</div>
+          <div class="box-sub">각 CSA 레이어마다 전용 DSA 인덱서</div>
+        </div>
+        <div class="scan-count">4회</div>
+      </div>
+      <div class="rows">
+        <div class="scan-row">
+          <div class="layer">L1</div><div class="context">압축 문맥 <b>N/4</b></div><div class="arrow">→</div>
+          <div class="indexer">인덱서</div><div class="arrow">→</div><div class="picked">선택 <b>top-k</b></div>
+        </div>
+        <div class="scan-row">
+          <div class="layer">L2</div><div class="context">압축 문맥 <b>N/4</b></div><div class="arrow">→</div>
+          <div class="indexer">인덱서</div><div class="arrow">→</div><div class="picked">선택 <b>top-k</b></div>
+        </div>
+        <div class="scan-row">
+          <div class="layer">L3</div><div class="context">압축 문맥 <b>N/4</b></div><div class="arrow">→</div>
+          <div class="indexer">인덱서</div><div class="arrow">→</div><div class="picked">선택 <b>top-k</b></div>
+        </div>
+        <div class="scan-row">
+          <div class="layer">L4</div><div class="context">압축 문맥 <b>N/4</b></div><div class="arrow">→</div>
+          <div class="indexer">인덱서</div><div class="arrow">→</div><div class="picked">선택 <b>top-k</b></div>
+        </div>
+      </div>
+      <div class="result"><span>인덱서 실행</span><b>4 / 4층</b></div>
+    </div>
+
+    <div class="box shared">
+      <div class="box-head">
+        <div>
+          <div class="box-title"><span class="cy">GLM-5.2 · IndexShare</span></div>
+          <div class="box-sub">희소 어텐션 4층이 첫 레이어의 선택을 재사용</div>
+        </div>
+        <div class="scan-count">1회</div>
+      </div>
+      <div class="rows shared-rows">
+        <div class="share-spine"></div>
+        <div class="scan-row">
+          <div class="layer">L1</div><div class="context">전체 문맥 <b>1M</b></div><div class="arrow">→</div>
+          <div class="indexer">인덱서</div><div class="arrow">→</div><div class="picked">선택 <b>2,048</b></div>
+        </div>
+        <div class="scan-row">
+          <div class="layer">L2</div><div class="context off">검색 생략</div><div class="arrow"> </div>
+          <div class="indexer off">실행 안 함</div><div class="arrow">→</div><div class="picked off">같은 <b>2,048</b></div>
+        </div>
+        <div class="scan-row">
+          <div class="layer">L3</div><div class="context off">검색 생략</div><div class="arrow"> </div>
+          <div class="indexer off">실행 안 함</div><div class="arrow">→</div><div class="picked off">같은 <b>2,048</b></div>
+        </div>
+        <div class="scan-row">
+          <div class="layer">L4</div><div class="context off">검색 생략</div><div class="arrow"> </div>
+          <div class="indexer off">실행 안 함</div><div class="arrow">→</div><div class="picked off">같은 <b>2,048</b></div>
+        </div>
+      </div>
+      <div class="result"><span>인덱서 실행</span><b class="cy">1 / 4층</b></div>
+    </div>
+  </div>
+
+  <div class="foot"><b>V4: CSA마다 1개 · GLM-5.2: 4층마다 1개.</b> GLM 공식 발표 기준 1M에서 토큰당 FLOPs는 <b class="cy">1 / 2.9</b>입니다.</div>
+</body>
+</html>

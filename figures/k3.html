@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  /* 본문 1·2·3의 세 축을 그대로 세 패널로 옮긴 그림입니다.
+     예전 판의 가운데 패널은 "어디서 본 것들인가" 글 목록이었는데,
+     스펙 카드의 오른쪽 패널과 겹치고 개념을 그리지도 못했습니다. */
+  body { padding-top:42px; }
+  h1 { font-size:29px; }
+  .sub { margin-top:9px; font-size:13.5px; }
+
+  .panels { gap:20px; margin-top:20px; align-items:stretch; }
+  .panel { display:flex; flex-direction:column; padding:18px 20px;
+           border:1px solid var(--c-333d47); border-radius:12px; background:var(--c-161b22); }
+  .kicker { font:700 10px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-8b96a3); letter-spacing:.09em; }
+  .ptitle { margin-top:6px; font-size:16.5px; line-height:1.35; }
+  .pdesc { margin-top:5px; margin-bottom:0; font-size:11px; }
+  .sect { margin-top:12px; font-size:10.5px; color:var(--c-8b96a3); }
+  .note { margin-top:auto; padding-top:11px; font-size:11.5px; color:var(--c-8b96a3); line-height:1.6; }
+  .note b { color:var(--c-c3ccd6); font-weight:700; }
+
+  /* ── 축 1: 층 배합 ── */
+  .unit { display:flex; align-items:center; gap:5px; margin-top:12px; }
+  .lay { flex:0 0 auto; padding:9px 0; width:54px; text-align:center; border-radius:4px;
+         font:700 10px "Pretendard Variable", sans-serif; }
+  .lay.kda { background:var(--c-0e8fa3); color:var(--c-0d1117); }
+  .lay.mla { background:var(--c-c47d15); color:var(--c-0d1117); }
+  .rep { font-size:11px; color:var(--c-8b96a3); white-space:nowrap; }
+  .split { display:flex; height:28px; margin-top:11px; border-radius:3px; overflow:hidden; }
+  .split i { display:flex; align-items:center; justify-content:center; height:100%;
+             font:700 10.5px "Pretendard Variable", sans-serif; }
+  .split i.kda { background:var(--c-0e8fa3); color:var(--c-0d1117); }
+  .split i.mla { background:var(--c-c47d15); color:var(--c-0d1117); }
+  .beh { display:grid; grid-template-columns:1fr; gap:11px; margin-top:15px; }
+  .bcard { padding:20px 14px; border-radius:7px; background:var(--c-1b2027);
+           border-left:3px solid var(--c-5d6773); }
+  .bcard.k { border-left-color:var(--c-22a7bd); }
+  .bcard.m { border-left-color:var(--c-e0912a); }
+  .bcard strong { display:block; font-size:13px; color:var(--c-e6edf3); }
+  .bcard span { display:block; margin-top:4px; font-size:11.5px; color:var(--c-8b96a3); line-height:1.45; }
+  .big { margin-top:15px; padding:20px 15px; border-radius:8px;
+         background:var(--a-36); border:1px solid var(--c-2f6b78); }
+  .big b { font:800 27px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--ink-on-cy-tint); letter-spacing:-.02em; }
+  .big span { display:block; margin-top:5px; font-size:11.5px; color:var(--c-8b96a3); }
+
+  /* ── 축 2: 전문가 격자 ──
+     판을 깔고 꺼진 점을 짙게 씁니다 — 라이트에서 옛 값(#d1cfcb)은 대비 1.39로 묻혔습니다. */
+  /* 칸은 SVG로 그립니다(2026-08-03). 5px 칸이 캡처 배율(zoom 1.395 × DPR 2 = 2.79)에서
+     13.95 디바이스픽셀이라 크로미움이 박스마다 정수로 스냅해 칸이 갈렸습니다 —
+     이 그림이 51장 중 오차가 가장 컸습니다(7.2%). SVG는 viewBox를 통째로 변환하므로
+     균일합니다. **div로 되돌리지 마세요.** 칸 5 + 틈 2(피치 7) · 32열 28행 → 222×194. */
+  /* 양식은 6.1의 R1 전문가 격자(moe.html)와 같습니다 — **테두리를 두르지 않고**
+     꺼진 점으로 --c-4d5661을 씁니다. 예전에는 --c-0d1117 판을 6px 둘렀는데 맨 윗줄
+     위와 맨 오른쪽줄 옆에 희미한 선으로 보였고(44번에서 같은 이유로 걷어냈습니다),
+     꺼진 점은 --c-dot-off였는데 이 패널(--c-161b22) 위에서 대비가 1.33이라 거의
+     보이지 않았습니다. 점 크기만 R1과 다릅니다 — 여기는 896개(32×28)라 5px입니다
+     (R1은 256개 8px). */
+  .experts { display:block; width:222px; height:194px;
+             margin-top:10px; border-radius:3px; }
+  .e { fill:var(--c-4d5661); }
+  .e.on { fill:var(--c-0e8fa3); }
+  .rr { display:flex; align-items:baseline; gap:9px; padding:4px 0;
+        border-bottom:1px solid var(--c-21262d); }
+  .rr:last-of-type { border-bottom:0; }
+  .rl { width:92px; font-size:11.5px; color:var(--c-9aa7b4); }
+  .rv { width:48px; font:700 15px "IBM Plex Mono", "Pretendard Variable", monospace; }
+  .rn { font-size:10.5px; color:var(--c-7d8896); line-height:1.4; }
+
+  /* 분위수로 커트라인을 다시 긋는다는 개념 */
+  .qbox { margin-top:11px; padding:9px 11px; border-radius:8px;
+          background:var(--c-1b2027); border:1px solid var(--c-21262d); }
+  .qtop { font-size:11px; color:var(--c-c3ccd6); font-weight:700; }
+  .qtop span { display:block; margin-top:2px; font-weight:400; font-size:10px; color:var(--c-8b96a3); }
+  .qpair { display:flex; gap:14px; margin-top:8px; }
+  .qone { flex:1; }
+  .qbars { position:relative; display:flex; align-items:flex-end; gap:3px; height:26px; }
+  .qbars i { flex:1; border-radius:2px 2px 0 0; background:var(--c-3f4c58); }
+  .qbars i.pass { background:var(--c-0e8fa3); }
+  .qcut { position:absolute; left:-3px; right:-3px; border-top:1.5px dashed var(--c-e0912a); }
+  .qlab { margin-top:6px; font-size:10px; color:var(--c-8b96a3); }
+  .qlab b { color:var(--c-e0912a); font-weight:700; }
+
+  /* ── 축 3: 언제 4비트가 되나 ── */
+  .tl { margin-top:9px; }
+  .tlrow { margin-top:14px; }
+  .tlname { font-size:11px; color:var(--c-9aa7b4); }
+  .tlname b { color:var(--c-c3ccd6); font-weight:700; }
+  .tlbar { display:flex; height:30px; margin-top:6px; border-radius:3px; overflow:hidden;
+           background:var(--c-1b2027); }
+  .tlbar i { display:flex; align-items:center; justify-content:center; height:100%;
+             font:700 10px "Pretendard Variable", sans-serif; white-space:nowrap; }
+  .tlbar i.w16 { background:var(--c-c47d15); color:var(--c-0d1117); }
+  .tlbar i.squeeze { background:var(--c-4a3a1c); color:var(--c-e0912a); }
+  .tlbar i.w4 { background:var(--c-0e8fa3); color:var(--c-0d1117); }
+
+  .calc { margin-top:16px; padding:15px 12px; border-radius:8px;
+          background:var(--c-1b2027); border:1px solid var(--c-21262d);
+          font:700 13.5px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-c3ccd6); text-align:center; }
+  .calc b { color:var(--c-22a7bd); font-size:18px; }
+
+  /* 같은 이유로 SVG입니다 — 16px 칸 = 44.64 디바이스픽셀. 칸 16 + 틈 4(피치 20) ·
+     세로 피치 30. 예전 flex-wrap이 내던 배치 그대로 18칸씩 끊습니다. */
+  .gpus { display:block; }
+  .g.amber { fill:var(--c-c47d15); }
+  .g.cyan  { fill:var(--c-0e8fa3); }
+  .hwrow { margin-top:16px; }
+  .hwlab { display:flex; align-items:baseline; justify-content:space-between; gap:8px;
+           font-size:11px; color:var(--c-9aa7b4); margin-bottom:5px; }
+  .hwlab b { font:700 17px "IBM Plex Mono", "Pretendard Variable", monospace; }
+  .hwlab b.am { color:var(--c-e0912a); } .hwlab b.cy { color:var(--c-22a7bd); }
+</style>
+</head>
+<body>
+  <h1>Kimi K3 &mdash; <span class="cy">세 축으로 2.8조를 돌립니다</span></h1>
+  <div class="sub">새 발명이 아니라 <b>종합</b>입니다. 앞에서 하나씩 본 것이 한 모델에 모여 있고,
+    셋이 각각 <b>읽는 양 &middot; 켜는 양 &middot; 담는 양</b>을 깎습니다.</div>
+
+  <div class="panels">
+
+    <div class="panel" style="width:400px">
+      <div class="kicker">축 1 &middot; KDA</div>
+      <div class="ptitle">93층 중 69층은 <span class="cy">노트만</span> 듭니다</div>
+      <div class="pdesc">6.3 Gated DeltaNet의 배합을 규모만 키웠습니다</div>
+
+      <div class="sect">3 대 1 배합이 93층까지 반복됩니다</div>
+      <div class="unit">
+        <span class="lay kda">KDA</span><span class="lay kda">KDA</span>
+        <span class="lay kda">KDA</span><span class="lay mla">MLA</span>
+        <span class="rep">&middot;&middot;&middot; 이 묶음이 계속</span>
+      </div>
+      <div class="split"><i class="kda" style="width:74.2%">KDA 69층</i><i class="mla" style="width:25.8%">MLA 24</i></div>
+
+      <div class="beh">
+        <div class="bcard k"><strong>KDA 69층 &mdash; 고정 크기 요약 노트</strong>
+          <span>대화가 길어져도 드는 양이 그대로입니다</span></div>
+        <div class="bcard m"><strong>Gated MLA 24층 &mdash; 정확한 회상</strong>
+          <span>여기만 길이에 비례해 KV가 쌓입니다</span></div>
+      </div>
+
+      <div class="big"><b>6.3&times;</b>
+        <span>1M 토큰 디코딩 가속 &mdash; 자체 발표치</span></div>
+
+      <div class="note">KV캐시가 늘어나는 층이 <b>93층 중 24층</b>뿐입니다.
+        1M을 버티는 힘이 여기서 나옵니다.</div>
+    </div>
+
+    <div class="panel" style="width:424px">
+      <div class="kicker">축 2 &middot; Stable LatentMoE</div>
+      <div class="ptitle">전문가 896개 중 <span class="cy">16개</span>만 켭니다</div>
+      <div class="pdesc">점 하나가 전문가 하나 &mdash; 실제 개수 그대로</div>
+
+      <svg class="experts" id="experts" width="222" height="194" viewBox="0 0 222 194"></svg>
+
+      <div style="margin-top:14px">
+        <div class="rr"><span class="rl">전문가 개수</span><span class="rv cy">1.8%</span>
+          <span class="rn">896개 중 16개 &mdash; MoE 층 안에서만 성립</span></div>
+        <div class="rr"><span class="rl">활성 파라미터</span><span class="rv cy">3.7%</span>
+          <span class="rn">2.8T 중 104B &middot; 공유 전문가 2개 포함</span></div>
+        <div class="rr"><span class="rl">같은 잣대의 R1</span>
+          <span class="rv" style="color:var(--c-8b96a3)">5.5%</span>
+          <span class="rn">37B / 671B &mdash; K3가 더 희소합니다</span></div>
+      </div>
+
+      <div class="qbox">
+        <div class="qtop">Quantile Balancing &mdash; 합격선을 매번 다시 긋습니다
+          <span>고정 점수가 아니라 <b style="color:var(--c-c3ccd6)">분포의 분위수</b>로 자릅니다</span></div>
+        <div class="qpair">
+          <div class="qone">
+            <div class="qbars">
+              <i style="height:34%"></i><i class="pass" style="height:82%"></i><i style="height:24%"></i>
+              <i class="pass" style="height:96%"></i><i style="height:46%"></i><i style="height:18%"></i>
+              <i class="pass" style="height:71%"></i><i style="height:29%"></i>
+              <div class="qcut" style="bottom:62%"></div>
+            </div>
+            <div class="qlab">점수가 고를 때 &mdash; <b>선이 높이</b></div>
+          </div>
+          <div class="qone">
+            <div class="qbars">
+              <i style="height:16%"></i><i class="pass" style="height:41%"></i><i style="height:12%"></i>
+              <i style="height:9%"></i><i class="pass" style="height:52%"></i><i style="height:22%"></i>
+              <i style="height:14%"></i><i class="pass" style="height:37%"></i>
+              <div class="qcut" style="bottom:31%"></div>
+            </div>
+            <div class="qlab">전체가 낮을 때 &mdash; <b>선도 내려감</b></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">두 비율은 <b>분모가 다릅니다.</b> 그리고 켜지는 건 3.7%여도
+        <b>메모리엔 896개가 전부</b> 올라가 있습니다.</div>
+    </div>
+
+    <div class="panel" style="width:400px">
+      <div class="kicker">축 3 &middot; MXFP4 QAT</div>
+      <div class="ptitle">압축한 게 아니라 <span class="cy">4비트로 태어났습니다</span></div>
+      <div class="pdesc">7장 양자화를 학습 단계부터 전제로 깔았습니다</div>
+
+      <div class="sect">언제 4비트가 되는가</div>
+      <div class="tl">
+        <div class="tlrow">
+          <div class="tlname">보통은 &mdash; <b>다 학습한 뒤 압축</b>(PTQ)</div>
+          <div class="tlbar"><i class="w16" style="width:74%">16비트로 학습</i><i class="squeeze" style="width:26%">4비트로 압축</i></div>
+        </div>
+        <div class="tlrow">
+          <div class="tlname">K3는 &mdash; <b>처음부터 4비트를 전제로</b>(QAT)</div>
+          <div class="tlbar"><i class="w4" style="width:100%">4비트를 전제로 학습 &middot; 그대로 배포</i></div>
+        </div>
+      </div>
+
+      <div class="calc">2.8T &times; 0.5바이트 = <b>약 1.4TB</b></div>
+
+      <div class="hwrow">
+        <div class="hwlab"><span>H200 &mdash; FP4 텐서코어가 없어 FP8로</span><b class="am">32장</b></div>
+        <svg class="gpus" id="h200" width="356" height="56" viewBox="0 0 356 56"></svg>
+      </div>
+      <div class="hwrow">
+        <div class="hwlab"><span>B300 &mdash; FP4 네이티브</span><b class="cy">8장</b></div>
+        <svg class="gpus" id="b300" width="156" height="26" viewBox="0 0 156 26"></svg>
+      </div>
+
+      <div class="note">같은 모델인데 <b>4배</b>입니다. 단, 8장은 가중치가 겨우 들어가는 최소이고
+        Moonshot 권장은 <b>64장 이상</b>입니다.</div>
+    </div>
+
+  </div>
+
+  <div class="foot">
+    셋이 각각 다른 청구서를 깎습니다 &mdash; KDA는 <b>KV캐시</b>, MoE는 <b>토큰마다 읽는 양</b>,
+    4비트는 <b>담는 값</b>. 그래서 4배는 "칩이 덜 필요해진다"가 아니라
+    <b>어떤 칩이 필요한지가 바뀐다</b>는 신호였습니다.
+  </div>
+
+<script>
+/* 전문가 896개 — 개수를 실제로 그립니다(32 × 28). 켜지는 16개는 고정 시드로 흩뿌립니다. */
+const host = document.getElementById('experts');
+const on = new Set();
+let seed = 7;
+function rnd() { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; }
+while (on.size < 16) on.add(Math.floor(rnd() * 896));
+const SVGNS = 'http://www.w3.org/2000/svg';
+const rect = (host, attrs) => {
+  const r = document.createElementNS(SVGNS, 'rect');
+  for (const [k, v] of Object.entries(attrs)) r.setAttribute(k, v);
+  host.appendChild(r);
+};
+for (let i = 0; i < 896; i++) {
+  rect(host, { class: 'e' + (on.has(i) ? ' on' : ''),
+               x: (i % 32) * 7, y: Math.floor(i / 32) * 7,
+               width: 5, height: 5, rx: 1 });
+}
+/* 한 줄에 18장씩 — 예전 flex-wrap이 358px 폭에서 내던 배치와 같습니다. */
+for (const [id, n, cls] of [['h200', 32, 'amber'], ['b300', 8, 'cyan']]) {
+  const h = document.getElementById(id);
+  for (let i = 0; i < n; i++) {
+    rect(h, { class: 'g ' + cls, x: (i % 18) * 20, y: Math.floor(i / 18) * 30,
+              width: 16, height: 26, rx: 2 });
+  }
+}
+</script>
+</body>
+</html>

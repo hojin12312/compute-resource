@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compute Resource — 읽기용 문서</title>
+<meta name="description" content="LLM과 컴퓨팅 자원의 역학관계 — 이어서 읽는 문서판. 발표용 슬라이드와 같은 내용입니다.">
+<style>
+  /* 자체 호스팅 — 그림·문서·덱이 저장소 루트의 fonts/ 한 벌을 공유합니다.
+     같은 문서의 세 얼굴이라 서체가 갈리면 같은 자료로 보이지 않습니다.
+     Pretendard는 SIL OFL 1.1 (fonts/pretendard.LICENSE.txt), IBM Plex Mono도 OFL 1.1.
+     서브셋 커버리지: KS X 1001 한글 2,350자 + README·그림·덱이 쓰는 모든 문자.
+     font-display:swap이라 폰트를 기다리며 글이 안 보이는 일은 없습니다
+     (그림과 덱은 레이아웃이 폰트에 민감해 block을 씁니다). */
+  @font-face {
+    font-family: 'Pretendard Variable';
+    font-style: normal; font-weight: 45 930; font-display: swap;
+    src: url('../fonts/pretendard.woff2') format('woff2-variations');
+  }
+  @font-face { font-family:'IBM Plex Mono'; font-style:normal; font-weight:400; font-display:swap;
+    src:url('../fonts/plexmono-400.woff2') format('woff2'); }
+  @font-face { font-family:'IBM Plex Mono'; font-style:normal; font-weight:600; font-display:swap;
+    src:url('../fonts/plexmono-600.woff2') format('woff2'); }
+  @font-face { font-family:'IBM Plex Mono'; font-style:normal; font-weight:700; font-display:swap;
+    src:url('../fonts/plexmono-700.woff2') format('woff2'); }
+
+  :root {
+    color-scheme: dark;
+    --bg: #0b0e13;
+    --panel: #10151c;
+    --ink: #ccd6e0;
+    --ink-strong: #eef4f9;
+    --ink-dim: #8b96a3;
+    --line: #232c37;
+    --cyan: #4ec5da;
+    --amber: #d99a2b;
+    --topbar: rgba(11, 14, 19, .93);
+    --code-bg: #1a212b;
+    --code-ink: #b8dde5;
+    --math-bg: #1c2430;
+    --math-ink: #d7e3ea;
+    --th-bg: #161d26;
+    --zebra: rgba(255, 255, 255, .018);
+    --border-hover: #3d4a58;
+    --caption: #6b7683;
+    --fn-ink: #a8b3bf;
+    --overlay: #06080b;
+    --close-ink: #7d8996;
+    --rule: rgba(78, 197, 218, .35);
+    --fn-target: rgba(78, 197, 218, .07);
+    --toc-active: rgba(78, 197, 218, .10);
+    --fig-bg: #0d1117;          /* 그림 캔버스와 같은 배경 (figures/base.css의 --c-0d1117) */
+    --text-w: 1120px;
+    --toc-w: 244px;
+  }
+
+  /* 라이트 팔레트는 덱(slides/deck.css)의 검증된 값을 그대로 씁니다 —
+     같은 그림을 같은 색으로 보여야 하고, 그 값들은 대비비와 색약 ΔE를
+     이미 계산해 둔 것입니다. 의미색은 텍스트용 변종(짙은 쪽)을 씁니다. */
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #f4f2ee;
+    --panel: #fbfaf7;
+    --ink: #22272e;
+    --ink-strong: #05070a;
+    --ink-dim: #666e79;
+    --line: #ddd7cd;
+    --cyan: #0a6f80;
+    --amber: #96590a;
+    --topbar: rgba(244, 242, 238, .93);
+    --code-bg: #e9e5dd;
+    --code-ink: #0a6f80;
+    --math-bg: #e9e5dd;
+    --math-ink: #2a3038;
+    --th-bg: #eae5dc;
+    --zebra: rgba(21, 24, 28, .028);
+    --border-hover: #c2bbae;
+    --caption: #7a8189;
+    --fn-ink: #4c545f;
+    --overlay: #eae7e1;
+    --close-ink: #6b7280;
+    --rule: rgba(10, 111, 128, .4);
+    --fn-target: rgba(10, 111, 128, .09);
+    --toc-active: rgba(10, 111, 128, .10);
+    --fig-bg: #f4f2ee;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Pretendard Variable", -apple-system, BlinkMacSystemFont,
+                 "Apple SD Gothic Neo", "Segoe UI", "Malgun Gothic", Roboto, sans-serif;
+    font-size: 17px;
+    line-height: 1.85;
+    -webkit-font-smoothing: antialiased;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  /* ── 상단 바 ── */
+  .topbar {
+    position: sticky; top: 0; z-index: 40;
+    display: flex; align-items: center; gap: 14px;
+    padding: 11px 26px;
+    background: var(--topbar);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+    font-size: 13.5px;
+  }
+  .topbar .brand { font-weight: 700; color: var(--ink-strong); letter-spacing: -.01em; }
+  .topbar .where {
+    color: var(--caption); font-size: 12px;
+    padding: 2px 8px; border: 1px solid var(--line); border-radius: 999px;
+  }
+  .topbar .hint { color: var(--ink-dim); }
+  .topbar .hint b { color: var(--cyan); font-weight: 600; }
+  .topbar nav { margin-left: auto; display: flex; align-items: center; gap: 13px; }
+  .topbar nav a { color: var(--ink-dim); text-decoration: none; white-space: nowrap; }
+  .topbar nav a:hover { color: var(--cyan); }
+
+  .pill {
+    font: inherit; font-size: 13px;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 11px;
+    color: var(--ink-dim); background: var(--panel);
+    border: 1px solid var(--line); border-radius: 999px;
+    cursor: pointer; white-space: nowrap;
+  }
+  .pill:hover { color: var(--cyan); border-color: var(--border-hover); }
+  .pill .kbd {
+    font: 600 10.5px "IBM Plex Mono", ui-monospace, monospace;
+    color: var(--caption); border: 1px solid var(--line);
+    border-radius: 3px; padding: 0 3px;
+  }
+  #toc-toggle { display: none; }
+
+  /* ── 뼈대: 왼쪽 목차 + 본문 ─────────────────────────────────────────────
+     그림을 본문 폭에 맞추면서 생긴 왼쪽 공간을 목차가 씁니다. */
+  .wrap {
+    display: grid;
+    grid-template-columns: var(--toc-w) minmax(0, var(--text-w));
+    gap: 44px;
+    justify-content: center;
+    padding: 0 26px;
+  }
+
+  /* ── 목차 ── */
+  #toc {
+    position: sticky; top: 58px;
+    align-self: start;
+    max-height: calc(100vh - 88px);
+    overflow-y: auto; overscroll-behavior: contain;
+    padding: 34px 4px 60px 0;
+    font-size: 13px; line-height: 1.55;
+    scrollbar-width: thin;
+  }
+  #toc .toc-head {
+    font-size: 11px; letter-spacing: .06em; color: var(--caption);
+    margin-bottom: 10px; padding-left: 10px;
+  }
+  #toc ol { list-style: none; margin: 0; padding: 0; }
+  #toc a {
+    display: block; padding: 4px 10px;
+    color: var(--ink-dim); text-decoration: none;
+    border-left: 2px solid transparent;
+    border-radius: 0 4px 4px 0;
+  }
+  #toc a:hover { color: var(--ink-strong); background: var(--zebra); }
+  #toc .lv3 a { padding-left: 22px; font-size: 12.5px; color: var(--caption); }
+  #toc a.on {
+    color: var(--ink-strong); background: var(--toc-active);
+    border-left-color: var(--cyan); font-weight: 600;
+  }
+  #toc .lv3 { display: none; }        /* 현재 장의 절만 펼칩니다 */
+  #toc .lv3.show { display: block; }
+
+  /* ── 본문 ── */
+  .doc { padding: 34px 0 140px; min-width: 0; }
+  .doc > *:first-child { margin-top: 0; }
+
+  h1, h2, h3, h4 {
+    color: var(--ink-strong);
+    line-height: 1.4; letter-spacing: -.015em;
+    scroll-margin-top: 68px;
+  }
+  h1 { font-size: 2.15em; margin: 0 0 .5em; font-weight: 800; }
+  h2 {
+    font-size: 1.62em; margin: 2.6em 0 .8em; font-weight: 750;
+    padding-bottom: .34em; border-bottom: 1px solid var(--line);
+  }
+  h3 { font-size: 1.28em; margin: 2.1em 0 .7em; font-weight: 700; }
+  h4 { font-size: 1.06em; margin: 1.8em 0 .6em; font-weight: 700; color: var(--cyan); }
+  p { margin: 0 0 1.15em; }
+  strong, b { color: var(--ink-strong); font-weight: 700; }
+  a { color: var(--cyan); text-decoration-color: var(--rule); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: var(--cyan); }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 3em 0; }
+
+  ul, ol { padding-left: 1.5em; margin: 0 0 1.15em; }
+  li { margin: .3em 0; }
+  li > ul, li > ol { margin: .3em 0; }
+
+  blockquote {
+    margin: 1.6em 0; padding: .1em 0 .1em 1.15em;
+    border-left: 3px solid var(--amber);
+    color: var(--ink-strong); font-size: 1.06em;
+  }
+  blockquote p { margin: .5em 0; }
+
+  code {
+    font-family: "IBM Plex Mono", "Pretendard Variable", ui-monospace, SFMono-Regular,
+                 Menlo, Consolas, monospace;
+    font-size: .87em;
+    background: var(--code-bg); color: var(--code-ink);
+    padding: .12em .4em; border-radius: 4px;
+  }
+  pre {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    padding: 16px 18px; overflow-x: auto; line-height: 1.6;
+  }
+  pre code { background: none; padding: 0; color: var(--ink); font-size: .9em; }
+  .math { background: var(--math-bg); color: var(--math-ink); }
+
+  /* ── 표 ── */
+  .tablewrap { overflow-x: auto; margin: 1.5em 0; }
+  table { border-collapse: collapse; width: 100%; font-size: .94em; }
+  th, td {
+    border: 1px solid var(--line); padding: 9px 13px;
+    text-align: left; vertical-align: top;
+  }
+  th { background: var(--th-bg); color: var(--ink-strong); font-weight: 700; white-space: nowrap; }
+  tbody tr:nth-child(even) { background: var(--zebra); }
+
+  /* ── 그림 ───────────────────────────────────────────────────────────────
+     그림은 이미지가 아니라 figures/*.html 을 그 자리에서 렌더한 것입니다.
+     캔버스가 1376×768로 고정이라 폭에 맞춰 축소합니다(--s는 JS가 넣습니다).
+     본문 폭에 맞추면 그림 안 11px 글자가 8.5px가 되므로, 클릭해 키워 보는 것을
+     전제로 합니다 — 그래서 확대 유도를 눈에 띄게 둡니다. */
+  figure.fig { margin: 2.2em 0; }
+  .stage {
+    position: relative;
+    aspect-ratio: 1376 / 768;
+    overflow: hidden;
+    border: 1px solid var(--line); border-radius: 10px;
+    background: var(--fig-bg);
+    cursor: zoom-in;
+    transition: border-color .15s ease;
+  }
+  .stage:hover { border-color: var(--border-hover); }
+  .stage > iframe, .stage > img {
+    position: absolute; top: 0; left: 0;
+    width: 1376px; height: 768px;
+    border: 0;
+    transform-origin: top left;
+    transform: scale(var(--s, 1));
+    /* 클릭을 그림이 먹으면 확대가 안 됩니다. 스크롤도 가로채지 않게 막습니다. */
+    pointer-events: none;
+    opacity: 0; transition: opacity .18s ease;
+  }
+  .stage > img { width: 1376px; height: 768px; object-fit: cover; }
+  .stage.ready > iframe, .stage.ready > img { opacity: 1; }
+  .stage .zoom {
+    position: absolute; top: 10px; right: 12px; z-index: 2;
+    font-size: 11.5px; color: var(--caption);
+    background: var(--topbar); border: 1px solid var(--line);
+    border-radius: 999px; padding: 2px 9px;
+    opacity: 0; transition: opacity .15s ease;
+  }
+  .stage:hover .zoom { opacity: 1; }
+  figure.fig figcaption {
+    margin-top: 8px; font-size: 12.5px; color: var(--caption); text-align: center;
+  }
+
+  /* ── 각주 ── */
+  .footnotes { margin-top: 3.5em; padding-top: 1.4em; border-top: 1px solid var(--line); }
+  .footnotes ol { font-size: .93em; color: var(--fn-ink); }
+  .footnotes li { margin: .8em 0; }
+  .footnotes li:target { background: var(--fn-target); border-radius: 6px; }
+  .footnote-ref a { text-decoration: none; font-weight: 700; padding: 0 1px; }
+  .footnote-backref { text-decoration: none; }
+
+  /* ── 확대 ── */
+  .lightbox {
+    position: fixed; inset: 0; z-index: 90;
+    background: var(--overlay);
+    display: grid; place-items: center;
+    cursor: zoom-out;
+  }
+  .lightbox[hidden] { display: none; }
+  .lightbox .lbstage {
+    position: relative; overflow: hidden;
+    background: var(--fig-bg);
+  }
+  .lightbox .lbstage > iframe, .lightbox .lbstage > img {
+    position: absolute; top: 0; left: 0;
+    width: 1376px; height: 768px; border: 0;
+    transform-origin: top left; transform: scale(var(--ls, 1));
+    pointer-events: none;
+  }
+  .lightbox .close {
+    /* 그림이 화면을 거의 채우므로 안내가 그림에 가려집니다 — 위로 띄웁니다. */
+    position: fixed; top: 14px; right: 18px; z-index: 2;
+    color: var(--close-ink); font-size: 12.5px; letter-spacing: .02em;
+    background: var(--topbar); border: 1px solid var(--line);
+    border-radius: 999px; padding: 3px 11px;
+  }
+
+  .inline-toc { margin: 1.6em 0 2.4em; }
+  .inline-toc > summary {
+    cursor: pointer; color: var(--ink-dim); font-size: 14px;
+    padding: 6px 0; list-style: none;
+  }
+  .inline-toc > summary::-webkit-details-marker { display: none; }
+  .inline-toc > summary::before { content: '▸ '; color: var(--caption); }
+  .inline-toc[open] > summary::before { content: '▾ '; }
+  .inline-toc > summary:hover { color: var(--cyan); }
+
+  .status { color: var(--ink-dim); padding: 40px 0; }
+  .status code { display: inline-block; margin-top: 8px; }
+
+  /* ── 좁은 화면: 목차는 서랍으로 ── */
+  @media (max-width: 1480px) {
+    .wrap { grid-template-columns: minmax(0, var(--text-w)); }
+    #toc-toggle { display: inline-flex; }
+    #toc {
+      position: fixed; top: 48px; left: 0; bottom: 0; z-index: 35;
+      width: 290px; max-height: none;
+      background: var(--bg); border-right: 1px solid var(--line);
+      padding: 24px 12px 60px 16px;
+      transform: translateX(-100%); transition: transform .18s ease;
+    }
+    #toc.open { transform: none; }
+  }
+  @media (max-width: 760px) {
+    body { font-size: 16px; }
+    .wrap { padding: 0 16px; }
+    .doc { padding: 24px 0 90px; }
+    .topbar { padding: 10px 14px; gap: 10px; }
+    .topbar .hint, .topbar .where { display: none; }
+  }
+</style>
+<script>
+/* 저장된 테마를 렌더 전에 적용합니다 — 나중에 적용하면 라이트로 열 때
+   다크가 한 번 번쩍입니다. 키는 덱과 공유해 사이트 전체가 같은 테마로 열립니다. */
+(function () {
+  try {
+    if (localStorage.getItem('cr-deck-theme') === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  } catch (e) {}
+})();
+</script>
+</head>
+<body>
+
+<header class="topbar">
+  <button id="toc-toggle" class="pill" type="button" aria-expanded="false">목차</button>
+  <span class="brand">Compute Resource</span>
+  <span class="where">읽기용 문서</span>
+  <span class="hint">그림은 <b>실시간 렌더링</b> · <b>클릭</b>하면 전체화면 · <b>Esc</b>로 닫힘</span>
+  <nav>
+    <button id="theme" class="pill" type="button" aria-pressed="false">
+      <span id="theme-label">라이트</span><span class="kbd">T</span>
+    </button>
+    <a href="../slides/">발표용 슬라이드</a>
+    <a href="https://github.com/hojin12312/compute-resource">GitHub</a>
+  </nav>
+</header>
+
+<div class="wrap">
+  <nav id="toc" aria-label="목차">
+    <div class="toc-head">목차</div>
+    <ol id="toc-list"></ol>
+  </nav>
+  <main id="doc" class="doc">
+    <p class="status">README를 불러오는 중…</p>
+  </main>
+</div>
+
+<div id="lightbox" class="lightbox" hidden>
+  <span class="close">클릭 또는 Esc로 닫기</span>
+  <div class="lbstage"></div>
+</div>
+
+<script src="vendor/markdown-it.min.js"></script>
+<script src="vendor/markdown-it-footnote.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* 그림을 실시간 렌더링하지 않고 캡처된 webp로 되돌리는 스위치.
+     실시간 렌더링에 문제가 생기면 이 한 줄만 false로 두면 됩니다. */
+  var USE_LIVE_FIGURES = true;
+
+  var FIG_W = 1376, FIG_H = 768;      /* 그림 HTML이 전제하는 캔버스 */
+  var THEME_KEY = 'cr-deck-theme';    /* 덱과 공유 */
+
+  var host = document.getElementById('doc');
+  var root = document.documentElement;
+  var box = document.getElementById('lightbox');
+  var lbStage = box.querySelector('.lbstage');
+
+  var stages = [];      /* 그림 무대들 */
+  var manifest = {};    /* 에셋 이름 → 그림 소스 */
+  var figVer = {};      /* 그림 소스 → 내용 해시 (캐시 버스터) */
+  var assetVer = '';    /* 캡처본용 한 벌 토큰 */
+  var openStage = null;
+
+  /* ── 캐시 ────────────────────────────────────────────────────────────────
+     GitHub Pages는 max-age=600으로 내보냅니다. 그림을 고쳐 배포해도 이미 열어 본
+     브라우저는 하드 리프레시 없이 10분간 옛 그림을 그립니다. 그래서 그림 URL마다
+     내용 해시를 붙입니다 — 내용이 바뀌면 URL이 바뀌므로 곧바로 새로 받습니다.
+     해시는 manifest.json에서 오고 그 파일은 no-store로 읽습니다.
+     `?fresh`를 주소에 붙이면 해시 대신 현재 시각을 써서 무조건 새로 받습니다. */
+  var FRESH = /(^|[?&])fresh\b/.test(location.search);
+
+  function bust(url, token) {
+    var t = FRESH ? Date.now() : token;
+    if (!t) return url;
+    return url + (url.indexOf('?') < 0 ? '?' : '&') + 'v=' + t;
+  }
+
+  function figUrl(file) { return bust('../figures/' + file, figVer[file]); }
+
+  /* ── 테마 ────────────────────────────────────────────────────────────────
+     덱과 같은 규칙입니다: data-theme 속성 · 저장 키 'cr-deck-theme'.
+     그림은 이미지를 맞바꾸지 않고 iframe 안 문서에 같은 속성을 심습니다. */
+  function currentTheme() {
+    return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  }
+
+  function paintFrame(frame, theme) {
+    try {
+      var d = frame.contentDocument;
+      if (!d || !d.documentElement) return false;
+      if (theme === 'light') d.documentElement.setAttribute('data-theme', 'light');
+      else d.documentElement.removeAttribute('data-theme');
+      return true;
+    } catch (e) { return false; }   /* 같은 출처가 아니면 포기 */
+  }
+
+  function applyTheme(theme) {
+    if (theme === 'light') root.setAttribute('data-theme', 'light');
+    else root.removeAttribute('data-theme');
+
+    stages.forEach(function (st) {
+      var frame = st.querySelector('iframe');
+      if (frame) paintFrame(frame, theme);
+      var img = st.querySelector('img');
+      if (img && img.dataset.dark) {
+        var want = theme === 'light' ? img.dataset.light : img.dataset.dark;
+        if (want && img.getAttribute('src') !== want) img.setAttribute('src', want);
+      }
+    });
+    if (openStage) {
+      var f = lbStage.querySelector('iframe');
+      if (f) paintFrame(f, theme);
+      var i = lbStage.querySelector('img');
+      if (i && i.dataset.dark) i.src = theme === 'light' ? i.dataset.light : i.dataset.dark;
+    }
+
+    var btn = document.getElementById('theme');
+    btn.setAttribute('aria-pressed', theme === 'light' ? 'true' : 'false');
+    document.getElementById('theme-label').textContent = theme === 'light' ? '다크' : '라이트';
+    btn.title = (theme === 'light' ? '다크' : '라이트') + ' 테마로 (T)';
+  }
+
+  function toggleTheme() {
+    var next = currentTheme() === 'light' ? 'dark' : 'light';
+    applyTheme(next);
+    try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+  }
+
+  document.getElementById('theme').addEventListener('click', toggleTheme);
+  applyTheme(currentTheme());
+
+  /* ── 마크다운 ───────────────────────────────────────────────────────────
+     README의 `$`는 대부분 달러 금액입니다($3,999 등). 그래서 인라인 수식은
+     역슬래시가 있거나 한 글자인 경우만 골라 코드로 감쌉니다. */
+  function markMath(md) {
+    md = md.replace(/\$\$([\s\S]+?)\$\$/g, function (_, b) {
+      return '<code class="math">' + b.trim() + '</code>';
+    });
+    md = md.replace(/\$([^$\n]*\\[^$\n]*)\$/g, function (_, b) {
+      return '<code class="math">' + b.trim() + '</code>';
+    });
+    md = md.replace(/\$([A-Za-z](?:_\{?[a-z0-9]+\}?)?)\$/g, function (_, b) {
+      return '<code class="math">' + b + '</code>';
+    });
+    return md;
+  }
+
+  /* GitHub과 같은 앵커를 만들어야 README 안의 목차 링크가 그대로 동작합니다. */
+  function slugify(t) {
+    return t.trim().toLowerCase().replace(/[^\p{L}\p{N}_\s-]/gu, '').replace(/\s/g, '-');
+  }
+
+  function addHeadingIds(scope) {
+    var seen = Object.create(null);
+    scope.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(function (h) {
+      var base = slugify(h.textContent);
+      if (!base) return;
+      var id = base;
+      if (seen[base] !== undefined) { seen[base] += 1; id = base + '-' + seen[base]; }
+      else { seen[base] = 0; }
+      h.id = id;
+    });
+  }
+
+  /* README 서두의 '목차' 절은 이 화면에서 접습니다. 왼쪽 사이드바가 늘 보이므로
+     같은 링크 49개를 본문 맨 위에 또 두면 읽기 시작이 멀어집니다.
+     GitHub에서 보는 README에는 그대로 남습니다(원본을 고치지 않습니다). */
+  function foldInlineToc(scope) {
+    var h = Array.prototype.slice.call(scope.querySelectorAll('h2'))
+      .filter(function (x) { return x.textContent.trim() === '목차'; })[0];
+    if (!h) return;
+    var wrap = document.createElement('details');
+    wrap.className = 'inline-toc';
+    var sum = document.createElement('summary');
+    sum.textContent = '목차 (왼쪽에 늘 있습니다 — 펼쳐 보려면 클릭)';
+    wrap.appendChild(sum);
+    var n = h.nextSibling;
+    var moved = [];
+    while (n && !(n.nodeType === 1 && n.tagName === 'H2')) { moved.push(n); n = n.nextSibling; }
+    moved.forEach(function (el) { wrap.appendChild(el); });
+    h.parentNode.replaceChild(wrap, h);
+  }
+
+  function fixLinks(scope) {
+    scope.querySelectorAll('a[href]').forEach(function (a) {
+      var href = a.getAttribute('href');
+      if (href.indexOf('./') === 0) a.setAttribute('href', '..' + href.slice(1));
+      if (/^https?:/.test(a.getAttribute('href'))) {
+        a.setAttribute('target', '_blank');
+        a.setAttribute('rel', 'noopener');
+      }
+    });
+  }
+
+  /* ── 그림 만들기 ────────────────────────────────────────────────────────
+     README에는 이미지 뒤에 각주가 붙은 문단도 있어(`![...](...)[^주]`)
+     :only-child 로 찾으면 그 한 장을 놓칩니다. 각주 표시를 뺀 나머지 텍스트가
+     비었는지로 판정하고, 각주는 캡션으로 옮깁니다. */
+  function buildFigures(scope) {
+    Array.prototype.slice.call(scope.querySelectorAll('p > span.figph')).forEach(function (ph) {
+      var p = ph.parentNode;
+      if (p.tagName !== 'P') return;
+
+      var outside = '';
+      Array.prototype.slice.call(p.childNodes).forEach(function (n) {
+        if (n === ph) return;
+        if (n.nodeType === 1 && n.classList.contains('footnote-ref')) return;
+        outside += n.textContent || '';
+      });
+      if (outside.trim() !== '') return;   /* 글과 섞인 그림은 그대로 둡니다 */
+
+      var asset = ph.dataset.asset || null;
+      var alt = ph.dataset.alt || '';
+
+      var fig = document.createElement('figure');
+      fig.className = 'fig';
+
+      var st = document.createElement('div');
+      st.className = 'stage';
+      st.dataset.asset = asset || '';
+      st.dataset.alt = alt;
+      st.dataset.webp = '../assets/' + asset + '.webp';
+      st.title = alt;
+
+      var badge = document.createElement('span');
+      badge.className = 'zoom';
+      badge.textContent = '⤢ 확대';
+      st.appendChild(badge);
+
+      fig.appendChild(st);
+
+      /* 남은 각주 표시는 캡션으로 */
+      ph.remove();
+      var cap = document.createElement('figcaption');
+      while (p.firstChild) cap.appendChild(p.firstChild);
+      if (cap.textContent.trim() !== '') fig.appendChild(cap);
+
+      p.parentNode.replaceChild(fig, p);
+      stages.push(st);
+    });
+
+    Array.prototype.slice.call(scope.querySelectorAll('table')).forEach(function (t) {
+      var wrap = document.createElement('div');
+      wrap.className = 'tablewrap';
+      t.parentNode.insertBefore(wrap, t);
+      wrap.appendChild(t);
+    });
+  }
+
+  /* 캡처된 webp로 채웁니다 (실시간 렌더링을 못 쓸 때) */
+  function fillWithImage(st) {
+    if (st.querySelector('img')) return;
+    var frame = st.querySelector('iframe');
+    if (frame) frame.remove();
+    var img = document.createElement('img');
+    img.alt = st.dataset.alt;
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.dataset.dark = bust(st.dataset.webp, assetVer);
+    img.dataset.light = bust(st.dataset.webp.replace(/\.webp$/, '_light.webp'), assetVer);
+    img.src = currentTheme() === 'light' ? img.dataset.light : img.dataset.dark;
+    img.addEventListener('load', function () { st.classList.add('ready'); });
+    img.addEventListener('error', function () {
+      if (img.getAttribute('src') !== img.dataset.dark) img.src = img.dataset.dark;
+    });
+    st.appendChild(img);
+    scaleStage(st);
+  }
+
+  /* 그림 소스를 iframe으로 띄웁니다 */
+  function fillWithFrame(st) {
+    if (st.querySelector('iframe') || st.querySelector('img')) return;
+    var file = manifest[st.dataset.asset];
+    if (!file) { fillWithImage(st); return; }
+
+    var frame = document.createElement('iframe');
+    frame.setAttribute('title', st.dataset.alt);
+    frame.setAttribute('scrolling', 'no');
+    frame.setAttribute('tabindex', '-1');
+    frame.setAttribute('aria-hidden', 'true');   /* 본문에 alt가 이미 있습니다 */
+
+    var settled = false;
+    var giveUp = setTimeout(function () {
+      if (!settled) fillWithImage(st);           /* 못 뜨면 캡처본으로 */
+    }, 6000);
+
+    frame.addEventListener('load', function () {
+      var ok = paintFrame(frame, currentTheme());
+      var body = null;
+      try { body = frame.contentDocument && frame.contentDocument.body; } catch (e) {}
+      if (!ok || !body || body.children.length === 0) { clearTimeout(giveUp); fillWithImage(st); return; }
+      settled = true;
+      clearTimeout(giveUp);
+      st.classList.add('ready');
+    });
+    frame.addEventListener('error', function () { clearTimeout(giveUp); fillWithImage(st); });
+
+    frame.src = figUrl(file);
+    st.appendChild(frame);
+    scaleStage(st);
+  }
+
+  /* 1376px 캔버스를 무대 폭에 맞춥니다. calc로는 길이÷길이를 못 하므로 여기서 잽니다. */
+  function scaleStage(st) {
+    var w = st.getBoundingClientRect().width;
+    if (w > 0) st.style.setProperty('--s', (w / FIG_W).toFixed(5));
+  }
+  function scaleAll() { stages.forEach(scaleStage); }
+
+  /* 화면에 다가오면 채웁니다 — 39장을 한꺼번에 띄우지 않습니다. */
+  function observeStages() {
+    var fill = USE_LIVE_FIGURES ? fillWithFrame : fillWithImage;
+    if (!('IntersectionObserver' in window)) { stages.forEach(fill); return; }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        io.unobserve(e.target);
+        fill(e.target);
+      });
+    }, { rootMargin: '600px 0px' });
+    stages.forEach(function (st) { io.observe(st); });
+  }
+
+  /* ── 확대 ── */
+  function scaleLightbox() {
+    var pad = 28;
+    var s = Math.min((innerWidth - pad) / FIG_W, (innerHeight - pad) / FIG_H);
+    lbStage.style.setProperty('--ls', s.toFixed(5));
+    lbStage.style.width = Math.round(FIG_W * s) + 'px';
+    lbStage.style.height = Math.round(FIG_H * s) + 'px';
+  }
+
+  function openBox(st) {
+    openStage = st;
+    lbStage.innerHTML = '';
+    var file = manifest[st.dataset.asset];
+    if (USE_LIVE_FIGURES && file && st.querySelector('iframe')) {
+      var frame = document.createElement('iframe');
+      frame.setAttribute('scrolling', 'no');
+      frame.setAttribute('title', st.dataset.alt);
+      frame.addEventListener('load', function () { paintFrame(frame, currentTheme()); });
+      frame.src = figUrl(file);
+      lbStage.appendChild(frame);
+    } else {
+      var img = document.createElement('img');
+      img.alt = st.dataset.alt;
+      img.dataset.dark = bust(st.dataset.webp, assetVer);
+      img.dataset.light = bust(st.dataset.webp.replace(/\.webp$/, '_light.webp'), assetVer);
+      img.src = currentTheme() === 'light' ? img.dataset.light : img.dataset.dark;
+      lbStage.appendChild(img);
+    }
+    scaleLightbox();
+    box.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeBox() {
+    openStage = null;
+    box.hidden = true;
+    lbStage.innerHTML = '';
+    document.body.style.overflow = '';
+  }
+
+  box.addEventListener('click', closeBox);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !box.hidden) { closeBox(); return; }
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+    if (e.key === 't' || e.key === 'T') toggleTheme();
+  });
+
+  addEventListener('resize', function () {
+    scaleAll();
+    if (!box.hidden) scaleLightbox();
+  });
+
+  /* ── 목차 ───────────────────────────────────────────────────────────────
+     장(h2)은 늘 보이고, 절(h3)은 지금 읽는 장의 것만 펼칩니다.
+     제목이 49개라 전부 펼치면 목차가 본문보다 길어집니다. */
+  var tocLinks = [];
+
+  function buildToc(scope) {
+    var list = document.getElementById('toc-list');
+    var heads = Array.prototype.slice.call(scope.querySelectorAll('h2, h3'))
+      .filter(function (h) { return h.id && h.textContent.trim() !== '목차'; });
+    var currentGroup = null;
+
+    heads.forEach(function (h) {
+      var li = document.createElement('li');
+      var a = document.createElement('a');
+      a.href = '#' + h.id;
+      a.textContent = h.textContent.replace(/\s+/g, ' ').trim();
+      li.appendChild(a);
+
+      if (h.tagName === 'H2') {
+        li.className = 'lv2';
+        list.appendChild(li);
+        currentGroup = document.createElement('li');
+        currentGroup.className = 'lv3';
+        var sub = document.createElement('ol');
+        currentGroup.appendChild(sub);
+        list.appendChild(currentGroup);
+        li.dataset.group = '1';
+        tocLinks.push({ a: a, head: h, level: 2, group: currentGroup });
+      } else if (currentGroup) {
+        currentGroup.querySelector('ol').appendChild(li);
+        tocLinks.push({ a: a, head: h, level: 3, group: currentGroup });
+      }
+    });
+
+    /* 목차 클릭 후에는 서랍을 닫습니다 (좁은 화면) */
+    list.addEventListener('click', function (e) {
+      if (e.target.tagName === 'A') closeDrawer();
+    });
+  }
+
+  function markActive() {
+    if (!tocLinks.length) return;
+    var y = 130;   /* 상단 바(48) + 제목의 scroll-margin-top(68) 보다 약간 아래.
+                     이보다 낮으면 방금 눌러 이동한 장이 활성으로 안 잡힙니다. */
+    var active = tocLinks[0];
+    for (var i = 0; i < tocLinks.length; i++) {
+      if (tocLinks[i].head.getBoundingClientRect().top <= y) active = tocLinks[i];
+      else break;
+    }
+    var group = active.level === 3 ? active.group
+      : (tocLinks.filter(function (t) { return t.level === 2 && t.group === active.group; })[0] || {}).group;
+
+    tocLinks.forEach(function (t) { t.a.classList.toggle('on', t === active); });
+    document.querySelectorAll('#toc .lv3').forEach(function (g) {
+      g.classList.toggle('show', g === (active.group || group));
+    });
+
+    /* 활성 항목이 목차 밖으로 나가면 목차만 살짝 스크롤합니다 */
+    var nav = document.getElementById('toc');
+    var r = active.a.getBoundingClientRect(), nr = nav.getBoundingClientRect();
+    if (r.top < nr.top + 8) nav.scrollTop -= (nr.top + 8 - r.top);
+    else if (r.bottom > nr.bottom - 8) nav.scrollTop += (r.bottom - nr.bottom + 8);
+  }
+
+  /* 스크롤마다 재지 않고 프레임에 한 번만 */
+  var ticking = false;
+  addEventListener('scroll', function () {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () { markActive(); ticking = false; });
+  }, { passive: true });
+
+  /* 좁은 화면의 목차 서랍 */
+  var toggle = document.getElementById('toc-toggle');
+  function closeDrawer() {
+    document.getElementById('toc').classList.remove('open');
+    toggle.setAttribute('aria-expanded', 'false');
+  }
+  toggle.addEventListener('click', function () {
+    var nav = document.getElementById('toc');
+    var open = nav.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var el = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    if (el) el.scrollIntoView();
+  }
+
+  /* ── 시작 ── */
+  Promise.all([
+    /* 쿼리에 시각을 붙입니다. no-store는 브라우저 캐시만 건너뛰므로, 중간 CDN이
+       Pages의 max-age=600을 붙들고 있으면 옛 본문이 옵니다. URL이 매번 달라야 확실합니다. */
+    fetch('../README.md?t=' + Date.now(), { cache: 'no-store' }).then(function (r) {
+      if (!r.ok) throw new Error('README.md HTTP ' + r.status);
+      return r.text();
+    }),
+    fetch('../figures/manifest.json?t=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; }),
+  ]).then(function (res) {
+    var text = res[0];
+    manifest = (res[1] && res[1].figures) || {};
+    figVer = (res[1] && res[1].v) || {};
+    assetVer = (res[1] && res[1].ver) || '';
+
+    var md = window.markdownit({ html: true, linkify: false, typographer: false })
+      .use(window.markdownitFootnote);
+
+    /* 이미지를 <img>로 내보내면 브라우저가 곧바로 webp를 받으러 갑니다. 이 페이지는
+       그림을 실시간 렌더링하므로 그 요청은 낭비이고, 경로도 문서 폴더 기준이라
+       404가 납니다. 그래서 자리표시자만 내보내고 뒤에서 무대로 바꿉니다. */
+    md.renderer.rules.image = function (tokens, idx) {
+      var t = tokens[idx];
+      var src = t.attrGet('src') || '';
+      var m = /assets\/([a-z0-9_]+)\.webp/i.exec(src);
+      return '<span class="figph" data-asset="' + (m ? m[1] : '') +
+             '" data-alt="' + md.utils.escapeHtml(t.content || '') + '"></span>';
+    };
+
+    host.innerHTML = md.render(markMath(text));
+
+    addHeadingIds(host);
+    foldInlineToc(host);
+    fixLinks(host);
+    buildFigures(host);
+    buildToc(host);
+    scaleAll();
+    observeStages();
+    markActive();
+    jumpToHash();
+
+    stages.forEach(function (st) {
+      st.addEventListener('click', function () { openBox(st); });
+    });
+  }).catch(function (err) {
+    host.innerHTML = '<p class="status">README.md를 불러오지 못했습니다 (' +
+      String(err.message).replace(/[<>&]/g, '') + ').<br>' +
+      'file:// 로 직접 열면 브라우저가 요청을 막습니다. 로컬에서 볼 때는 저장소 루트에서 ' +
+      '<code>python3 -m http.server</code> 를 띄운 뒤 <code>/document/</code> 로 접속하세요.</p>';
+  });
+})();
+</script>
+</body>
+</html>

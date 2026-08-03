@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:42px; }
+  h1 { font-size:31px; }
+  .compression {
+    height:342px;
+    margin-top:24px;
+    padding:18px 22px;
+    border:1px solid var(--c-333d47);
+    border-radius:12px;
+    background:var(--c-161b22);
+  }
+  .section-head {
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:11px;
+  }
+  .section-head strong { font-size:15px; }
+  .section-head span {
+    color:var(--c-8b96a3);
+    font-size:10px;
+  }
+  .method-row {
+    height:89px;
+    display:grid;
+    grid-template-columns:170px 398px 42px 1fr;
+    align-items:center;
+    border-top:1px solid var(--c-21262d);
+  }
+  .method-row:first-of-type { border-top:0; }
+  .method-name {
+    font-size:13px;
+    font-weight:760;
+  }
+  .method-name small {
+    display:block;
+    margin-top:3px;
+    color:var(--c-7d8896);
+    font-size:9.5px;
+    font-weight:500;
+  }
+  /* 칸은 SVG로 그립니다(2026-08-03). 캡처 배율(zoom 1.395 × DPR 2 = 2.79)에서
+     칸/피치가 정수 디바이스픽셀에 떨어지지 않아 크로미움이 박스마다 스냅합니다
+     (source 피치 12 → 33.49 · full-bar 칸 11 → 30.69 · csa-bar 칸 11.1875 → 31.22).
+     SVG는 viewBox를 통째로 변환하므로 균일합니다. **div로 되돌리지 마세요.** */
+  .source {
+    position:relative;
+    height:44px;
+    padding:8px;
+    border-radius:6px;
+    background:var(--c-1c222a);
+  }
+  .scells { display:block; }
+  .scells rect { fill:var(--c-2b333d); }
+  .source-label {
+    position:absolute;
+    left:50%;
+    bottom:-17px;
+    transform:translateX(-50%);
+    color:var(--c-7d8896);
+    font:650 8.5px "Pretendard Variable", sans-serif;
+    white-space:nowrap;
+  }
+  .arrow {
+    color:var(--c-7d8896);
+    font-size:19px;
+    text-align:center;
+  }
+  .result-wrap {
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  .result-track {
+    position:relative;
+    width:430px;
+    height:44px;
+    display:flex;
+    align-items:center;
+    padding:7px;
+    border:1px solid var(--c-333d47);
+    border-radius:6px;
+    background:var(--c-1b2027);
+  }
+  .result-bar {
+    flex:none;
+    height:28px;
+    display:grid;
+    gap:2px;
+  }
+  .result-bar i { border-radius:2px; }
+  svg.result-bar { display:block; }
+  .full-bar rect { fill:var(--c-c47d15); }
+  .csa-bar rect { fill:var(--c-0e8fa3); }
+  .csa-bar rect.dim { fill:var(--c-2b333d); }
+  .select-note {
+    position:absolute;
+    left:130px;
+    top:50%;
+    transform:translateY(-50%);
+    color:var(--c-22a7bd);
+    font-size:9.5px;
+    font-weight:700;
+    white-space:nowrap;
+  }
+  .hca-bar { width:max(8px,.8%); grid-template-columns:1fr; }
+  .hca-bar i { background:var(--c-8b6ff0); }
+  .ratio {
+    min-width:78px;
+    font:800 19px "IBM Plex Mono", "Pretendard Variable", monospace;
+    text-align:right;
+  }
+  .full-row .ratio { color:var(--c-e0912a); }
+  .csa-row .ratio { color:var(--c-22a7bd); }
+  .hca-row .ratio { color:var(--c-a48cf5); }
+  .ratio small {
+    display:block;
+    margin-top:2px;
+    color:var(--c-8b96a3);
+    font:500 9px "Pretendard Variable", sans-serif;
+  }
+  .actual {
+    height:206px;
+    display:grid;
+    /* 레시피 · 층 구성 · 기준선 셋. 기준선 카드가 329px씩 쓰면서 여백만 넓었으므로
+       좌우로 눌러 가운데 자리를 만들었습니다. */
+    grid-template-columns:452px 1px 336px 1px 1fr;
+    align-items:center;
+    gap:24px;
+    margin-top:16px;
+    padding:17px 23px;
+    border:1px solid var(--c-333d47);
+    border-radius:12px;
+    background:var(--c-161b22);
+  }
+  .actual h2 {
+    font-size:15px;
+    margin-bottom:9px;
+  }
+  .recipe {
+    display:grid;
+    grid-template-columns:1fr 20px 1fr 20px 1fr;
+    align-items:center;
+  }
+
+  /* ── 층 구성 — 위 섹션의 색을 그대로 물려받습니다
+     (앰버 = 무압축/MHA · 시안 = CSA · 보라 = HCA). 같은 색이 같은 기법을 뜻하므로
+     범례를 따로 두지 않습니다. */
+  .lmodel { margin-top:9px; }
+  .lmodel:first-of-type { margin-top:0; }
+  .lhead { display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
+  .lhead span { font-size:11.5px; font-weight:700; color:var(--c-e6edf3); }
+  .lhead em { font-style:normal; font:700 11px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-9aa7b4); }
+  .lbar { display:flex; height:19px; margin-top:4px; border-radius:3px; overflow:hidden;
+          background:var(--c-1b2027); }
+  .lbar i { display:block; height:100%; }
+  .lbar i + i { border-left:1px solid var(--c-0d1117); }
+  .lseg { display:flex; gap:7px; margin-top:4px; font-size:10px; white-space:nowrap; }
+  .lseg span b { font-weight:700; }
+  .lnote { margin-top:9px; font-size:10.5px; color:var(--c-8b96a3); line-height:1.45; }
+  .lnote b { color:var(--c-c3ccd6); font-weight:700; }
+  .ingredient {
+    height:82px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:0 13px;
+    border:1px solid var(--c-333d47);
+    border-radius:7px;
+    background:var(--c-1b2027);
+  }
+  .ingredient strong {
+    margin-bottom:4px;
+    color:var(--c-e6edf3);
+    font-size:12px;
+  }
+  .ingredient span {
+    color:var(--c-8b96a3);
+    font-size:9.5px;
+    line-height:1.35;
+  }
+  .plus {
+    color:var(--c-7d8896);
+    font-size:17px;
+    text-align:center;
+  }
+  .divider { width:1px; height:136px; background:var(--c-333d47); }
+  .baselines {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+  .baseline {
+    height:117px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:0 13px;
+    border:1px solid var(--c-333d47);
+    border-radius:8px;
+    background:var(--c-1b2027);
+  }
+  .baseline span {
+    color:var(--c-8b96a3);
+    font-size:9.5px;
+  }
+  .baseline strong {
+    margin:5px 0 2px;
+    color:var(--c-22a7bd);
+    font-size:26px;
+    letter-spacing:-.04em;
+  }
+  .baseline em {
+    color:var(--c-c3ccd6);
+    font-size:10px;
+    font-style:normal;
+  }
+  .baseline.common strong { color:var(--c-a48cf5); }
+  .foot { bottom:19px; padding-top:12px; font-size:11.5px; }
+</style>
+</head>
+<body>
+  <h1>DeepSeek V4 &mdash; <span class="cy">컨텍스트를 비율로 압축합니다</span></h1>
+  <div class="sub">위는 남기는 문맥 엔트리 수, 아래는 실제 모델 전체의 KV 바이트입니다. 서로 다른 기준을 섞지 않습니다.</div>
+
+  <section class="compression">
+    <div class="section-head">
+      <strong>같은 원본 컨텍스트 N토큰</strong>
+      <span>막대 폭 = 압축 뒤 남는 엔트리 비율</span>
+    </div>
+    <div class="method-row full-row">
+      <div class="method-name">압축 없음 <small>MHA 기준선</small></div>
+      <div class="source"><svg class="scells" width="382" height="28" viewBox="0 0 382 28"></svg><span class="source-label">원본 N</span></div>
+      <div class="arrow">→</div>
+      <div class="result-wrap">
+        <div class="result-track"><svg class="result-bar full-bar" width="414" height="28" viewBox="0 0 414 28"></svg></div>
+        <div class="ratio">100%<small>N개</small></div>
+      </div>
+    </div>
+    <div class="method-row csa-row">
+      <div class="method-name">CSA <small>4:1 압축 · 레이어별 DSA 선택</small></div>
+      <div class="source"><svg class="scells" width="382" height="28" viewBox="0 0 382 28"></svg><span class="source-label">원본 N</span></div>
+      <div class="arrow">→</div>
+      <div class="result-wrap">
+        <div class="result-track"><svg class="result-bar csa-bar" width="103.5" height="28" viewBox="0 0 103.5 28"></svg><div class="select-note">DSA → top-k만 읽음</div></div>
+        <div class="ratio">25%<small>N / 4 저장</small></div>
+      </div>
+    </div>
+    <div class="method-row hca-row">
+      <div class="method-name">HCA <small>강하게 압축한 요약을 전부 읽기</small></div>
+      <div class="source"><svg class="scells" width="382" height="28" viewBox="0 0 382 28"></svg><span class="source-label">원본 N</span></div>
+      <div class="arrow">→</div>
+      <div class="result-wrap">
+        <div class="result-track"><div class="result-bar hca-bar"></div></div>
+        <div class="ratio">0.8%<small>N / 128 저장</small></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="actual">
+    <div>
+      <h2>실제 KV 바이트는 압축률 하나로 정해지지 않습니다</h2>
+      <div class="recipe">
+        <div class="ingredient"><strong>CSA + HCA 혼합</strong><span>레이어마다<br>1/4 또는 1/128</span></div>
+        <div class="plus">+</div>
+        <div class="ingredient"><strong>공유 KV · MQA</strong><span>여러 Query가<br>KV 하나를 공유</span></div>
+        <div class="plus">+</div>
+        <div class="ingredient"><strong>혼합 정밀도 저장</strong><span>RoPE만 BF16<br>나머지는 FP8</span></div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div>
+      <h2>층은 이렇게 섞습니다</h2>
+      <div class="lmodel">
+        <div class="lhead"><span>V4 Flash</span><em>43층</em></div>
+        <div class="lbar">
+          <i class="amber"  style="width:4.65%"></i>
+          <i class="cyan"   style="width:48.84%"></i>
+          <i class="violet" style="width:46.51%"></i>
+        </div>
+        <div class="lseg">
+          <span class="am">무압축 <b>2</b> &middot; 5%</span>
+          <span class="cy">CSA <b>21</b> &middot; 49%</span>
+          <span class="vi">HCA <b>20</b> &middot; 47%</span>
+        </div>
+      </div>
+      <div class="lmodel">
+        <div class="lhead"><span>V4 Pro</span><em>61층</em></div>
+        <div class="lbar">
+          <i class="cyan"   style="width:49.18%"></i>
+          <i class="violet" style="width:50.82%"></i>
+        </div>
+        <div class="lseg">
+          <span class="cy">CSA <b>30</b> &middot; 49%</span>
+          <span class="vi">HCA <b>31</b> &middot; 51%</span>
+          <span style="color:var(--c-7d8896)">무압축 <b>0</b></span>
+        </div>
+      </div>
+      <div class="lnote">큰 쪽인 Pro는 <b>무압축 층이 없습니다.</b></div>
+    </div>
+    <div class="divider"></div>
+    <div class="baselines">
+      <div class="baseline">
+        <span>V3.2 = 100% · 1M 컨텍스트</span>
+        <strong>7–10%</strong>
+        <em>Flash 7% · Pro 10%</em>
+      </div>
+      <div class="baseline common">
+        <span>일반 BF16 GQA8 = 100%</span>
+        <strong>≈ 2%</strong>
+        <em>논문의 별도 기준선</em>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot">
+    <b>25%·0.8%</b>는 문맥 엔트리 비율 · <b>7%·10%·2%</b>는 비교 기준까지 포함한 실제 KV 바이트
+  </div>
+
+<script>
+/* 좌표는 예전 grid가 내던 값 그대로입니다 —
+   source 칸 10 · 피치 12 (패딩 8 안쪽이라 svg 자체가 8,8에서 시작)
+   full-bar 칸 11 · 피치 13 · csa-bar 칸 11.1875 · 피치 13.1875 */
+const SVGNS = 'http://www.w3.org/2000/svg';
+const rect = (host, attrs) => {
+  const r = document.createElementNS(SVGNS, 'rect');
+  for (const [k, v] of Object.entries(attrs)) r.setAttribute(k, v);
+  host.appendChild(r);
+};
+for (const host of document.querySelectorAll('.scells')) {
+  for (let i = 0; i < 32; i++) rect(host, { x: i * 12, y: 0, width: 10, height: 28, rx: 2 });
+}
+for (const host of document.querySelectorAll('.full-bar')) {
+  for (let i = 0; i < 32; i++) rect(host, { x: i * 13, y: 0, width: 11, height: 28, rx: 2 });
+}
+for (const host of document.querySelectorAll('.csa-bar')) {
+  for (let i = 0; i < 8; i++) {
+    const a = { x: i * 13.1875, y: 0, width: 11.1875, height: 28, rx: 2 };
+    if (![1, 4, 6].includes(i)) a.class = 'dim';
+    rect(host, a);
+  }
+}
+for (const host of document.querySelectorAll('.hca-bar')) host.insertAdjacentHTML('beforeend','<i></i>');
+</script>
+</body>
+</html>

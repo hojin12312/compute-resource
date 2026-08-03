@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:104px; }
+  .grid { display:flex; flex-direction:column; gap:3px; }
+  .grow { display:flex; gap:3px; align-items:center; }
+  .c { width:66px; height:66px; border-radius:4px; display:flex; align-items:center;
+       justify-content:center; font-size:17px; color:var(--c-0d1117); font-weight:700; }
+  .void { background:var(--c-161b22); }
+  .rlab { width:62px; font-size:14px; color:var(--c-9aa7b4); text-align:right; margin-right:8px; }
+  .clabs { display:flex; gap:3px; margin-left:70px; margin-bottom:9px; }
+  .clab { width:66px; text-align:center; font-size:13px; color:var(--c-7d8896); }
+
+  .steps { }
+  .step { display:flex; align-items:center; gap:12px; margin-top:34px; }
+  .sn { width:46px; font-size:12px; color:var(--c-7d8896); }
+  /* 읽기 막대는 글자에 딱 맞게 두고(좌우 여백 13px로 동일), 계산 막대만 길게 둡니다.
+     둘의 길이 차이가 이 패널의 주장이므로 읽기 쪽에 남는 여백을 두지 않습니다. */
+  .chip { height:50px; border-radius:3px; display:flex; align-items:center; flex:none;
+          padding:0 13px; font-size:12.5px; font-weight:700; color:var(--c-0d1117); }
+  .once { background:var(--c-0e8fa3); }
+
+  /* 세 줄이 동시에 출발한다는 것을 보이는 칸 */
+  .sim { margin-top:6px; }
+  .simrow { display:flex; align-items:center; gap:11px; margin-top:19px; }
+  .sname { width:46px; text-align:right; font-size:14px; color:var(--c-c3ccd6); }
+  .need { font-size:12px; color:var(--c-7d8896); }
+  .go { height:44px; width:132px; border-radius:3px; background:var(--c-0e8fa3); color:var(--c-0d1117);
+        font-size:12.5px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .simfoot { margin-top:16px; margin-left:57px; font-size:13px; color:var(--c-22a7bd); font-weight:700; }
+</style>
+</head>
+<body>
+  <h1>프리필 &mdash; <span class="cy">입력은 한 번에 삼킵니다</span></h1>
+  <div class="sub">"I like cats"를 넣으면, 각 토큰이 자기 앞을 본다는 규칙은 <b>이미 다 정해져</b> 있습니다.</div>
+
+  <div class="panels" style="margin-top:38px">
+    <div class="panel">
+      <div class="ptitle">누가 누구를 보는가</div>
+      <div class="pdesc">가로 = 보이는 토큰, 세로 = 계산할 토큰</div>
+      <div style="margin-top:18px">
+        <div class="clabs"><div class="clab">I</div><div class="clab">like</div><div class="clab">cats</div></div>
+        <div class="grid" id="grid"></div>
+      </div>
+      <div class="cap" style="margin-top:38px; line-height:1.8; font-size:14px">
+        입력이 이미 손 안에 있으니 <b style="color:var(--c-c3ccd6)">계단 전체를<br>한꺼번에</b> 계산할 수 있습니다.
+      </div>
+    </div>
+
+    <div class="panel" style="margin-left:20px">
+      <div class="ptitle">그래서 가중치를 <span class="cy">한 번만</span> 읽습니다</div>
+      <div class="pdesc">토큰이 3개든 30만 개든</div>
+      <div class="steps">
+        <div class="step"><span class="sn">읽기</span><span class="chip once">모델 가중치 &mdash; 1회</span></div>
+        <div class="step"><span class="sn">계산</span><span class="chip cyan" style="width:392px">모든 토큰을 동시에</span></div>
+      </div>
+      <div class="cap" style="margin-top:56px; line-height:1.8; font-size:14px">
+        메모리를 읽는 속도가 아니라 <b style="color:var(--c-c3ccd6)">GPU의 순수 연산 속도</b>가<br>
+        성능을 정합니다 &mdash; 다음 장의 디코딩과 정반대입니다.
+      </div>
+    </div>
+
+    <div class="panel" style="margin-left:14px; width:334px">
+      <div class="ptitle">왜 기다리지 않아도 되나</div>
+      <div class="pdesc">세 줄의 계산이 서로를 필요로 하지 않습니다</div>
+      <div class="sim">
+        <div class="simrow"><span class="sname">I</span><span class="go">지금 계산</span><span class="need">필요한 것: 없음</span></div>
+        <div class="simrow"><span class="sname">like</span><span class="go">지금 계산</span><span class="need">필요한 것: I</span></div>
+        <div class="simrow"><span class="sname">cats</span><span class="go">지금 계산</span><span class="need">필요한 것: I, like</span></div>
+        <div class="simfoot">&darr; 셋을 묶어 행렬 곱 한 번</div>
+      </div>
+      <div class="cap" style="margin-top:34px; line-height:1.8; font-size:14px">
+        각 줄에 필요한 토큰이 <b style="color:var(--c-c3ccd6)">이미 전부 입력에</b> 있습니다. 그러니 순서를 지킬 이유가 없습니다.
+      </div>
+      <div class="cap" style="margin-top:26px; line-height:1.8; font-size:14px">
+        디코딩은 정반대입니다 &mdash; 다음 줄에 필요한 토큰이 <b class="am">아직 만들어지지 않았습니다.</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    입력은 병렬로 삼킬 수 있지만, 출력은 <b>한 땀 한 땀</b>입니다.
+  </div>
+
+<script>
+const T = ['I', 'like', 'cats'];
+const g = document.getElementById('grid');
+T.forEach((name, r) => {
+  const row = document.createElement('div'); row.className = 'grow';
+  const lab = document.createElement('div'); lab.className = 'rlab'; lab.textContent = name;
+  row.appendChild(lab);
+  for (let c = 0; c < 3; c++) {
+    const cell = document.createElement('div');
+    cell.className = 'c ' + (c <= r ? 'cyan' : 'void');
+    if (c <= r) cell.textContent = '✓';
+    row.appendChild(cell);
+  }
+  g.appendChild(row);
+});
+</script>
+</body>
+</html>

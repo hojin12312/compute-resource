@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  .panels { gap:40px; margin-top:30px; }
+  .panel { padding:20px 22px 18px; border:1px solid var(--c-333d47); border-radius:11px;
+           background:var(--c-161b22); }
+
+  .row { display:flex; align-items:center; gap:12px; margin-top:18px; }
+  .rl { width:74px; font-size:12.5px; color:var(--c-9aa7b4); flex-shrink:0; }
+  .bar { height:34px; border-radius:3px; flex-shrink:0; display:flex;
+         align-items:center; justify-content:flex-end; padding-right:8px;
+         font:700 12.5px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-0d1117); }
+  .bar.base { background:var(--c-2b333d); color:var(--c-c3ccd6); }
+  .bar.cy { background:var(--c-0e8fa3); }
+  .bar.vi { background:var(--c-8b6ff0); }
+  .bar.am { background:var(--c-c47d15); }
+
+  .cards { display:flex; gap:14px; margin-top:16px; }
+  .card { width:180px; min-height:200px; padding:16px 15px 14px; border-radius:9px; border:1px solid var(--c-3f4c58);
+          background:var(--c-0d1117); position:relative; }
+  .card.pick { border-color:var(--c-17505c); background:var(--c-0f2930); }
+  .cname { font:700 13px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-e6edf3); }
+  .cnote { margin-top:10px; font-size:11.5px; color:var(--c-8b96a3); line-height:1.6; }
+  .cmetric { margin-top:12px; padding-top:10px; border-top:1px solid var(--c-21262d);
+             font-size:11px; color:var(--c-7d8896); }
+  .cmetric b { font:700 15px "IBM Plex Mono", "Pretendard Variable", monospace; display:block; margin-top:3px; }
+  .cbadge { position:absolute; top:-9px; right:11px; padding:1px 8px; border-radius:20px;
+            font-size:10.5px; font-weight:700; }
+  .cbadge.win { background:var(--c-4a3a1c); color:var(--c-e0912a); }
+  .cbadge.ship { background:var(--c-17505c); color:var(--ink-on-cy-fill); }
+</style>
+</head>
+<body>
+  <h1>담기는데도 나눕니다 &mdash; <span class="cy">자리가 없어서만이 아닙니다</span></h1>
+  <div class="sub">한 장에 들어가면 복제(DP)가 기본값입니다. 그래도 나누면 <b>대역폭과 KV캐시 자리</b>를 얻습니다.</div>
+  <div class="legend">
+    <div><span class="sw gray"></span>나누기 전(기준 1배)</div>
+    <div><span class="sw cyan"></span>KV캐시 자리</div>
+    <div><span class="sw violet"></span>처리량</div>
+  </div>
+
+  <div class="panels">
+    <div class="panel" style="width:558px">
+      <div class="ptitle">TP1 &rarr; TP2로 쪼갰을 때</div>
+      <div class="pdesc">가중치가 절반으로 줄어 그만큼 KV캐시가 들어갑니다 &mdash; vLLM 보고 사례</div>
+      <div class="row"><span class="rl">가중치<br>GPU당</span>
+        <div class="bar base" style="width:32px">1×</div></div>
+      <div class="row"><span class="rl"></span>
+        <div class="bar cy" style="width:16px"></div>
+        <span style="font:700 12.5px 'IBM Plex Mono',monospace; color:var(--c-22a7bd)">0.5×</span></div>
+      <div class="row" style="margin-top:24px"><span class="rl">KV 블록</span>
+        <div class="bar base" style="width:32px">1×</div></div>
+      <div class="row"><span class="rl"></span>
+        <div class="bar cy" style="width:445px">13.9×</div></div>
+      <div class="row" style="margin-top:22px"><span class="rl">처리량</span>
+        <div class="bar base" style="width:32px">1×</div></div>
+      <div class="row"><span class="rl"></span>
+        <div class="bar vi" style="width:125px">3.9×</div></div>
+      <div class="cap" style="margin-top:18px; line-height:1.7">
+        장수 2배로 기대할 <b>2배를 크게 넘습니다.</b> 원래 한 장에서는 가중치가 HBM을 거의
+        다 먹어 KV에 남는 자리가 적었기 때문이고, 그래서 <b>배수는 구성마다 다릅니다.</b>
+      </div>
+    </div>
+
+    <div class="panel" style="width:604px">
+      <div class="ptitle">그래서 프로덕션은 이렇게 골랐습니다</div>
+      <div class="pdesc">GLM-5.2-NVFP4 · B300 24장 · SLA는 평균 TTFT 2.5초 / TPOT 20ms 이하</div>
+      <div class="cards">
+        <div class="card">
+          <span class="cbadge win">GPU당 1위</span>
+          <div class="cname">TP1 DP2 EP</div>
+          <div class="cnote">인스턴스가 <b class="am">2장</b>뿐이라 1M 컨텍스트를 감당할 KV캐시 자리가 부족했습니다.</div>
+          <div class="cmetric">GPU당 처리량<b class="am">기준 100%</b></div>
+        </div>
+        <div class="card pick">
+          <span class="cbadge ship">채택</span>
+          <div class="cname">TP1 DP4 EP</div>
+          <div class="cnote">GPU당 효율 약 <b class="am">8%</b>를 내주고 <b class="cy">4장 몫의 KV캐시 자리</b>를 샀습니다.</div>
+          <div class="cmetric">GPU당 처리량<b class="cy">약 92%</b></div>
+        </div>
+        <div class="card">
+          <span class="cbadge win">참고</span>
+          <div class="cname">TP2 + EP</div>
+          <div class="cnote">2장 규모에서는 all-to-all 비용이 이득을 넘어 <b class="am">그냥 TP2보다 느렸습니다.</b></div>
+          <div class="cmetric">EP를 켠 값<b class="am">마이너스</b></div>
+        </div>
+      </div>
+      <div class="cap" style="margin-top:20px; line-height:1.7">
+        절대 처리량 1위는 GPU를 두 배 쓴 구성이었습니다 &mdash; <b>장수가 다른 구성을 절대값으로
+        비교하면 안 된다</b>는 것을 출처가 직접 경고합니다.
+      </div>
+      <div class="cap" style="margin-top:8px; line-height:1.7">
+        같은 사례에서 동시성은 SLA가 정합니다 &mdash; 8K 입력에서 약 700, 16K에서 300,
+        <b class="am">256K에서 25</b>.
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>나누는 이유는 셋입니다</b> &mdash; 한 사람이 받는 속도, KV캐시 자리, 큰 배치의 전문가 읽기.
+    대가는 all-to-all과 쏠림, 그리고 넓어지는 장애 반경입니다.
+  </div>
+</body>
+</html>

@@ -1,0 +1,717 @@
+/* ============================================================================
+   Compute Resource — 발표 덱 테마
+   figures/base.css의 시각 언어를 그대로 계승합니다. 색은 장식이 아니라 의미입니다.
+     앰버 = 비싼 것 / 전량 계산 / 하락      시안 = 아낀 것 / 새로 계산 / 활성
+     보라 = 더 세게 아낀 것 / 두 번째 기법   회색 = 계산 안 함 / 재사용
+   슬라이드 규격 1376×768 = 그림 webp와 정확히 같은 크기.
+   ========================================================================== */
+
+/* ── 폰트는 자체 호스팅합니다 (저장소 루트 fonts/, OFL-1.1) ────────────────
+   CDN이 아니라 로컬입니다. 이 덱은 iPhone·iPad·MacBook·Windows(Edge/Chrome)·
+   갤럭시에서 열립니다. CDN에 기대면 네트워크가 불안한 순간 기기별 시스템 폰트로
+   갈라집니다 — macOS는 Apple SD Gothic Neo, Windows는 맑은 고딕, Android는
+   Noto Sans CJK KR. 같은 덱이 기기마다 다른 글자로 보이면 안 됩니다.
+   서브셋은 KS X 1001 한글 2,350자 + README·그림·덱이 쓰는 모든 문자입니다(484KB).
+   전에는 덱에 나온 글자만 담아 192KB였는데, 새 낱말을 쓰면 그 글자만 시스템 폰트로
+   튀었습니다 — '벡'이 없어 "압축한 잠재 벡터"를 다른 말로 우회한 일이 있습니다.
+   지금은 한글을 자유롭게 써도 됩니다(2,350자 밖의 희귀 음절만 주의).
+   font-display:block인 이유는 로컬이라 즉시 뜨고, swap이면 발표 도중 글자가
+   폴백에서 본 폰트로 바뀌는 것이 보이기 때문입니다. */
+@font-face {
+  font-family: 'Pretendard Variable';
+  font-style: normal; font-weight: 45 930; font-display: block;
+  src: url('../fonts/pretendard.woff2') format('woff2-variations');
+}
+@font-face { font-family:'IBM Plex Mono'; font-style:normal; font-weight:400; font-display:block;
+  src:url('../fonts/plexmono-400.woff2') format('woff2'); }
+@font-face { font-family:'IBM Plex Mono'; font-style:normal; font-weight:500; font-display:block;
+  src:url('../fonts/plexmono-500.woff2') format('woff2'); }
+@font-face { font-family:'IBM Plex Mono'; font-style:normal; font-weight:600; font-display:block;
+  src:url('../fonts/plexmono-600.woff2') format('woff2'); }
+@font-face { font-family:'IBM Plex Mono'; font-style:normal; font-weight:700; font-display:block;
+  src:url('../fonts/plexmono-700.woff2') format('woff2'); }
+
+/* 폰트는 저장소 루트의 fonts/ 한 벌을 그림·문서·덱이 함께 씁니다.
+   덱 전용 서브셋(193KB)을 쓰던 동안은 덱에 나온 글자만 담겨 있어서, 새 낱말을 쓰면
+   그 글자만 시스템 폰트로 튀었습니다("압축한 잠재 벡터"의 '벡'이 없어 표현을 우회한
+   일이 있습니다). 공용 서브셋은 KS X 1001 한글 2,350자를 전부 담아 그 제약이 없습니다. */
+
+:root {
+  --bg:      #0d1117;
+  --fg:      #e6edf3;
+  --ink:     #ffffff;     /* <b>·표지 제목처럼 본문보다 한 단계 더 밝은 글자 */
+  --muted:   #9aa7b4;
+  --dim:     #7d8896;
+  --faint:   #6b7682;
+  --line:    #21262d;
+  --line-lt: #2d3540;
+  --panel:   #131a22;
+
+  --amber:   #c47d15;  --amber-t:  #e0912a;
+  --cyan:    #0e8fa3;  --cyan-t:   #22a7bd;
+  --violet:  #8b6ff0;  --violet-t: #a48cf5;
+  --gray:    #2b333d;
+
+  /* 테마에 따라 달라지는 크롬 */
+  --letterbox: #000;                       /* 16:9가 아닌 화면의 여백 */
+  --glow-cy:   rgba(14,143,163,.13);       /* 슬라이드 안쪽 배경 광원 */
+  --glow-vi:   rgba(139,111,240,.09);
+  --grain:     .038;
+  --track:     rgba(255,255,255,.07);      /* 진행바 바닥 */
+  --mark:      rgba(230,237,243,.085);     /* 챕터 넘버 워터마크 외곽선 */
+  --mark-cy:   rgba(34,167,189,.34);
+  --hi-cy:     rgba(14,143,163,.10);       /* 강조 행 배경 */
+  --hi-am:     rgba(196,125,21,.10);
+  --chip-bg:   rgba(13,17,23,.86);
+  --chip-sh:   rgba(0,0,0,.5);
+
+  /* 필기 잉크 — 획은 hex가 아니라 이름으로 저장되고 여기서 해석됩니다.
+     테마를 바꿔도 "시안으로 그은 것"이 계속 시안이어야 하기 때문입니다. */
+  --pen-cyan:   #2bb6cc;
+  --pen-amber:  #eb9a2e;
+  --pen-violet: #ab94f7;
+  --pen-ink:    #ffffff;
+
+  /* 폴백은 3개 OS를 전부 적습니다. 벤더링했으니 폴백까지 갈 일은 거의 없지만,
+     여기에 애플 폰트만 적어두면 Windows·Android에서 조용히 다른 글자가 됩니다. */
+  --sans: 'Pretendard Variable', Pretendard,
+          -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',   /* macOS · iOS */
+          'Segoe UI', 'Malgun Gothic',                                /* Windows */
+          'Noto Sans KR', 'Noto Sans CJK KR', Roboto,                 /* Android */
+          sans-serif;
+  /* Pretendard가 시스템 mono보다 **앞**에 옵니다. 폴백은 글리프 단위라
+     라틴·숫자는 IBM Plex Mono가 그대로 가져가고, Plex Mono에 없는 것
+     (한글, 그리고 → − β 같은 기호)만 Pretendard가 받습니다.
+     Menlo를 앞에 두면 그 기호들이 Menlo로 그려지는데, Windows에는 Menlo가
+     없어 같은 기호가 기기마다 달라집니다. 시스템 mono는 최후 폴백입니다. */
+  --mono: 'IBM Plex Mono', 'Pretendard Variable', Pretendard,
+          ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* ── 라이트 테마 ──────────────────────────────────────────────────────────
+   단순 반전이 아닙니다. 종이(따뜻한 오프화이트) 위에 먹으로 인쇄한 판면을
+   기준으로 잡고, 의미색은 밝은 배경에서 다시 대비를 맞춘 값을 씁니다.
+
+   검증(대비비 / OKLab ΔE, deuteranopia 시뮬레이션 기준):
+     텍스트 앰버 5.04 · 시안 5.22 · 보라 6.32 : 1  (다크의 의미색과 같은 수준)
+     채움색 대 배경 3.11 / 3.43 / 4.87 : 1        (비텍스트 최소 3:1 충족)
+     인접쌍 deutan ΔE 13.1 ~ 33.6                 (다크 기준선 11.8 ~ 37.1 상회)
+   색을 바꾸려면 이 세 줄을 다시 계산하세요 — 색이 곧 의미인 문서입니다. */
+:root[data-theme="light"] {
+  --bg:      #f4f2ee;
+  --fg:      #15181c;
+  --ink:     #05070a;
+  --muted:   #4c545f;
+  --dim:     #666e79;
+  --faint:   #868d97;
+  --line:    #e3ded6;
+  --line-lt: #d2ccc1;
+  --panel:   #fbfaf7;
+
+  --amber:   #c07a14;  --amber-t:  #96590a;
+  --cyan:    #0e8fa3;  --cyan-t:   #0a6f80;
+  --violet:  #6f52d6;  --violet-t: #5a3fc7;
+  --gray:    #c6c9ce;
+
+  --letterbox: #1c2026;                    /* 종이를 감싸는 어두운 테두리 */
+  --glow-cy:   rgba(14,143,163,.05);
+  --glow-vi:   rgba(111,82,214,.045);
+  --grain:     .022;
+  --track:     rgba(21,24,28,.09);
+  --mark:      rgba(21,24,28,.14);
+  --mark-cy:   rgba(10,111,128,.45);
+  --hi-cy:     rgba(14,143,163,.13);
+  --hi-am:     rgba(192,122,20,.13);
+  --chip-bg:   rgba(255,255,255,.92);
+  --chip-sh:   rgba(28,32,38,.18);
+
+  --pen-cyan:   #0a6f80;
+  --pen-amber:  #a5620b;
+  --pen-violet: #5a3fc7;
+  --pen-ink:    #15181c;
+}
+
+/* ── 바탕 ─────────────────────────────────────────────────────────────────
+   슬라이드는 정확한 16:9(1376×774)입니다. 화면 비율이 16:9가 아니면 남는 자리는
+   순검정 레터박스가 되고, 슬라이드 영역만 문서 배경색(#0d1117)을 씁니다.
+   그래서 어떤 화면에서도 슬라이드 경계가 분명하고, 잘리거나 늘어나지 않습니다. */
+html, body { background: var(--letterbox); }
+
+.reveal-viewport { background: var(--letterbox); }
+
+/* 배경 광원은 슬라이드 안쪽에만 — 레터박스로 새어 나가면 경계가 흐려집니다 */
+.reveal .slides section {
+  background:
+    radial-gradient(1100px 620px at 22% -12%, var(--glow-cy), transparent 62%),
+    radial-gradient(880px 520px at 96% 108%, var(--glow-vi), transparent 60%),
+    var(--bg);
+}
+.reveal-viewport::after {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 60; opacity: var(--grain);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.reveal {
+  font-family: var(--sans);
+  font-size: 22px;
+  color: var(--fg);
+  font-weight: 400;
+  letter-spacing: -.01em;
+  -webkit-font-smoothing: antialiased;
+
+  /* 한글은 기본값에서 **글자 단위**로 줄이 바뀌어 단어 한복판에서 끊깁니다.
+     keep-all은 띄어쓰기에서만 끊고, 한 어절이 줄 폭보다 길 때만
+     overflow-wrap이 예외로 끼어들어 넘침을 막습니다. figures/base.css와 같은 규칙입니다. */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+/* 코드 블록은 예외 — 계단 도식이 어절 단위로 밀리면 정렬이 깨집니다 */
+.reveal pre, .reveal pre code { word-break: normal; overflow-wrap: normal; }
+
+.reveal .slides { text-align: left; }
+.reveal .slides section {
+  height: 774px;                   /* 1376:774 = 정확히 16:9 */
+  padding: 62px 72px 104px 72px;   /* 아래는 .foot이 앉을 자리 */
+  box-sizing: border-box;
+}
+/* display 자체는 Reveal.initialize({ display: 'flex' })가 인라인으로 넣습니다.
+   여기서는 방향만 정합니다 — CSS로 display를 덮으려 하면 인라인에 밀립니다. */
+.reveal .slides section { flex-direction: column; }
+.reveal .slides section.fig { padding: 0; }
+
+/* ── 타이포 ─────────────────────────────────────────────────────────────── */
+.reveal h1, .reveal h2, .reveal h3 {
+  font-family: var(--sans);
+  color: var(--fg);
+  letter-spacing: -.03em;
+  text-transform: none;
+  margin: 0;
+  line-height: 1.18;
+  text-shadow: none;
+}
+.reveal h2 { font-size: 44px; font-weight: 700; }
+.reveal h3 { font-size: 27px; font-weight: 600; letter-spacing: -.02em; }
+.reveal p  { margin: 0 0 16px 0; line-height: 1.62; }
+.reveal strong, .reveal b { font-weight: 700; color: var(--ink); }
+.reveal em { font-style: normal; color: var(--muted); }
+.reveal a { color: var(--cyan-t); text-decoration: none; }
+
+/* 의미색 — base.css와 같은 클래스명을 씁니다.
+   !important는 의도한 것입니다: 표 셀(.reveal table td)의 특이도가 이 유틸리티를 이겨서
+   6장 지도표의 보라·시안이 통째로 죽었던 적이 있습니다. 색이 곧 의미인 문서라
+   유틸리티가 어디에 붙든 항상 이겨야 합니다. */
+.cy  { color: var(--cyan-t)   !important; }
+.am  { color: var(--amber-t)  !important; }
+.vi  { color: var(--violet-t) !important; }
+.gr  { color: var(--faint)    !important; }
+/* 의미색 안의 <b>는 색을 물려받아야 합니다. 특이도가 아니라 상속 문제라
+   (.reveal b가 color를 직접 지정) 자식 쪽에서 되돌려 줘야 합니다. */
+.cy b, .cy strong, .am b, .am strong,
+.vi b, .vi strong, .gr b, .gr strong { color: inherit !important; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; font-weight: 600; letter-spacing: -.02em; }
+
+/* 슬라이드 상단 눈표 — 제목 위에 붙는 작은 라벨 */
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 14px; font-weight: 600;
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--cyan-t);
+  margin-bottom: 14px;
+  display: flex; align-items: center; gap: 12px;
+}
+.eyebrow::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line-lt), transparent); }
+
+/* 제목 아래 한 줄 요약 */
+.lead {
+  font-size: 25px; line-height: 1.58; color: var(--muted);
+  margin: 18px 0 0 0; max-width: 1150px; letter-spacing: -.015em;
+}
+.lead b { color: var(--fg); font-weight: 600; }
+
+/* 본문은 제목 아래 남은 높이를 전부 받아 그 안에서 세로 중앙에 앉습니다.
+   슬라이드마다 콘텐츠 양이 달라도 아래쪽이 휑하게 비지 않습니다. */
+.body {
+  margin-top: 34px;
+  flex: 1;
+  display: flex; flex-direction: column; justify-content: center;
+  min-height: 0;
+}
+
+/* ── 표 ─────────────────────────────────────────────────────────────────── */
+.reveal table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 21px;
+  margin: 0;
+}
+.reveal table th {
+  font-family: var(--mono);
+  font-size: 14px; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--dim);
+  text-align: left;
+  padding: 0 20px 12px 14px;
+  border-bottom: 1px solid var(--line-lt);
+  white-space: nowrap;
+}
+/* 왼쪽 14px은 강조행을 위한 자리입니다. 강조행에만 들여쓰기를 주면 그 행의 글자만
+   오른쪽으로 밀려 열 정렬이 깨지고(753B·2.8T가 1B·27B보다 튀어나옴), 틴트 배경도
+   글자와 같은 지점에서 시작해 잘린 것처럼 보입니다. 모든 셀에 같은 값을 주면
+   정렬이 맞고 인셋 바(3px)와 글자 사이에 여유가 생깁니다. */
+.reveal table td {
+  padding: 14px 20px 14px 14px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  vertical-align: middle;
+  line-height: 1.45;
+}
+.reveal table td:first-child { color: var(--fg); font-weight: 500; }
+.reveal table tr:last-child td { border-bottom: none; }
+.reveal table .n { font-family: var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.reveal table.tight td { padding-top: 10px; padding-bottom: 10px; }
+.reveal table.tight { font-size: 19.5px; }
+.reveal table.mid { font-size: 20px; }
+/* 강조 행 — 결론이 되는 줄 */
+.reveal table tr.hi td { color: var(--fg); background: linear-gradient(90deg, var(--hi-cy), transparent 72%); }
+.reveal table tr.hi td:first-child { box-shadow: inset 3px 0 0 var(--cyan); }
+.reveal table tr.hi-am td { color: var(--fg); background: linear-gradient(90deg, var(--hi-am), transparent 72%); }
+.reveal table tr.hi-am td:first-child { box-shadow: inset 3px 0 0 var(--amber); }
+
+/* ── 불릿 ───────────────────────────────────────────────────────────────── */
+.reveal ul { list-style: none; margin: 0; padding: 0; }
+.reveal ul li {
+  position: relative;
+  padding-left: 26px;
+  margin-bottom: 17px;
+  line-height: 1.6;
+  color: var(--muted);
+  font-size: 23px;
+}
+.reveal ul li::before {
+  content: ''; position: absolute; left: 2px; top: .62em;
+  width: 7px; height: 7px; border-radius: 2px; background: var(--cyan);
+}
+.reveal ul li b, .reveal ul li strong { color: var(--fg); }
+.reveal ol { margin: 0; padding-left: 30px; }
+.reveal ol li { margin-bottom: 16px; line-height: 1.6; color: var(--muted); font-size: 23px; }
+.reveal ol li::marker { font-family: var(--mono); font-weight: 600; color: var(--cyan-t); font-size: 19px; }
+
+/* ── 패널 (2~3열 배치) ──────────────────────────────────────────────────── */
+.cols { display: grid; gap: 32px; align-items: start; }
+.c2 { grid-template-columns: 1fr 1fr; }
+.c2u { grid-template-columns: 1.25fr 1fr; }
+.c3 { grid-template-columns: 1fr 1fr 1fr; }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 24px 26px;
+}
+.card.am-b { border-color: rgba(196,125,21,.42); }
+.card.cy-b { border-color: rgba(14,143,163,.42); }
+.card.vi-b { border-color: rgba(139,111,240,.42); }
+.card h4 {
+  font-size: 20px; font-weight: 700; color: var(--fg);
+  margin: 0 0 10px 0; letter-spacing: -.02em;
+}
+.card p { font-size: 19px; color: var(--muted); line-height: 1.55; margin: 0; }
+.card .k {
+  font-family: var(--mono); font-size: 13px; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--dim);
+  display: block; margin-bottom: 8px;
+}
+
+/* ── 임팩트 수치 ────────────────────────────────────────────────────────── */
+.big {
+  font-family: var(--mono);
+  font-size: 128px; font-weight: 700;
+  letter-spacing: -.055em; line-height: .96;
+  font-variant-numeric: tabular-nums;
+}
+.big.sm { font-size: 92px; }
+.big-cap { font-size: 19px; color: var(--dim); margin-top: 14px; line-height: 1.5; }
+
+/* 결론 바 — 슬라이드 하단에 한 줄로 못 박는 문장 */
+.foot {
+  position: absolute; left: 72px; right: 72px; bottom: 50px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+  font-size: 20px; color: var(--muted); letter-spacing: -.015em;
+}
+.foot b { color: var(--fg); font-weight: 700; }
+.foot.cy-l { border-top-color: rgba(14,143,163,.5); }
+.foot.am-l { border-top-color: rgba(196,125,21,.5); }   /* 앰버 결론 — "비싼 쪽"이 결론인 슬라이드 */
+
+/* 인용 — 절 첫머리 문장 */
+.reveal blockquote {
+  background: none; border: none; box-shadow: none;
+  width: auto; margin: 0; padding: 0 0 0 22px;
+  border-left: 2px solid var(--cyan);
+  font-style: normal;
+  font-size: 27px; line-height: 1.5; color: var(--fg); font-weight: 500;
+  letter-spacing: -.025em;
+}
+
+/* 코드 — 어텐션 계단 등 */
+.reveal pre {
+  box-shadow: none; background: var(--panel);
+  border: 1px solid var(--line); border-radius: 8px;
+  font-size: 20px; width: auto; margin: 0;
+  padding: 20px 24px; line-height: 1.6;
+}
+.reveal pre code {
+  font-family: var(--mono); background: none; color: var(--muted);
+  padding: 0; max-height: none; display: block;
+}
+
+/* 수식 — MathJax 없이 HTML로 조판합니다 (오프라인 안전) */
+.eq {
+  font-family: var(--mono); font-size: 25px; color: var(--fg);
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 26px 30px; line-height: 1.75; letter-spacing: -.01em;
+}
+.eq .t { color: var(--dim); }
+/* 수식의 한 항이 단어 중간에서 끊기지 않게 합니다 — "정밀도"/"(byte)"가 두 줄로
+   갈라져 있었습니다. 줄을 나눠야 하면 <br>로 의미 단위(요청 축/모델 축)에서 끊습니다. */
+.eq .cy, .eq .am, .eq .vi { white-space: nowrap; }
+.eq .eqi { padding-left: 7.65em; }  /* 둘째 줄의 '×'를 첫 줄 '=' 아래로 — 연산자 열을 맞춥니다 */
+/* 첨자는 조금 크게 — 발표 화면에서 t와 T가 뭉쳐 보이면 수식이 아니라 얼룩이 됩니다 */
+.eq sub { font-size: .74em; }
+.eq sup { font-size: .74em; margin-left: 1px; }
+.eqlab {
+  font-family: var(--mono); font-size: 19px; color: var(--dim);
+  letter-spacing: .08em; margin-bottom: 12px;
+}
+
+/* ── 챕터 전환 슬라이드 ─────────────────────────────────────────────────── */
+/* 특이도를 .reveal .slides section(0,3,1)보다 높여야 justify-content가 먹습니다 */
+.reveal .slides section.chapter { justify-content: center; }
+section.chapter .cnum {
+  position: absolute; right: 64px; bottom: -34px;
+  font-family: var(--mono); font-weight: 700;
+  font-size: 340px; line-height: .8; letter-spacing: -.06em;
+  color: transparent;
+  -webkit-text-stroke: 2px var(--mark);
+  pointer-events: none; user-select: none;
+}
+section.chapter .ctag {
+  font-family: var(--mono); font-size: 15px; font-weight: 600;
+  letter-spacing: .2em; text-transform: uppercase; color: var(--cyan-t);
+  margin-bottom: 22px;
+}
+section.chapter h2 { font-size: 58px; max-width: 1000px; }
+section.chapter blockquote { margin-top: 30px; max-width: 940px; font-size: 29px; }
+section.chapter .cwhat {
+  margin-top: 38px; font-size: 20px; color: var(--dim); max-width: 900px; line-height: 1.6;
+}
+section.chapter .cwhat b { color: var(--muted); font-weight: 600; }
+
+/* ── 그림 슬라이드 — webp를 1376×768 그대로 ────────────────────────────── */
+section.fig { padding: 0 !important; }
+/* 그림 원본 1920×1080과 슬라이드 1376×774는 둘 다 정확한 16:9라
+   배율이 완전히 일치합니다 — 잘림도 여백도 없습니다. */
+section.fig img,
+section.fig iframe {
+  display: block; width: 1376px; height: 774px;
+  margin: 0; border: none; box-shadow: none; background: none;
+  object-fit: contain;
+  flex-shrink: 0;   /* 슬라이드가 flex 컨테이너라 눌리지 않게 못박습니다 */
+}
+/* 그림은 캡처된 이미지가 아니라 figures/*.html 을 그 자리에서 렌더한 것입니다.
+   캔버스가 1376×768이고 슬라이드가 1376×774라 아래 6px은 그림 자신의 배경색으로
+   채워집니다(iframe 캔버스가 body 배경을 물려받습니다) — 캡처본과 같은 모양입니다.
+
+   pointer-events:none이 없으면 iframe이 마우스를 먹어 **그림 위에 필기가 안 됩니다.**
+   레이저 포인터도 멈춥니다. 발표 도구가 죽는 것이라 이 한 줄이 제일 중요합니다. */
+section.fig iframe {
+  pointer-events: none;
+  color-scheme: only light;   /* 브라우저가 iframe 배경을 임의로 어둡게 하지 않도록 */
+}
+/* 그림에는 캡션을 얹지 않습니다 — webp 하단에 이미 결론 한 줄(.foot)이 들어 있어
+   겹칩니다. 발표자가 짚을 말은 <aside class="notes">로 갑니다. */
+
+/* ── 표지 ───────────────────────────────────────────────────────────────── */
+.reveal .slides section.cover { justify-content: center; }
+/* 오른쪽 여백을 잡아주는 워터마크 — 부제의 "2.8조"와 호응합니다 */
+section.cover .cmark {
+  position: absolute; right: 66px; top: 50%; transform: translateY(-52%);
+  font-family: var(--mono); font-weight: 700;
+  font-size: 172px; line-height: .92; letter-spacing: -.055em;
+  text-align: right; color: transparent;
+  -webkit-text-stroke: 1.5px var(--mark);
+  pointer-events: none; user-select: none;
+}
+section.cover .cmark span { display: block; font-size: 40px; letter-spacing: .12em;
+  -webkit-text-stroke: 1px var(--mark-cy); margin-top: 12px; }
+section.cover .ctitle {
+  font-size: 76px; font-weight: 800; letter-spacing: -.045em; line-height: 1.1; color: var(--ink);
+}
+section.cover .csub {
+  margin-top: 26px; font-size: 27px; color: var(--muted); letter-spacing: -.02em; line-height: 1.5;
+}
+section.cover .cmeta {
+  position: absolute; left: 72px; bottom: 64px; right: 72px;
+  display: flex; justify-content: space-between; align-items: flex-end;
+  font-family: var(--mono); font-size: 15px; color: var(--dim); letter-spacing: .04em;
+}
+section.cover .rule {
+  width: 78px; height: 3px; margin: 40px 0 0 0; border-radius: 2px;
+  background: linear-gradient(90deg, var(--cyan), var(--violet));
+}
+/* 발표자 — 표지에만 들어갑니다. 챕터 전환 슬라이드에는 반복하지 않습니다. */
+section.cover .cby { margin-top: 42px; }
+section.cover .cname {
+  font-size: 27px; font-weight: 700; color: var(--fg); letter-spacing: -.035em;
+}
+section.cover .corg {
+  margin-top: 8px; font-size: 17px; line-height: 1.6; color: var(--dim); letter-spacing: -.01em;
+}
+
+/* ── 목차 — 전반부/후반부 두 열. 지금 어느 쪽에 있는지 강조합니다 ────────── */
+.tochalf { border-top: 2px solid var(--line); padding-top: 20px; }
+.tochalf.on { border-top-color: var(--cyan); }
+.tochalf .hk {
+  font-family: var(--mono); font-size: 14px; font-weight: 600;
+  letter-spacing: .16em; text-transform: uppercase; color: var(--faint);
+  margin-bottom: 6px;
+}
+.tochalf.on .hk { color: var(--cyan-t); }
+.tochalf .hw { font-size: 19px; color: var(--dim); margin-bottom: 22px; letter-spacing: -.015em; }
+.tochalf.on .hw { color: var(--muted); }
+.tocl .ti { display: flex; gap: 15px; align-items: baseline; margin-bottom: 17px; }
+.tocl .tn {
+  font-family: var(--mono); font-size: 15px; font-weight: 600;
+  color: var(--faint); width: 18px; flex: none; text-align: right;
+}
+.tochalf.on .tocl .tn { color: var(--cyan-t); }
+.tocl .tt { font-size: 21px; font-weight: 600; color: var(--dim); letter-spacing: -.025em; }
+.tochalf.on .tocl .tt { color: var(--fg); }
+.tocl .tt em { display: block; margin-top: 3px; font-size: 17px; font-weight: 400; color: var(--faint); }
+.tochalf.on .tocl .tt em { color: var(--dim); }
+
+/* ── 전환 문장 슬라이드 — 장과 장 사이에서 축이 바뀔 때 한 박자 ─────────── */
+.reveal .slides section.stmt { justify-content: center; }
+section.stmt .sq {
+  font-size: 45px; font-weight: 700; line-height: 1.42;
+  letter-spacing: -.04em; color: var(--ink); max-width: 1130px;
+}
+section.stmt .sqs {
+  margin-top: 30px; font-size: 21px; line-height: 1.65; color: var(--dim); max-width: 940px;
+}
+section.stmt .sqs b { color: var(--muted); font-weight: 600; }
+
+/* ── 두 축 배지 (용량 / KV캐시) ────────────────────────────────────────── */
+.axis { display: inline-flex; align-items: center; gap: 9px; font-size: 18px; color: var(--muted); }
+.axis .dot { width: 11px; height: 11px; border-radius: 3px; }
+.dot.amber { background: var(--amber); }
+.dot.cyan { background: var(--cyan); }
+.dot.violet { background: var(--violet); }
+.dot.gray { background: var(--gray); }
+.legend { display: flex; gap: 28px; margin-top: 18px; }
+
+/* ── 크롬: 진행바 · 번호 · 챕터 라벨 ───────────────────────────────────── */
+.reveal .progress { height: 3px; color: var(--cyan); background: var(--track); }
+
+/* 슬라이드 번호는 reveal 기본(뷰포트 고정)을 끄고 슬라이드 안에 직접 그립니다.
+   16:9가 아닌 화면에서 기본 위치는 레터박스 바깥으로 밀려나, 슬라이드 안에 있는
+   챕터 라벨과 따로 놀았습니다. 번호를 JS로 data-num에 주입해 씁니다. */
+.reveal .slides section[data-num]::before {
+  content: attr(data-num);
+  position: absolute; right: 40px; bottom: 17px;
+  font-family: var(--mono); font-size: 15px; font-weight: 500;
+  letter-spacing: .06em; color: var(--faint);
+}
+section.cover::before { display: none; }
+/* 그림 슬라이드의 번호가 보이지 않던 이유 (2026-07-31 고침) —
+   그림은 iframe이고 크로미움이 iframe을 별도 합성 레이어로 올립니다. 그래서 z-index가
+   auto인 ::before는 배치 순서상 위에 와야 하는데도 iframe 아래로 깔렸습니다.
+   41장 전부(그림 슬라이드 전체) 번호가 안 보였고, z-index를 주면 드러납니다.
+   숫자가 그림 배경(1376×774 캔버스의 오른쪽 아래) 위에 놓이므로 색은 --dim보다
+   한 단 밝은 --muted를 쓰고, 그림의 .foot 띠와 겹쳐도 읽히게 그림자를 얕게 깝니다. */
+section.fig[data-num]::before {
+  right: 34px; z-index: 6; color: var(--muted);
+  text-shadow: 0 0 6px var(--bg), 0 0 3px var(--bg);
+}
+
+/* reveal 기본 번호 배지는 감춥니다 — 번호는 위 [data-num]으로 슬라이드 안에 그립니다.
+   그런데도 slideNumber를 'c/t'로 켜 두는 이유는, jump-to-slide가 그 설정일 때만
+   입력한 "32"를 32번째 슬라이드로 해석하기 때문입니다(index.html 참고). */
+.reveal .slide-number { display: none !important; }
+
+/* 숫자로 슬라이드 이동 — 숫자를 누르면 왼쪽 위에 뜹니다 (present.js) */
+.reveal .jump-to-slide { top: 18px; left: 18px; font-size: 24px; }
+.reveal .jump-to-slide-input {
+  width: 268px; padding: 11px 16px;
+  font-family: var(--mono); font-size: 20px; font-weight: 600; letter-spacing: .02em;
+  color: var(--fg); background: var(--chip-bg);
+  border: 1px solid var(--line-lt); border-radius: 9px;
+  box-shadow: 0 12px 34px -12px var(--chip-sh);
+  backdrop-filter: blur(10px);
+}
+.reveal .jump-to-slide-input::placeholder { color: var(--faint); opacity: 1; }
+/* ── 모바일 몰입 모드 ────────────────────────────────────────────────────
+   iPhone Safari에는 Fullscreen API가 아예 없습니다. 그래서 API에 기대지 않고
+   CSS로 화면을 채웁니다 — 세로로 든 상태면 콘텐츠를 90도 돌려 꽉 채웁니다.
+   Fullscreen API와 화면 회전 잠금이 되는 기기(Android·iPad)에서는 그쪽도 함께
+   시도하고, 기기가 실제로 가로가 되면 아래 회전은 자동으로 풀립니다. */
+html.immersive, html.immersive body { overflow: hidden; overscroll-behavior: none; }
+
+/* 회전은 좌상단을 축으로 돌린 뒤 화면 오른쪽 끝에서 시작하게 두는 관용구를 씁니다.
+   translate와 rotate를 섞으면 translate가 회전된 좌표계에서 적용돼 위아래 여백이
+   비대칭이 됩니다(실제로 그렇게 나왔습니다). */
+html.rot .reveal {
+  position: fixed;
+  top: 0;
+  left: 100vw;
+  left: 100dvw;
+  width: 100vh;  height: 100vw;    /* 가로·세로를 맞바꿉니다 */
+  width: 100dvh; height: 100dvw;   /* 주소창을 뺀 실제 영역 (지원 시 이 값이 이깁니다) */
+  transform: rotate(90deg);
+  transform-origin: 0 0;
+  z-index: 50;
+}
+
+/* 모바일 안내 — 첫 탭 전까지만 보이는 힌트 */
+.touchhint {
+  position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+  z-index: 70; display: none;
+  font-family: var(--mono); font-size: 13px; letter-spacing: .04em;
+  color: var(--muted); background: var(--chip-bg);
+  border: 1px solid var(--line-lt); border-radius: 999px;
+  padding: 9px 18px; white-space: nowrap;
+  animation: riseIn .5s .6s backwards;
+}
+html.is-touch .touchhint { display: block; }
+html.immersive .touchhint, html.hint-done .touchhint { display: none; }
+
+/* 좌하단 챕터 라벨 — 데이터 속성으로 주입 */
+.reveal .slides section[data-chapter]::after {
+  content: attr(data-chapter);
+  position: absolute; left: 72px; bottom: 18px;
+  font-family: var(--mono); font-size: 14px; font-weight: 500;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--faint);
+}
+section.fig[data-chapter]::after { left: 56px; color: var(--dim); }
+section.cover::after, section.chapter::after { display: none; }
+
+/* ── 등장 모션 — 슬라이드마다 한 번, 과하지 않게 ────────────────────────────
+   fill-mode가 both가 아니라 backwards인 것은 의도입니다. both는 애니메이션이
+   끝난 뒤에도 to 키프레임(opacity:1; transform:none)을 계속 물고 있어서 요소가
+   합성 레이어로 승격된 채 남습니다. 그 레이어는 부모의 transform:scale(1.395)를
+   반영하지 않고 1배로 래스터화된 뒤 확대되므로 글자가 흐려집니다(실측 엣지 -32%).
+   to의 값이 요소의 원래 상태와 같으므로 forwards를 빼도 보이는 결과는 같습니다. */
+@keyframes riseIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes numIn  { from { opacity: 0; transform: translateY(26px) scale(.97); } to { opacity: 1; transform: none; } }
+
+.reveal .slides section.present > .eyebrow { animation: riseIn .42s cubic-bezier(.22,.7,.3,1) backwards; }
+.reveal .slides section.present > h2       { animation: riseIn .46s cubic-bezier(.22,.7,.3,1) .05s backwards; }
+.reveal .slides section.present > .lead    { animation: riseIn .5s  cubic-bezier(.22,.7,.3,1) .11s backwards; }
+.reveal .slides section.present > .body    { animation: riseIn .54s cubic-bezier(.22,.7,.3,1) .17s backwards; }
+.reveal .slides section.present > .foot    { animation: riseIn .5s  cubic-bezier(.22,.7,.3,1) .26s backwards; }
+.reveal .slides section.chapter.present .cnum { animation: numIn .8s cubic-bezier(.22,.7,.3,1) backwards; }
+.reveal .slides section.cover.present .rule {
+  animation: riseIn .6s cubic-bezier(.22,.7,.3,1) .2s backwards;
+}
+
+/* fragment 기본을 조용하게 */
+.reveal .slides section .fragment.visible { opacity: 1; }
+
+/* ══ 발표 도구 — 레이저 포인터 · 필기 · 도구막대 ═══════════════════════════
+   동작은 present.js에 있습니다. 여기서는 생김새만 정합니다.
+   층위: 그레인 오버레이가 z-60이므로 도구는 그 위(70)에 얹습니다. */
+.ptools {
+  position: fixed; inset: 0; z-index: 70;
+  pointer-events: none;              /* 평소에는 슬라이드가 그대로 클릭됩니다 */
+}
+.ptools.catch { pointer-events: auto; }   /* 필기·지우개일 때만 포인터를 받습니다 */
+.ptools.hide { display: none; }           /* 개요(ESC) 화면에서는 통째로 숨김 */
+.ptools .ink { position: absolute; inset: 0; pointer-events: none; }
+
+/* 도구가 켜지면 시스템 커서를 감춥니다 — 레이저 점이나 펜 링이 커서 역할을 합니다 */
+html.t-on, html.t-on .reveal, html.t-on .ptools.catch { cursor: none; }
+
+/* ── 레이저 ───────────────────────────────────────────────────────────────
+   문서의 의미색(앰버·시안·보라)을 쓰지 않고 붉은색을 씁니다. 그림 위를 지날 때
+   차트의 색과 섞여 새로운 의미로 읽히면 안 되기 때문입니다. 붉은 점은 누구나
+   "포인터"로 읽고, 늘 움직이며, 인쇄물에는 남지 않습니다. */
+.laser { position: absolute; left: 0; top: 0; display: none; will-change: transform; }
+html.t-laser .laser { display: block; }
+.laser i { position: absolute; left: 0; top: 0; display: block; border-radius: 50%; }
+.laser .lc {                                   /* 코어 — 즉시 따라옵니다 */
+  width: 18px; height: 18px; margin: -9px 0 0 -9px;
+  background: radial-gradient(circle, #fff 0 26%, #ff6a4d 46%, rgba(255,58,32,.85) 72%, rgba(255,58,32,0) 100%);
+  box-shadow: 0 0 12px 3px rgba(255,64,38,.55);
+}
+.laser .lg {                                   /* 잔광 — 살짝 늦게 따라와 꼬리가 생깁니다 */
+  width: 56px; height: 56px; margin: -28px 0 0 -28px;
+  background: radial-gradient(circle, rgba(255,72,44,.30) 0 22%, rgba(255,72,44,0) 70%);
+  transition: transform .13s cubic-bezier(.2,.7,.4,1);
+}
+
+/* ── 펜 링 — 색과 굵기를 손에 쥔 채로 보여 주는 커서 ────────────────────── */
+.penring {
+  position: absolute; left: 0; top: 0; display: none;
+  border: 2px solid var(--pen-cyan); border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--chip-sh);
+  will-change: transform;
+}
+html.t-pen .penring, html.t-eraser .penring { display: block; }
+html.t-eraser .penring { border-style: dashed; border-color: var(--faint); }
+
+/* ── 도구막대 — 포인터를 화면 아래로 내리면 올라옵니다 ────────────────────
+   타이머로 여닫으면 발표 중에 깜빡여 시선을 뺏습니다. "아래로 내리면 보인다"가
+   예측 가능하고, 슬라이드를 가리는 시간도 최소입니다. */
+.pbar {
+  position: absolute; left: 50%; bottom: 18px;
+  transform: translate(-50%, calc(100% + 30px));
+  display: flex; align-items: center; gap: 4px;
+  padding: 6px; border-radius: 999px;
+  background: var(--chip-bg);
+  border: 1px solid var(--line-lt);
+  box-shadow: 0 10px 30px -12px var(--chip-sh);
+  backdrop-filter: blur(10px);
+  pointer-events: auto;
+  opacity: 0;
+  transition: transform .26s cubic-bezier(.22,.7,.3,1), opacity .2s;
+}
+.pbar.near { transform: translate(-50%, 0); opacity: 1; }
+.pbar button {
+  font-family: var(--sans); font-size: 14px; font-weight: 600;
+  letter-spacing: -.01em; color: var(--dim);
+  background: none; border: 0; border-radius: 999px;
+  padding: 7px 13px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 7px;
+  transition: color .14s, background .14s;
+}
+.pbar button::after {                      /* 단축키를 작게 병기 — 손이 키보드로 옮겨가게 */
+  content: attr(data-k);
+  font-family: var(--mono); font-size: 10.5px; font-weight: 600;
+  letter-spacing: .04em; color: var(--faint);
+  border: 1px solid var(--line); border-radius: 4px;
+  padding: 1px 4px;
+}
+.pbar button:hover { color: var(--fg); background: var(--line); }
+.pbar button[aria-pressed="true"] { color: var(--cyan-t); background: var(--hi-cy); }
+.pbar button[aria-pressed="true"]::after { color: var(--cyan-t); border-color: currentColor; }
+.pbar .sw { width: 12px; height: 12px; border-radius: 3px; background: var(--pen-cyan); }
+.pbar .sep { width: 1px; height: 20px; background: var(--line-lt); margin: 0 4px; }
+
+/* ── 알림 칩 — 모드가 바뀐 것만 짧게 알립니다 ────────────────────────────── */
+.ptools .toast {
+  position: absolute; right: 34px; top: 24px; transform: translateY(-8px);
+  font-family: var(--mono); font-size: 13px; letter-spacing: .04em;
+  color: var(--fg); background: var(--chip-bg);
+  border: 1px solid var(--line-lt); border-radius: 999px;
+  padding: 7px 16px; white-space: nowrap;
+  opacity: 0; pointer-events: none;
+  transition: opacity .18s, transform .18s;
+}
+.ptools .toast.on { opacity: 1; transform: translateY(0); }
+
+/* ── 인쇄(PDF) — 모션 제거, 도구는 나가지 않습니다 ─────────────────────── */
+@media print {
+  .reveal-viewport::after { display: none; }
+  .reveal .slides section > * { animation: none !important; }
+  .ptools { display: none !important; }
+}

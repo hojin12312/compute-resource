@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:52px; }
+  /* flex-shrink:0 필수 — 없으면 긴 막대 행만 눌려 0% 선과 막대 길이가 함께 틀어집니다 */
+  .grp { margin-top:18px; }
+  .grp:first-child { margin-top:0; }
+  .bar { display:flex; align-items:center; gap:13px; margin-top:4px; }
+  .bar > * { flex-shrink:0; }
+  .ylab { flex:0 0 48px; text-align:right; font-size:14px; color:var(--c-c3ccd6); font-weight:700; }
+  .ylab.blank { color:transparent; }
+  .zero { flex:0 0 2px; background:var(--c-3d4650); height:26px; }
+  .track { flex:0 0 auto; height:26px; }
+  .bval { flex:0 0 auto; font-size:15px; font-weight:700; white-space:nowrap; }
+  .mult { flex:0 0 auto; font-size:12.5px; color:var(--c-7d8896); white-space:nowrap; margin-left:4px; }
+
+  .big { font-size:52px; font-weight:700; letter-spacing:-.03em; line-height:1; }
+  .kv { font-size:13.5px; color:var(--c-9aa7b4); line-height:1.7; margin-top:12px; }
+  .kv b { color:var(--c-e6edf3); font-weight:700; }
+  .why { border-left:2px solid var(--c-2b333d); padding-left:18px; margin-top:26px;
+         font-size:13.5px; color:var(--c-8b96a3); line-height:1.8; }
+  .why b { color:var(--c-c3ccd6); font-weight:600; }
+</style>
+</head>
+<body>
+  <h1>돈의 격차는 <span class="am">8배</span>에서 줄지 않습니다</h1>
+  <div class="sub">미국 하이퍼스케일러(AWS·Microsoft·Google·Meta·Oracle) vs 중국(Alibaba·Tencent·ByteDance·Baidu) 연간 AI 설비투자 &mdash; 단위 10억 달러</div>
+
+  <div class="legend">
+    <div><span class="sw amber"></span>미국</div>
+    <div><span class="sw cyan"></span>중국</div>
+  </div>
+
+  <div class="panels" style="margin-top:26px; gap:54px">
+    <div class="panel" style="width:830px">
+      <div class="ptitle">연간 AI 설비투자</div>
+      <div class="pdesc">왼쪽 끝이 0 &mdash; 오른쪽 회색 숫자가 그해의 배율입니다. 2026·2027은 추정치</div>
+      <div style="margin-top:14px" id="bars"></div>
+    </div>
+
+    <div class="panel" style="width:340px">
+      <div class="ptitle">2026년</div>
+      <div class="pdesc">미국 하이퍼스케일러 5곳의 한 해 투자</div>
+      <div class="big am" style="margin-top:18px">7,640억<br>달러</div>
+      <div class="kv">같은 해 중국 4곳은 <b>1,020억 달러</b>.<br><b>7.5배</b> 차이입니다.</div>
+
+      <div class="why">
+        4년째 <b>7~8배</b>에서 고정돼 있고,<br>
+        절대 금액의 차이는 오히려 <b>벌어집니다</b>.
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    돈은 8배 차이입니다. <b>그런데 나오는 모델의 격차는 8배가 아닙니다</b> &mdash; 그래서 시장이 놀랐습니다.
+  </div>
+
+<script>
+const D = [
+  { y: '2022', us:  156, cn:   8, m: '19.5배' },
+  { y: '2023', us:  156, cn:  18, m:  '8.7배' },
+  { y: '2024', us:  254, cn:  36, m:  '7.1배' },
+  { y: '2025', us:  443, cn:  57, m:  '7.8배' },
+  { y: '2026', us:  764, cn: 102, m:  '7.5배' },
+  { y: '2027', us: 1018, cn: 123, m:  '8.3배' },
+];
+const SCALE = 0.52;   // 1십억 달러당 px — 최장 막대(1018)가 패널 안에 들어가는 최댓값
+const fmt = v => v.toLocaleString('en-US');
+const host = document.getElementById('bars');
+D.forEach(d => {
+  const g = document.createElement('div'); g.className = 'grp';
+  g.innerHTML =
+    '<div class="bar">' +
+      '<div class="ylab">' + d.y + '</div>' +
+      '<div class="zero"></div>' +
+      '<div class="track amber" style="width:' + (d.us * SCALE) + 'px"></div>' +
+      '<div class="bval am">' + fmt(d.us) + '</div>' +
+      '<div class="mult">' + d.m + '</div>' +
+    '</div>' +
+    '<div class="bar">' +
+      '<div class="ylab blank">' + d.y + '</div>' +
+      '<div class="zero"></div>' +
+      '<div class="track cyan" style="width:' + (d.cn * SCALE) + 'px"></div>' +
+      '<div class="bval cy">' + fmt(d.cn) + '</div>' +
+    '</div>';
+  host.appendChild(g);
+});
+</script>
+</body>
+</html>

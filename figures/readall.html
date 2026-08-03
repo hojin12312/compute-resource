@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:42px; }
+
+  /* 색은 base.css의 규칙 그대로입니다 —
+     시안 = 이번 걸음에 새로 계산 · 회색 = 계산 안 하고 캐시에서 읽음 · 앰버 = 전량 재계산 */
+  .step { display:flex; align-items:center; gap:9px; margin-top:10px; }
+  .snum { flex:0 0 54px; text-align:right; font-size:11.5px; color:var(--c-7d8896); }
+  .chips { flex:0 0 auto; display:flex; gap:4px; }
+  .tok { font-size:13px; padding:6px 10px; border-radius:4px; white-space:nowrap;
+         background:var(--c-2b333d); color:var(--c-9aa7b4); }
+  .tok.now { background:var(--c-0e8fa3); color:var(--c-0d1117); font-weight:700; }
+  .arw { flex:0 0 auto; font-size:13px; color:var(--c-5d6773); }
+  .out { flex:0 0 auto; font-size:13px; font-weight:700; color:var(--c-22a7bd); white-space:nowrap; }
+
+  /* 마지막 줄 — 999개를 칸으로 그릴 수 없으므로 한 덩어리로 눌러 표현합니다 */
+  .far { margin-top:15px; padding-top:14px; border-top:1px dashed var(--c-333d47); }
+  .lump { flex:0 0 auto; display:flex; align-items:center; justify-content:center;
+          width:250px; height:30px; border-radius:4px; background:var(--c-2b333d);
+          font-size:12px; color:var(--c-9aa7b4); }
+  .dots { flex:0 0 54px; text-align:right; font-size:13px; color:var(--c-4d5661); }
+
+  /* 토큰 하나가 남기는 것 */
+  .keep { display:flex; align-items:center; gap:11px; margin-top:4px; }
+  .kv { display:flex; flex-direction:column; gap:3px; }
+  .kv i { display:flex; align-items:center; justify-content:center; font-style:normal;
+          width:36px; height:24px; border-radius:3px; font-size:11.5px; font-weight:700;
+          background:var(--c-0f2930); color:var(--c-22a7bd); border:1px solid var(--c-17505c); }
+  .xlay { font-size:12.5px; color:var(--c-8b96a3); line-height:1.6; }
+  .xlay b { color:var(--c-c3ccd6); font-weight:700; }
+  .per { margin-top:16px; display:flex; align-items:baseline; gap:9px; }
+  .per b { font-size:22px; font-weight:700; color:var(--c-22a7bd); letter-spacing:-.02em; }
+  .per span { font-size:11.5px; color:var(--c-7d8896); }
+
+  /* 계단 그림 — 세로축은 그 걸음에 새로 계산하는 토큰 수.
+     라벨을 그림 위에 얹지 않고 오른쪽 열로 뺐습니다 — 막대 안쪽에 글자를 두면
+     라이트 테마에서 앰버 위 대비가 4.4까지 떨어지고, 시안 라벨이 앰버 면
+     안으로 들어가 색의 뜻이 뒤섞입니다.
+
+     겹 여덟을 **왼쪽에 맞춰** 쌓고 위로 갈수록 좁힙니다(2026-08-03에 오른쪽 맞춤에서
+     바꿨습니다). 왼쪽 맞춤이라야 축의 뜻이 그림과 맞습니다 —
+     **가로는 컨텍스트의 토큰 자리, 세로는 그 토큰을 다시 계산하는 횟수**입니다.
+     캐시가 없으면 앞 토큰일수록 걸음마다 되풀이되므로 왼쪽이 높고 오른쪽으로
+     가늘어지며, 면적이 1+2+…+N = N²/2이 되어 **제곱**이 눈으로 읽힙니다.
+
+     맨 아래 한 겹이 시안(캐시 있음)입니다. 어느 토큰이든 꼭 한 번만 계산하므로
+     폭 전체에 한 겹으로 깔리고, 면적이 N이라 **선형**입니다.
+     그 위 일곱 겹이 캐시를 지웠을 때 더 쌓이는 몫입니다.
+
+     겹은 높이 10 + 틈 4로 맨 아래 y=108, 맨 위 y=10이고 왼쪽 끝은 전부 x=2입니다. */
+  .area { display:flex; gap:14px; align-items:flex-start; margin-top:6px; }
+  .area svg { display:block; flex:0 0 auto; }
+  .abar     { fill:var(--c-c47d15); }
+  .abar.one { fill:var(--c-0e8fa3); }
+  .aax   { stroke:var(--c-3d4650); stroke-width:1; }
+  .alegend { flex:1 1 auto; display:flex; flex-direction:column; gap:16px; padding-top:8px; }
+  .alegend div { display:flex; align-items:flex-start; gap:8px; font-size:11.5px;
+                 color:var(--c-8b96a3); line-height:1.5; }
+  .alegend .sw { flex:0 0 12px; height:12px; margin-top:2px; }
+  .alegend b { display:block; font-size:12.5px; }
+  .alegend .am b { color:var(--c-e0912a); }
+  .alegend .cy b { color:var(--c-22a7bd); }
+  .axname { display:flex; justify-content:space-between; width:314px; margin-top:4px;
+            font-size:10.5px; color:var(--c-5d6773); }
+
+  .cmp { display:flex; gap:10px; margin-top:18px; }
+  .cbox { flex:1 1 0; border-radius:6px; padding:10px 12px; }
+  .cbox.a { background:var(--a-37); border:1px solid var(--c-4a3a1c); }
+  .cbox.c { background:var(--a-36); border:1px solid var(--c-17505c); }
+  .cbox em { display:block; font-style:normal; font-size:11px; color:var(--c-8b96a3); }
+  .cbox b { display:block; font-size:19px; font-weight:700; margin-top:3px; letter-spacing:-.02em; }
+  .cbox.a b { color:var(--c-e0912a); }
+  .cbox.c b { color:var(--c-22a7bd); }
+  .cbox span { display:block; font-size:10.5px; color:var(--c-7d8896); margin-top:2px; }
+
+  .note { margin-top:14px; border-left:2px solid var(--c-0e8fa3); padding-left:13px;
+          font-size:12px; color:var(--c-8b96a3); line-height:1.7; }
+  .note b { color:var(--c-c3ccd6); font-weight:700; }
+</style>
+</head>
+<body>
+  <h1>한 글자를 더 쓰려면 <span class="cy">지금까지의 전부</span>를 봅니다</h1>
+  <div class="sub">토큰 하나를 만들 때마다 앞의 모든 토큰과의 관계를 다시 따집니다. 그 결과를 버리지 않고 들고 있는 것이 KV캐시입니다.</div>
+
+  <div class="legend">
+    <div><span class="sw cyan"></span><span>이번 걸음에 <b style="color:var(--c-c3ccd6)">새로 계산</b>하는 토큰</span></div>
+    <div><span class="sw gray"></span><span>계산하지 않고 <b style="color:var(--c-c3ccd6)">캐시에서 읽는</b> 토큰</span></div>
+  </div>
+
+  <div class="panels" style="margin-top:24px; gap:44px">
+
+    <div class="panel" style="width:560px">
+      <div class="ptitle">걸음마다 읽는 양이 한 칸씩 늘어납니다</div>
+      <div class="pdesc">여섯 걸음만 그렸습니다 &middot; 오른쪽이 그 걸음에서 나온 토큰입니다</div>
+
+      <div class="step"><div class="snum">1걸음</div>
+        <div class="chips"><span class="tok now">회사</span></div>
+        <span class="arw">&rarr;</span><span class="out">에서</span></div>
+      <div class="step"><div class="snum">2걸음</div>
+        <div class="chips"><span class="tok">회사</span><span class="tok now">에서</span></div>
+        <span class="arw">&rarr;</span><span class="out">쓸</span></div>
+      <div class="step"><div class="snum">3걸음</div>
+        <div class="chips"><span class="tok">회사</span><span class="tok">에서</span><span class="tok now">쓸</span></div>
+        <span class="arw">&rarr;</span><span class="out">모델</span></div>
+      <div class="step"><div class="snum">4걸음</div>
+        <div class="chips"><span class="tok">회사</span><span class="tok">에서</span><span class="tok">쓸</span><span class="tok now">모델</span></div>
+        <span class="arw">&rarr;</span><span class="out">을</span></div>
+      <div class="step"><div class="snum">5걸음</div>
+        <div class="chips"><span class="tok">회사</span><span class="tok">에서</span><span class="tok">쓸</span><span class="tok">모델</span><span class="tok now">을</span></div>
+        <span class="arw">&rarr;</span><span class="out">고를</span></div>
+      <div class="step"><div class="snum">6걸음</div>
+        <div class="chips"><span class="tok">회사</span><span class="tok">에서</span><span class="tok">쓸</span><span class="tok">모델</span><span class="tok">을</span><span class="tok now">고를</span></div>
+        <span class="arw">&rarr;</span><span class="out">때</span></div>
+
+      <div class="far">
+        <div class="step" style="margin-top:0">
+          <div class="dots">&middot;&middot;&middot;</div>
+          <div class="lump">앞의 999개는 계산하지 않고 읽습니다</div>
+          <div class="chips"><span class="tok now">1,000번째</span></div>
+          <span class="arw">&rarr;</span><span class="out">1,001번째</span></div>
+      </div>
+
+      <div class="note">새로 계산하는 것은 <b>언제나 한 칸</b>입니다. 나머지는 앞 걸음에서 이미
+        계산해 둔 것을 꺼내 씁니다 &mdash; 그 꺼내 쓰는 더미가 KV캐시입니다.</div>
+    </div>
+
+    <div class="panel" style="width:660px">
+      <div class="ptitle">토큰 하나가 남기는 것</div>
+      <div class="pdesc">층마다 K와 V 한 쌍씩</div>
+      <div class="keep">
+        <span class="tok">모델</span>
+        <span class="arw">&rarr;</span>
+        <div class="kv"><i>K</i><i>V</i></div>
+        <div class="xlay">&times; <b>78개 층</b> &mdash; GLM-5.2 기준<br>
+          토큰 하나가 <b>43.9KiB</b>를 차지합니다</div>
+      </div>
+      <div class="per"><b>1M 대화 하나 = 46.5GiB</b><span>K·V 43.9 + 인덱서 2.6GiB · 사람 한 명 몫</span></div>
+
+      <div class="ptitle" style="margin-top:30px">지워 버리면 다시 계산해야 합니다</div>
+      <div class="pdesc">가로는 컨텍스트의 토큰 자리, 세로는 <b style="color:var(--c-c3ccd6)">그 토큰을 다시 계산하는 횟수</b>입니다 &middot; 면적이 총 계산량입니다</div>
+      <div class="area">
+        <svg width="314" height="128" viewBox="0 0 314 128">
+          <!-- 겹 여덟. 왼쪽 끝은 전부 x=2, 폭이 위로 갈수록 좁아집니다.
+               폭 = 38 × (겹 번호, 아래에서부터) · 높이 10 · 간격 4 -->
+          <rect class="abar" x="2" y="10"  width="38"  height="10" rx="2"></rect>
+          <rect class="abar" x="2" y="24"  width="76"  height="10" rx="2"></rect>
+          <rect class="abar" x="2" y="38"  width="114" height="10" rx="2"></rect>
+          <rect class="abar" x="2" y="52"  width="152" height="10" rx="2"></rect>
+          <rect class="abar" x="2" y="66"  width="190" height="10" rx="2"></rect>
+          <rect class="abar" x="2" y="80"  width="228" height="10" rx="2"></rect>
+          <rect class="abar" x="2" y="94"  width="266" height="10" rx="2"></rect>
+          <rect class="abar one" x="2" y="108" width="304" height="10" rx="2"></rect>
+          <line class="aax" x1="2" y1="118.5" x2="310" y2="118.5"></line>
+        </svg>
+        <div class="alegend">
+          <div class="am"><span class="sw amber"></span><span><b>캐시 없음</b>앞 토큰일수록 걸음마다 다시 계산돼 겹이 쌓입니다 &mdash; 연산량이 컨텍스트 길이의 <b style="display:inline;color:var(--c-c3ccd6)">제곱</b>에 비례합니다</span></div>
+          <div class="cy"><span class="sw cyan"></span><span><b>캐시 있음</b>어느 토큰이든 딱 한 번, 가장 최근 것만 계산합니다 &mdash; 연산량이 컨텍스트 길이에 <b style="display:inline;color:var(--c-c3ccd6)">비례</b>합니다</span></div>
+        </div>
+      </div>
+      <div class="axname"><span>첫 토큰</span><span>1,000번째 토큰 &rarr;</span></div>
+
+      <div class="cmp">
+        <div class="cbox a"><em>캐시 없음</em><b>500,500번</b><span>토큰을 처리한 횟수 &mdash; 1+2+…+1,000</span></div>
+        <div class="cbox c"><em>캐시 있음</em><b>1,000번</b><span>걸음마다 한 번 &mdash; 약 500배 차이</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="foot">
+    대화가 길어질수록 읽어야 할 더미가 커지고, <b>그 더미는 사람마다 따로</b> 쌓입니다 &mdash;
+    이것이 두 번째 청구서의 정체입니다.
+  </div>
+</body>
+</html>

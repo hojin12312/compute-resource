@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  /* 7장 도입 그림입니다 (2026-07-31 신설). 덱 7장이 "포맷과 방법을 나눕니다"라는
+     산문으로 시작해 청자가 양자화가 무엇을 하는지 보기 전에 분류부터 들었습니다.
+     그래서 **한 손잡이가 두 청구서에 다 듣는다**는 것을 먼저 그림으로 보여줍니다.
+
+     수치는 전부 README에 있는 것입니다 — GLM-5.2 753B의 가중치는 3장 그림(vram)의
+     예시와 같고(원본 1,506 · 표준 753 · 품질 한계 377 · 극한 226GB), H200 장수는
+     `[^glm-spec]`, 1M 대화 하나 46.5GiB는 `[^mla-calc]`입니다.
+     KV의 ×2·×0.5는 그 46.5GiB(FP8 기준)에 정밀도 배수를 곱한 유도값이라 캡션에 밝힙니다. */
+  body { padding-top:42px; }
+
+  .grip { display:flex; align-items:center; gap:14px; margin-top:20px;
+          padding:18px 20px; border:1px solid var(--c-17505c); border-radius:10px;
+          background:var(--c-0f2930); }
+  .grip b { font-size:15.5px; color:var(--c-e6edf3); font-weight:700; white-space:nowrap; }
+  .grip span { font-size:12.5px; color:var(--c-9aa7b4); line-height:1.5; }
+
+  .row { display:flex; align-items:center; gap:10px; margin-top:19px; }
+  .rlab { flex:0 0 96px; text-align:right; font-size:12px; color:var(--c-8b96a3); }
+  .rlab b { display:block; font-size:13px; color:var(--c-c3ccd6); font-weight:700; }
+  .bar { flex:0 0 auto; height:38px; border-radius:3px; display:flex; align-items:center;
+         justify-content:flex-end; padding-right:8px; font-size:11.5px; font-weight:700; }
+  .bar.big  { background:var(--c-c47d15); color:var(--c-0d1117); }
+  .bar.std  { background:var(--c-0e8fa3); color:var(--c-0d1117); }
+  .bar.low  { background:var(--c-8b6ff0); color:var(--c-0d1117); }
+  .bar.tiny { background:var(--c-3d4650); color:var(--c-c3ccd6); }
+  .rval { flex:0 0 auto; font-size:12px; color:var(--c-8b96a3); white-space:nowrap; }
+  .rval b { color:var(--c-e6edf3); font-weight:700; font-size:13px; }
+
+  .mark { margin-top:10px; padding-left:106px; font-size:10.5px; color:var(--c-5d6773); }
+  .cap { margin-top:20px; font-size:11.5px; color:var(--c-8b96a3); line-height:1.65; }
+  .cap b { color:var(--c-c3ccd6); font-weight:700; }
+
+  .split { display:flex; gap:12px; margin-top:16px; }
+  .half { flex:1 1 0; padding:18px 16px; border-radius:8px; font-size:12px;
+          color:var(--c-9aa7b4); line-height:1.6; }
+  .half.a { background:var(--a-37); border:1px solid var(--c-4a3a1c); }
+  .half.c { background:var(--a-36); border:1px solid var(--c-17505c); }
+  .half em { display:block; font-style:normal; font-size:11px; font-weight:700;
+             color:var(--c-8b96a3); margin-bottom:4px; }
+  .half b { color:var(--c-c3ccd6); font-weight:700; }
+</style>
+</head>
+<body>
+  <h1>양자화는 <span class="cy">압축</span>입니다 &mdash; 두 청구서에 함께 듣습니다</h1>
+  <div class="sub">모델도 대화도 그대로 두고, <b style="color:var(--c-c3ccd6)">값 하나를 몇 비트에 담을지</b>만 바꿉니다.
+    이 문서에서 두 청구서 양쪽을 동시에 깎는 손잡이는 이것뿐입니다.</div>
+
+  <div class="grip">
+    <b>손잡이 하나</b>
+    <span>파라미터 하나 &middot; KV 값 하나를 <b style="color:var(--c-c3ccd6)">16비트 &rarr; 8 &rarr; 4비트</b>로.
+      구조를 바꾸지 않으므로 6장의 기법들과 <b style="color:var(--c-c3ccd6)">겹쳐 쓸 수 있습니다.</b></span>
+  </div>
+
+  <div class="panels" style="margin-top:22px; gap:46px">
+
+    <div class="panel" style="width:598px">
+      <div class="ptitle">1 &middot; 담는 값 &mdash; 모델 가중치</div>
+      <div class="pdesc">GLM-5.2 753B을 올리는 데 필요한 메모리 &middot; 막대 오른쪽은 H200 141GB 몇 장</div>
+
+      <div class="row"><div class="rlab">원본<b>BF16</b></div>
+        <div class="bar big" style="width:396px">1,506GB</div>
+        <div class="rval"><b>11장</b></div></div>
+      <div class="row"><div class="rlab">표준<b>FP8</b></div>
+        <div class="bar std" style="width:198px">753GB</div>
+        <div class="rval"><b>6장</b></div></div>
+      <div class="row"><div class="rlab">품질 한계<b>FP4</b></div>
+        <div class="bar low" style="width:99px">377GB</div>
+        <div class="rval"><b>3장</b></div></div>
+      <div class="row"><div class="rlab">극한<b>2~3비트</b></div>
+        <div class="bar tiny" style="width:59px">226GB</div>
+        <div class="rval">2장 &middot; 손실 있음</div></div>
+
+      <div class="cap">한 번 압축해 두면 <b>그 파일을 그대로 배포</b>합니다 &mdash;
+        받는 쪽은 압축된 것을 올리기만 하면 됩니다.</div>
+    </div>
+
+    <div class="panel" style="width:562px">
+      <div class="ptitle">2 &middot; 일 시키는 값 &mdash; KV캐시</div>
+      <div class="pdesc">1M 대화 <b style="color:var(--c-c3ccd6)">한 사람 몫</b> &middot; 같은 배수가 그대로 곱해집니다</div>
+
+      <div class="row"><div class="rlab">원본<b>BF16</b></div>
+        <div class="bar big" style="width:330px">93GiB</div>
+        <div class="rval">&times;2</div></div>
+      <div class="row"><div class="rlab">표준<b>FP8</b></div>
+        <div class="bar std" style="width:165px">46.5GiB</div>
+        <div class="rval">기준</div></div>
+      <div class="row"><div class="rlab">4비트<b>INT4 등</b></div>
+        <div class="bar low" style="width:83px">23GiB</div>
+        <div class="rval">&times;0.5</div></div>
+      <div class="mark">46.5GiB = K&middot;V 43.9 + 인덱서 2.6 &middot; 배수는 여기서 유도한 값입니다</div>
+
+      <div class="cap">이쪽은 <b>요청마다 새로 만들어집니다.</b> 압축해 둘 파일이 없고,
+        <b>줄인 만큼 동시 사용자를 삽니다.</b></div>
+    </div>
+
+  </div>
+
+  <div class="split">
+    <div class="half a"><em>그래서 7장은 둘로 갈립니다</em>
+      <b>가중치</b>는 미리 재 보고 <b>자리마다 비트를 다르게</b> 줄 수 있습니다 &mdash; 오프라인에서 한 번만 하면 되니까요.</div>
+    <div class="half c"><em>같은 손잡이인데 방법이 다릅니다</em>
+      <b>KV캐시</b>는 무엇이 들어올지 모르므로 <b>전체에 같은 비트</b>를 씁니다 &mdash; 자리마다 고르는 일을 매 요청에 할 수 없습니다.</div>
+  </div>
+
+  <div class="foot">
+    <b>양자화는 용량과 대역폭을 함께 깎습니다.</b> 다만 KV캐시 쪽은 되펼치는 계산이 붙어 공짜가 아닙니다 &mdash; 7.2에서 그 청구서를 봅니다.
+  </div>
+</body>
+</html>

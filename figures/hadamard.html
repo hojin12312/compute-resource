@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:76px; }
+  .plot { position:relative; width:340px; height:250px;
+          border-left:1px solid var(--c-21262d); border-bottom:1px solid var(--c-21262d); }
+  .dot { position:absolute; width:7px; height:7px; border-radius:50%; }
+  .band { position:absolute; left:0; right:0; background:var(--a-35);
+          border-top:1px dashed var(--c-2f6b78); border-bottom:1px dashed var(--c-2f6b78); }
+  .ylab { position:absolute; left:-46px; font-size:11px; color:var(--c-5d6773); }
+  .plotcap { font-size:12.5px; color:var(--c-7d8896); margin-top:14px; line-height:1.6; }
+  .plotcap b { font-weight:700; }
+
+  .steps { }
+  .st { display:flex; align-items:baseline; gap:12px; padding:13px 0;
+        border-bottom:1px solid var(--c-1b2027); font-size:13.5px; color:var(--c-9aa7b4); line-height:1.6; }
+  .st:last-child { border-bottom:0; }
+  .stn { width:19px; height:19px; border-radius:50%; background:var(--c-233039); color:var(--c-c3ccd6);
+         font-size:11px; font-weight:700; display:inline-flex; align-items:center;
+         justify-content:center; flex-shrink:0; position:relative; top:2px; }
+  .st b { color:var(--c-e6edf3); font-weight:700; }
+
+  /* 2026-07-31 추가 — 회전의 효과를 분포의 "폭"으로 한 줄 적고(그림만으로는 눈금 낭비가
+     안 보입니다), 회전의 대가(입력에 행렬 곱)를 셋째 패널에 세웁니다. 베타 분포는
+     README 7.2의 TurboQuant 설명("회전 뒤 각 좌표가 베타 분포를 따른다는 성질")입니다. */
+  .spread { margin-top:14px; padding:10px 13px; border-radius:7px; font-size:12px;
+            color:var(--c-9aa7b4); line-height:1.5; }
+  .spread b { font-weight:700; }
+  .spread span { display:block; margin-top:3px; font-size:11px; color:var(--c-7d8896); }
+  .spread.am { background:var(--a-37); border:1px solid var(--c-4a3a1c); }
+  .spread.am b { color:var(--c-e0912a); }
+  .spread.cy { background:var(--a-36); border:1px solid var(--c-17505c); }
+  .spread.cy b { color:var(--c-22a7bd); }
+  .cost { margin-top:20px; padding:12px 14px; border-radius:7px; font-size:12px;
+          line-height:1.6; color:var(--c-9aa7b4);
+          background:var(--a-37); border:1px solid var(--c-4a3a1c); }
+  .cost em { display:block; font-style:normal; font-size:11px; font-weight:700;
+             color:var(--c-e0912a); margin-bottom:4px; }
+  .cost b { color:var(--c-c3ccd6); font-weight:700; }
+</style>
+</head>
+<body>
+  <h1>하다마드 회전 &mdash; <span class="cy">튀는 값을 먼저 흩어 놓습니다</span></h1>
+  <div class="sub">양자화 전에 회전 한 번을 곱해 이상치를 여러 차원에 나눕니다 &middot;
+    <b>가중치 &middot; 활성값 &middot; KV캐시에 모두 적용됩니다</b> &mdash; 균일 양자화만 쓸 수 있는 KV캐시에서 특히 값이 큽니다.</div>
+
+  <div class="panels" style="margin-top:30px; gap:52px">
+    <div class="panel">
+      <div class="ptitle" style="color:var(--c-e0912a)">그냥 4비트로 내리면</div>
+      <div class="pdesc">이상치 채널 하나가 눈금을 다 잡아먹습니다</div>
+      <div class="plot" id="before" style="margin-top:22px"></div>
+      <div class="plotcap">몇 개가 <b class="am">멀리 튀어</b> 있으면, 나머지 값들은<br>가운데에 뭉쳐 <b class="am">구분이 사라집니다.</b></div>
+      <div class="spread am">최대 &minus; 최소 <b>넓음</b><br><span>눈금 대부분이 빈 구간에 쓰입니다</span></div>
+    </div>
+
+    <div class="panel">
+      <div class="ptitle" style="color:var(--c-22a7bd)">하다마드 회전 뒤에는</div>
+      <div class="pdesc">튀는 값을 여러 채널로 퍼뜨린 다음 양자화</div>
+      <div class="plot" id="after" style="margin-top:22px"></div>
+      <div class="plotcap">고르게 퍼지니 <b class="cy">같은 4비트로도</b> 값들이<br>서로 구분됩니다.</div>
+      <div class="spread cy">최대 &minus; 최소 <b>좁음</b><br><span>좌표가 <b style="color:var(--c-c3ccd6)">예측 가능한 분포(베타)</b>를 따릅니다</span></div>
+    </div>
+
+    <div class="panel" style="width:380px">
+      <div class="ptitle">대표적인 두 방법</div>
+      <div class="steps" style="margin-top:10px">
+        <div class="st"><span class="stn">1</span><div><b>QuaRot</b> &mdash; 회전을 곱해 이상치를 분산시킨 뒤 양자화. 가중치·활성값·KV캐시를 통째로 <b>4비트</b>까지 내려도 정확도 99% 이상을 유지한다고 보고됐습니다.</div></div>
+        <div class="st"><span class="stn">2</span><div><b>TurboQuant</b> &mdash; 회전 후 좌표별 최적 양자화기를 설계하고 1비트 보정으로 내적 편향을 없앱니다. <b>3.5비트에서 손실 없음</b>, 2.5비트까지도 미미.</div></div>
+      </div>
+      <div class="cost">
+        <em>대가 &mdash; 회전은 공짜가 아닙니다</em>
+        쓸 때마다 <b>입력에 회전 행렬을 곱해야</b> 합니다. 가중치 쪽은 미리 돌려 두면 품질만 얻지만,
+        읽을 때마다 되펼치는 KV캐시에서는 <b>연산이 붙습니다.</b>
+      </div>
+      <div class="cap" style="margin-top:16px; line-height:1.7; font-size:13px">
+        KV캐시가 줄면 <b style="color:var(--c-c3ccd6)">같은 GPU에 더 많은 요청</b>을 올릴 수 있습니다 &mdash; 곧 처리량입니다.
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>회전은 분포를 예측 가능하게 만듭니다.</b> 그래서 데이터를 보지 않고도 최적 눈금을 미리 설계할 수 있고,
+    <b>가중치와 KV캐시 양쪽</b>에서 같은 비트로 더 나은 품질을 얻습니다.
+  </div>
+
+<script>
+let seed = 5;
+function rnd(){ seed = (seed*1103515245+12345)%2147483648; return seed/2147483648; }
+
+function draw(id, spread, outliers) {
+  const host = document.getElementById(id);
+  const H = 250, W = 340;
+  // 양자화 눈금이 실제로 쓰이는 구간
+  const bandH = spread * H;
+  const band = document.createElement('div');
+  band.className = 'band';
+  band.style.height = bandH + 'px';
+  band.style.top = (H/2 - bandH/2) + 'px';
+  host.appendChild(band);
+
+  for (let i = 0; i < 150; i++) {
+    const d = document.createElement('div');
+    const isOut = outliers && i % 30 === 0;
+    let y;
+    if (isOut) y = rnd() < 0.5 ? 8 + rnd()*22 : H - 30 + rnd()*22;
+    else y = H/2 + (rnd()-0.5) * bandH * 0.92;
+    d.className = 'dot';
+    d.style.left = (8 + rnd() * (W - 20)) + 'px';
+    d.style.top = y + 'px';
+    d.style.background = isOut ? 'var(--c-c47d15)' : (id === 'after' ? 'var(--c-0e8fa3)' : 'var(--c-3f4c58)');
+    host.appendChild(d);
+  }
+}
+draw('before', 0.16, true);
+draw('after', 0.72, false);
+</script>
+</body>
+</html>

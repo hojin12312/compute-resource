@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:74px; }
+  /* flex-shrink:0 필수 — 없으면 긴 막대 행만 눌려 0% 선과 막대 길이가 함께 틀어집니다 */
+  .bar { display:flex; align-items:center; gap:15px; margin-top:17px; }
+  .blab { flex:0 0 250px; text-align:right; font-size:13.5px; color:var(--c-c3ccd6); line-height:1.4; }
+  .blab span { display:block; font-size:11.5px; color:var(--c-7d8896); margin-top:3px; }
+  .zero { flex:0 0 2px; background:var(--c-3d4650); height:34px; }
+  .track { flex:0 0 auto; height:34px; }
+  .bval { flex:0 0 auto; font-size:17px; font-weight:700; white-space:nowrap; }
+
+  .big { font-size:56px; font-weight:700; letter-spacing:-.03em; line-height:1; }
+  .kv { font-size:13.5px; color:var(--c-9aa7b4); line-height:1.7; margin-top:12px; }
+  .kv b { color:var(--c-e6edf3); font-weight:700; }
+  .why { border-left:2px solid var(--c-2b333d); padding-left:18px; margin-top:30px;
+         font-size:13.5px; color:var(--c-8b96a3); line-height:1.8; }
+  .why b { color:var(--c-c3ccd6); font-weight:600; }
+</style>
+</head>
+<body>
+  <h1>발표 다음날, <span class="am">반도체가 흔들렸습니다</span></h1>
+  <div class="sub">2026년 7월 16일 Kimi K3 공개 &rarr; 7월 17일 프리마켓. 2025년 1월 "딥시크 모먼트"와 패턴이 거의 같습니다.</div>
+
+  <div class="panels" style="margin-top:34px; gap:60px">
+    <div class="panel" style="width:850px">
+      <div class="ptitle">7월 17일 하락률</div>
+      <div class="pdesc">왼쪽 끝이 0% &mdash; 막대가 길수록 많이 빠졌습니다</div>
+      <div style="margin-top:14px" id="bars"></div>
+    </div>
+
+    <div class="panel" style="width:330px">
+      <div class="ptitle">누적으로 보면</div>
+      <div class="pdesc">2026년 6월 22일 이후</div>
+      <div class="big am" style="margin-top:20px">3.3조<br>달러</div>
+      <div class="kv">반도체 섹터 시가총액이<br><b>증발한 상태</b>였습니다.</div>
+
+      <div class="why">
+        이 조정은 K3 발표 <b>이전부터</b> 진행 중이었고,<br>
+        발표가 하락을 <b>가속시켰다</b>는 분석입니다.
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    시장이 반응한 문장은 하나였습니다 &mdash; <b>"최첨단 GPU 없이도 프론티어급 모델이 나온다"</b>
+  </div>
+
+<script>
+const D = [
+  { n: 'TSMC',                 s: '대만 · 파운드리',        v: 7.3 },
+  { n: '대만 가권지수 TAIEX',    s: '대만 증시 전체',         v: 6.5 },
+  { n: '블룸버그 아시아 반도체', s: '아시아 반도체 지수',      v: 6.0 },
+  { n: 'NVDA',                 s: '엔비디아',               v: 2.0 },
+  { n: '나스닥 선물',           s: '프리마켓 · 매체별 편차',   v: 1.7 },
+  { n: 'S&P 500 선물',         s: '프리마켓',               v: 0.8 },
+];
+const SCALE = 68;   // 1%당 px — 최장 막대(7.3%)가 패널 안에 들어가는 최댓값. 넘으면 flex가 눌러 비율이 깨집니다
+const host = document.getElementById('bars');
+D.forEach(d => {
+  const row = document.createElement('div'); row.className = 'bar';
+  row.innerHTML =
+    '<div class="blab">' + d.n + '<span>' + d.s + '</span></div>' +
+    '<div class="zero"></div>' +
+    '<div class="track amber" style="width:' + (d.v * SCALE) + 'px; opacity:' + (0.45 + d.v / 14) + '"></div>' +
+    '<div class="bval am">−' + d.v.toFixed(1) + '%</div>';
+  host.appendChild(row);
+});
+</script>
+</body>
+</html>

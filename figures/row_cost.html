@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:52px; }
+  .legend { margin-top:18px; }
+  .sw.cache { background:var(--c-2b333d); }
+  .sw.fresh { background:var(--c-0e8fa3); }
+  .sw.link  { background:var(--c-2f6b78); }
+
+  .stages { display:flex; align-items:flex-start; gap:34px; margin-top:28px; }
+  .stage { width:382px; }
+  .stage + .stage { border-left:1px solid var(--c-21262d); padding-left:34px; width:416px; }
+  .stagehead { display:flex; align-items:baseline; gap:10px; }
+  .turn { font-size:16px; font-weight:700; color:var(--c-c3ccd6); }
+  .note { font-size:12px; color:var(--c-7d8896); }
+
+  /* 블록 폭은 최대 7블록(턴 3) 기준으로 고정합니다.
+     52px × 7 + 3px 간격 × 6 = 382px = 한 칸의 폭.
+     블록이 적은 턴은 오른쪽에 그만큼 여백이 남습니다. */
+  .scene { height:278px; position:relative; margin-top:12px; }
+  .tape { position:absolute; left:0; bottom:44px; width:var(--tw); height:56px; display:flex; gap:3px; }
+  .block { width:52px; flex:none; height:56px; border-radius:3px; display:flex; align-items:center;
+           justify-content:center; padding:0 5px; text-align:center; font-size:11.5px; font-weight:700; }
+  .old { background:var(--c-2b333d); color:var(--c-8b96a3); }
+  .new { background:var(--c-0e8fa3); color:var(--c-0d1117); }
+  .readlabel { position:absolute; left:0; bottom:12px; width:var(--tw); text-align:center;
+               white-space:nowrap; font-size:12px; color:var(--c-7d8896); }
+  .readlabel b { color:var(--c-c3ccd6); font-size:13px; }
+
+  svg { position:absolute; inset:0; width:100%; height:230px; overflow:visible; }
+  path { fill:none; stroke:var(--c-2f6b78); stroke-width:2; stroke-dasharray:5 5; }
+  circle { fill:var(--c-22a7bd); }
+  .callout {
+    position:absolute; top:12px; right:0; padding:11px 13px; border-radius:4px;
+    background:var(--c-161b22); color:var(--c-8b96a3); font-size:12px; line-height:1.55;
+  }
+  .callout b { color:var(--c-c3ccd6); }
+
+  /* 아래 막대는 "제곱 / 선형 / 상수"를 말이 아니라 높이로 보여 주는 자리입니다.
+     같은 폭의 띠 두 개를 나란히 두면 '일정'과 '증가'가 똑같이 보였습니다. */
+  .growth { display:flex; gap:44px; margin-top:16px; align-items:flex-start; }
+  .gleft { flex:none; width:604px; }
+  .chart { display:flex; gap:52px; align-items:flex-end; margin-top:16px; }
+  .bars { display:flex; gap:9px; align-items:flex-end; height:112px;
+          border-bottom:1px solid var(--c-3b4652); }
+  .bcol { width:46px; display:flex; flex-direction:column; justify-content:flex-end;
+          align-items:center; }
+  .bv { font-size:13px; font-weight:700; margin-bottom:5px; }
+  .bv.miss { color:var(--c-e0912a); } .bv.hit { color:var(--c-22a7bd); } .bv.flat { color:var(--c-7d8896); }
+  .b { display:block; width:46px; border-radius:3px 3px 0 0; }
+  .b.miss { background:var(--c-c47d15); }
+  .b.hit  { background:var(--c-0e8fa3); }
+  .b.flat { background:var(--c-2b333d); }
+  .gname { margin-top:9px; text-align:center; font-size:13px; font-weight:700; color:var(--c-c3ccd6); }
+  .gname em { font-style:normal; font-weight:400; color:var(--c-7d8896); }
+
+  .gright { flex:1; padding-top:26px; }
+  .gitem { display:flex; gap:12px; margin-bottom:19px; }
+  .gitem:last-child { margin-bottom:0; }
+  .gsw { width:13px; height:13px; border-radius:3px; flex-shrink:0; margin-top:4px; }
+  .gsw.miss { background:var(--c-c47d15); }
+  .gsw.hit  { background:var(--c-0e8fa3); }
+  .gsw.flat { background:var(--c-2b333d); }
+  .gitem b { display:block; font-size:14.5px; margin-bottom:3px; }
+  .gitem span { font-size:12.5px; color:var(--c-8b96a3); line-height:1.6; }
+  .gitem span b { display:inline; font-size:inherit; color:var(--c-c3ccd6); margin:0; }
+</style>
+</head>
+<body>
+  <h1><span class="cy">재계산하지 않음</span>은 <span class="am">보지 않음</span>이 아닙니다</h1>
+  <div class="sub">같은 길이의 새 입력을 붙여도, 그 입력은 앞에 저장된 KV 전체를 읽으며 답을 계산합니다.</div>
+
+  <div class="legend">
+    <div><span class="sw cache"></span>저장된 KV &mdash; 다시 계산하지 않음</div>
+    <div><span class="sw fresh"></span>이번 턴의 새 입력 &mdash; 새로 계산</div>
+    <div><span class="sw link"></span>새 입력이 과거 KV를 읽음</div>
+  </div>
+
+  <div class="stages">
+    <div class="stage">
+      <div class="stagehead"><span class="turn">턴 1</span><span class="note">짧은 작업 기록</span></div>
+      <div class="scene" style="--tw:162px">
+        <div class="callout">새 입력은 앞의 <b>2개 블록</b>을 읽습니다</div>
+        <svg viewBox="0 0 382 230" aria-hidden="true">
+          <path d="M136 178 Q103 68 26 178"></path>
+          <path d="M136 178 Q120 90 81 178"></path>
+          <circle cx="136" cy="178" r="5"></circle>
+        </svg>
+        <div class="tape">
+          <div class="block old">지침</div>
+          <div class="block old">요청</div>
+          <div class="block new">파일</div>
+        </div>
+        <div class="readlabel">새로 프리필 <b>1블록</b> · 읽을 KV <b>2블록</b></div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="stagehead"><span class="turn">턴 2</span><span class="note">도구 결과가 쌓임</span></div>
+      <div class="scene" style="--tw:272px">
+        <div class="callout">새 입력은 앞의 <b>4개 블록</b>을 읽습니다</div>
+        <svg viewBox="0 0 382 230" aria-hidden="true">
+          <path d="M246 178 Q180 28 26 178"></path>
+          <path d="M246 178 Q197 48 81 178"></path>
+          <path d="M246 178 Q213 68 136 178"></path>
+          <path d="M246 178 Q230 90 191 178"></path>
+          <circle cx="246" cy="178" r="5"></circle>
+        </svg>
+        <div class="tape">
+          <div class="block old">지침</div>
+          <div class="block old">요청</div>
+          <div class="block old">파일</div>
+          <div class="block old">응답</div>
+          <div class="block new">도구</div>
+        </div>
+        <div class="readlabel">새로 프리필 <b>1블록</b> · 읽을 KV <b>4블록</b></div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="stagehead"><span class="turn">턴 3</span><span class="note">긴 에이전트 컨텍스트</span></div>
+      <div class="scene" style="--tw:382px">
+        <div class="callout">새 입력은 앞의 <b>6개 블록</b>을 읽습니다</div>
+        <svg viewBox="0 0 382 230" aria-hidden="true">
+          <path d="M356 178 Q257 -14 26 178"></path>
+          <path d="M356 178 Q274 6 81 178"></path>
+          <path d="M356 178 Q290 28 136 178"></path>
+          <path d="M356 178 Q307 48 191 178"></path>
+          <path d="M356 178 Q323 68 246 178"></path>
+          <path d="M356 178 Q340 90 301 178"></path>
+          <circle cx="356" cy="178" r="5"></circle>
+        </svg>
+        <div class="tape">
+          <div class="block old">지침</div>
+          <div class="block old">요청</div>
+          <div class="block old">파일</div>
+          <div class="block old">응답</div>
+          <div class="block old">도구</div>
+          <div class="block old">수정</div>
+          <div class="block new">테스트</div>
+        </div>
+        <div class="readlabel">새로 프리필 <b>1블록</b> · 읽을 KV <b>6블록</b></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="growth">
+    <div class="gleft">
+      <div class="ptitle">그래서 턴이 쌓이면 연산량은 이렇게 갑니다</div>
+      <div class="pdesc" style="margin-bottom:0">위 그림과 같은 블록 기준으로 센 어텐션 연산량입니다</div>
+      <div class="chart">
+        <div>
+          <div class="bars">
+            <div class="bcol"><span class="bv miss">6</span><i class="b miss" style="height:24px"></i></div>
+            <div class="bcol"><span class="bv hit">3</span><i class="b hit" style="height:12px"></i></div>
+            <div class="bcol"><span class="bv flat">1</span><i class="b flat" style="height:5px"></i></div>
+          </div>
+          <div class="gname">턴 1 <em>· 3블록</em></div>
+        </div>
+        <div>
+          <div class="bars">
+            <div class="bcol"><span class="bv miss">15</span><i class="b miss" style="height:60px"></i></div>
+            <div class="bcol"><span class="bv hit">5</span><i class="b hit" style="height:20px"></i></div>
+            <div class="bcol"><span class="bv flat">1</span><i class="b flat" style="height:5px"></i></div>
+          </div>
+          <div class="gname">턴 2 <em>· 5블록</em></div>
+        </div>
+        <div>
+          <div class="bars">
+            <div class="bcol"><span class="bv miss">28</span><i class="b miss" style="height:112px"></i></div>
+            <div class="bcol"><span class="bv hit">7</span><i class="b hit" style="height:28px"></i></div>
+            <div class="bcol"><span class="bv flat">1</span><i class="b flat" style="height:5px"></i></div>
+          </div>
+          <div class="gname">턴 3 <em>· 7블록</em></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gright">
+      <div class="gitem">
+        <span class="gsw miss"></span>
+        <div><b class="am">캐시 미스 &mdash; 제곱으로</b>
+          <span>매 턴 컨텍스트 전체를 다시 프리필합니다. 블록이 <b>3 → 5 → 7</b>로 느는 동안 연산량은 <b>6 → 15 → 28</b>.</span></div>
+      </div>
+      <div class="gitem">
+        <span class="gsw hit"></span>
+        <div><b class="cy">캐시 히트 &mdash; 선형으로</b>
+          <span>새로 <b>계산</b>하는 건 늘 꼬리 한 블록입니다. 그런데 그 한 블록이 <b>과거 전부를 읽어야</b> 하니 <b>3 → 5 → 7</b>.</span></div>
+      </div>
+      <div class="gitem">
+        <span class="gsw flat"></span>
+        <div><b>상수는 아닙니다</b>
+          <span>새로 계산하는 <b>블록 수만</b> 세면 <b>1 → 1 → 1</b>입니다. 실제 청구서는 이 납작한 선이 아닙니다.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    캐시는 과거의 <b>계산 결과</b>를 재사용합니다. 새 입력이 과거를 <b>참조하는 비용</b>까지 없애지는 않습니다.
+  </div>
+</body>
+</html>

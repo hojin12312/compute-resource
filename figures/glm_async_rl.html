@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:42px; }
+  h1 { font-size:29px; }
+  .sub { margin-top:9px; font-size:13.5px; }
+
+  /* 좌우 배치입니다 — 동기가 왼쪽, 비동기가 오른쪽 (2026-07-31 변경).
+     세션 24에는 위아래로 쌓았습니다. "시간 축이 같아야 유휴가 눈에 잡힌다"는 이유였는데,
+     쌓으니 카드 하나가 1,264px로 너무 길어 한 줄을 훑는 눈이 오히려 비교를 놓쳤습니다
+     (호진님 지적). 좌우로 놓되 **두 도표의 폭·시간 배율·행 높이를 똑같이** 맞춰서
+     시간 축을 공유하는 성질은 유지합니다. 같은 x가 두 도표에서 같은 시각입니다.
+     그리고 슬롯을 4개 → **12개**로 늘려 세로를 채웠습니다 — 왼쪽은 회색 유휴가 계단처럼
+     쌓이고 오른쪽은 시안이 끝까지 이어지는 것이 면적으로 대비됩니다. */
+  .panels { gap:28px; margin-top:20px; align-items:stretch; }
+  .box {
+    flex:1 1 0;
+    min-width:0;
+    display:flex; flex-direction:column;
+    padding:14px 20px;
+    border-radius:12px;
+    border:1px solid var(--c-333d47);
+    background:var(--c-161b22);
+  }
+  /* 앰버 = 낭비가 있는 쪽, 시안 = 낭비를 없앤 쪽. 6장 다른 그림과 같은 규칙입니다. */
+  .box.sync  { background:var(--c-221a0d); border-color:var(--c-4a3a1c); }
+  .box.async { background:var(--c-0f2930); border-color:var(--c-17505c); }
+
+  .kicker {
+    font:700 10px "IBM Plex Mono", "Pretendard Variable", monospace;
+    color:var(--c-8b96a3);
+    letter-spacing:.09em;
+  }
+  .btitle { margin-top:6px; font-size:16.5px; font-weight:700; letter-spacing:-.01em; }
+
+  /* 시간 도표 */
+  .gcap {
+    display:flex; justify-content:space-between; gap:10px;
+    margin-top:12px;
+    font-size:10.5px; color:var(--c-8b96a3);
+  }
+  .gantt { position:relative; margin-top:8px; display:flex; flex-direction:column; gap:5px; }
+  .grow { display:grid; grid-template-columns:56px 1fr; gap:9px; align-items:center; }
+  .glab { font-size:11px; color:var(--c-8b96a3); text-align:right; }
+  .track { display:flex; height:22px; border-radius:3px; overflow:hidden; background:var(--c-1b2027); }
+  .track i {
+    display:flex; align-items:center; justify-content:center;
+    font-size:10px; font-weight:600; white-space:nowrap; overflow:hidden;
+  }
+  /* 밝은 시안 면 위의 글자는 어두운 먹입니다 — indexshare.html의 .picked와 같은 짝입니다.
+     --ink-on-cy-fill은 더 어두운 시안(--c-17505c) 위에 쓰는 값이라 여기서는 대비 2.65로
+     떨어집니다(split_gain.html이 그 자리에 씁니다). */
+  .gen  { background:var(--c-0e8fa3); color:var(--c-0d1117); }
+  .gen + .gen { border-left:1px solid var(--c-0d1117); }
+  .idle { background:var(--c-2b333d); color:var(--c-c3ccd6); }
+  .upd  { background:var(--c-8b6ff0); color:var(--c-0d1117); }
+
+  /* 버전은 막대가 아니라 **시간축**의 성질입니다. 세그먼트 안에 버전을 적으면
+     궤적 경계가 교체 시점을 넘는 경우를 한 버전으로 잘못 표기하게 됩니다
+     — 그리고 그렇게 넘는 것이 바로 비동기가 내는 대가입니다.
+     칸을 채우지 않습니다. 중립 회색 면은 패널 대비 1.3까지 떨어져 보이지 않고,
+     어차피 칸을 가르는 것은 아래로 이어지는 점선입니다. */
+  .vrow { margin-bottom:3px; }
+  .vbar { display:flex; height:15px; align-items:center; }
+  .vbar i {
+    display:flex; align-items:center; justify-content:center; gap:5px;
+    font-size:10px; font-weight:700; color:var(--c-9aa7b4); white-space:nowrap; overflow:hidden;
+  }
+  .vbar b { font:700 10px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-c3ccd6); }
+
+  .grow.learner { margin-top:5px; padding-top:7px; border-top:1px solid var(--c-3f4c58); }
+  .grow.learner .glab { color:var(--c-c3ccd6); font-weight:700; }
+
+  /* 가중치 교체 시점 — 동기는 배치 끝에 하나, 비동기는 도중에 여러 번입니다.
+     라벨 칸(56px + 간격 9px)만큼 안쪽에서 시작해야 막대와 맞습니다. */
+  .gates { position:absolute; left:65px; right:0; top:-5px; bottom:-5px; }
+  .gate { position:absolute; top:0; bottom:0; width:0; border-left:1px dashed var(--c-9aa7b4); }
+
+  .bnote { margin-top:auto; padding-top:11px; font-size:11.5px; color:var(--c-8b96a3); line-height:1.6; }
+  .bnote b { color:var(--c-c3ccd6); font-weight:700; }
+</style>
+</head>
+<body>
+  <h1>비동기 강화학습 &mdash; <span class="cy">기다림을 없애고 버전 어긋남을 받습니다</span></h1>
+  <div class="sub">답을 생성하는 쪽과 배우는 쪽을 다른 GPU에 놓습니다. GLM-5 리포트의 축이고
+    GLM-5.2가 이 파이프라인을 물려받았습니다.</div>
+
+  <div class="panels">
+    <div class="box sync">
+      <div class="kicker">동기 &middot; GLM-4.5까지</div>
+      <div class="btitle">배치는 <span class="am">가장 느린 궤적</span>이 끝나야 닫힙니다</div>
+
+      <div class="gcap">
+        <span>궤적 길이가 크게 다릅니다</span>
+        <span>가로축 = 시간 &middot; 점선 = 배치 닫힘</span>
+      </div>
+      <div class="gantt" id="g-sync"></div>
+
+      <div class="bnote">먼저 끝난 슬롯도, 학습 엔진도 <b>그때까지 놉니다.</b>
+        얻는 것은 배치 전체가 같은 버전에서 나온다는 깔끔함입니다.</div>
+    </div>
+
+    <div class="box async">
+      <div class="kicker">비동기 &middot; GLM-5부터</div>
+      <div class="btitle">닿는 대로 넘기고 <span class="cy">가중치는 도중에 갈아 끼웁니다</span></div>
+
+      <div class="gcap">
+        <span>임계치에 닿는 대로 학습 엔진으로</span>
+        <span>같은 시간 축 &middot; 점선 = 가중치 교체</span>
+      </div>
+      <div class="gantt" id="g-async"></div>
+
+      <div class="bnote">유휴가 사라진 대가는 <b>궤적 경계와 가중치 교체가 맞지 않는 것</b>입니다.
+        한 배치 안의 궤적이 서로 다른 버전에서 나옵니다.</div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>롤아웃 엔진은 그냥 추론 서버입니다</b> &mdash; 그래서 리포트 후반부에 프리필&middot;디코딩 분리와
+    캐시 히트, FP8, 투기적 디코딩이 그대로 나옵니다. 유휴 비율은 발표되지 않아 막대 길이는 개념도입니다.
+  </div>
+
+<script>
+/* 두 도표의 시간 축은 같습니다 — 폭 100%가 같은 시각까지이고, 동기는 84%에서 배치가
+   닫힌 뒤 16%를 갱신에 씁니다. 그래서 같은 x가 두 도표에서 같은 시각입니다.
+   슬롯 12개는 개념도입니다(유휴 비율은 발표되지 않았습니다 — foot에 밝혀 뒀습니다). */
+const CLOSE = 84;                     /* 동기 배치가 닫히는 시각 */
+const SYNC = [                        /* 슬롯별 생성 길이 — 나머지는 기다림입니다 */
+  29, 49, 36, CLOSE, 22, 61, 41, 33, 71, 55, 44, 66,
+];
+const ASYNC = [                       /* 슬롯별 궤적 경계 — 합이 100입니다 */
+  [24, 30, 46], [44, 21, 35], [17, 38, 45], [79, 21], [31, 27, 42],
+  [12, 36, 25, 27], [52, 48], [26, 33, 41], [38, 29, 33], [20, 45, 35],
+  [35, 30, 35], [22, 41, 37],
+];
+/* 긴 라벨은 그 칸이 넉넉할 때만 답니다 — 좁은 칸에 글자를 넣으면 잘립니다. */
+const SYNC_LONG = '생성 &middot; 가장 긴 궤적이 배치를 붙잡습니다';
+const ASYNC_LONG = '이 궤적 하나가 세 버전에 걸칩니다';
+
+function row(label, inner, cls) {
+  return '<div class="grow' + (cls ? ' ' + cls : '') + '"><span class="glab">' + label +
+         '</span><div class="track">' + inner + '</div></div>';
+}
+function seg(cls, w, text) {
+  return '<i class="' + cls + '" style="width:' + w + '%">' + (text || '') + '</i>';
+}
+
+/* ── 동기 ─────────────────────────────────────────────────────────── */
+let h = '<div class="gates"><div class="gate" style="left:' + CLOSE + '%"></div></div>' +
+  '<div class="grow vrow"><span class="glab">모델 버전</span><div class="vbar">' +
+  '<i style="width:' + CLOSE + '%">배치 전체가 <b>w1</b></i>' +
+  '<i style="width:' + (100 - CLOSE) + '%"><b>w2</b></i></div></div>';
+SYNC.forEach((gen, i) => {
+  const idle = CLOSE - gen;
+  h += row('슬롯 ' + (i + 1),
+    seg('gen', gen, gen === CLOSE ? SYNC_LONG : '생성') +
+    (idle > 0 ? seg('idle', idle, idle >= 20 ? '기다림' : '') : ''));
+});
+h += row('학습 엔진', seg('idle', CLOSE, '유휴') + seg('upd', 100 - CLOSE, '갱신'), 'learner');
+document.getElementById('g-sync').innerHTML = h;
+
+/* ── 비동기 ───────────────────────────────────────────────────────── */
+h = '<div class="gates"><div class="gate" style="left:32%"></div>' +
+    '<div class="gate" style="left:66%"></div></div>' +
+    '<div class="grow vrow"><span class="glab">모델 버전</span><div class="vbar">' +
+    '<i style="width:32%"><b>w1</b></i><i style="width:34%"><b>w2</b></i>' +
+    '<i style="width:34%"><b>w3</b></i></div></div>';
+ASYNC.forEach((parts, i) => {
+  h += row('슬롯 ' + (i + 1), parts.map(w =>
+    seg('gen', w, w >= 70 ? ASYNC_LONG : (w >= 17 ? '궤적' : ''))).join(''));
+});
+h += row('학습 엔진',
+  seg('upd', 100, '받는 대로 갱신 &middot; 가중치를 밀 때마다 옵티마이저 리셋'), 'learner');
+document.getElementById('g-async').innerHTML = h;
+</script>
+</body>
+</html>

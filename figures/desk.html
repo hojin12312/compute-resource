@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:44px; }
+
+  /* ── 공식 해부: 각 항 아래에 브래킷과 이름표를 답니다 ────────────────── */
+  .f { display:flex; align-items:flex-start; justify-content:center;
+       gap:10px; margin-top:26px; }
+  .lit { font-size:19px; color:var(--c-8b96a3); padding-top:11px; white-space:nowrap; }
+  .grp { display:flex; flex-direction:column; align-items:center; }
+  .grp b { font-size:19px; font-weight:600; color:var(--c-e6edf3); white-space:nowrap;
+           padding:9px 14px; border-radius:5px; }
+  .grp i { display:block; height:2px; width:100%; margin-top:2px; font-style:normal; }
+  .grp em { font-style:normal; font-size:14px; font-weight:700; margin-top:9px; white-space:nowrap; }
+  .grp small { display:block; font-size:11.5px; color:var(--c-7d8896); margin-top:4px; font-weight:400; }
+
+  .am-b  { background:var(--a-37); }
+  .cy-b  { background:var(--a-36); }
+  .am-l  { background:var(--c-c47d15); }
+  .cy-l  { background:var(--c-0e8fa3); }
+
+  /* ── 곱셈 경고 ───────────────────────────────────────────────────────── */
+  .mul { margin-top:30px; text-align:center; font-size:16.5px; color:var(--c-9aa7b4); }
+  .mul b { color:var(--c-e0912a); font-weight:700; font-size:19px; }
+
+  /* ── 항별 체감과 손잡이 ──────────────────────────────────────────────── */
+  .cards { display:flex; gap:18px; margin-top:26px; }
+  .card { flex:1 1 0; border:1px solid var(--c-21262d); border-radius:8px; padding:19px 19px; }
+  .cnum { font-size:11px; color:var(--c-7d8896); }
+  .cname { font-size:16px; font-weight:700; color:var(--c-e6edf3); margin-top:4px; }
+  .cbody { font-size:13.5px; color:var(--c-8b96a3); margin-top:11px; line-height:1.7; min-height:76px; }
+  .cbody b { color:var(--c-c3ccd6); font-weight:700; }
+  .chandle { margin-top:2px; padding-top:12px; border-top:1px solid var(--c-1b2027); font-size:12.5px; }
+
+  /* ── 가중치 한 벌 vs 사용자마다 ──────────────────────────────────────── */
+  .vs { display:flex; gap:18px; margin-top:28px; }
+  .vsbox { flex:1 1 0; border-radius:8px; padding:18px; display:flex;
+           align-items:center; gap:16px; }
+  .vsw { border:1px solid var(--c-4a3a1c); background:var(--c-221a0d); }
+  .vsk { border:1px solid var(--c-17505c); background:var(--c-0f2930); }
+  .vslab { font-size:14px; font-weight:700; white-space:nowrap; }
+  .vstxt { font-size:13px; color:var(--c-9aa7b4); line-height:1.6; }
+  .vstxt b { color:var(--c-e6edf3); font-weight:700; }
+  /* 책상 도식 — 칸 수는 실제 값이 아니라 길이 감각을 위한 그림입니다.
+     div 칸이 아니라 SVG로 그립니다(2026-08-03 변경). 칸이 4px이라 캡처 배율
+     (zoom 1.395 × DPR 2 = 2.79)에서 11.16 디바이스 픽셀이 되는데, 크로미움이
+     박스마다 페인트 좌표를 정수로 스냅해 10px과 12px로 갈렸습니다(캡처 실측).
+     SVG는 viewBox를 통째로 변환하므로 배율과 무관하게 칸이 균일합니다. */
+  .desks svg { display:block; }
+  .dbar { fill:var(--c-0e8fa3); }
+</style>
+</head>
+<body>
+  <h1>KV캐시는 <span class="am">네 가지가 곱해진</span> 값입니다</h1>
+  <div class="sub">공식은 복잡해 보이지만, 실무에서 기억할 건 <b style="color:var(--c-c3ccd6)">무엇에 비례하느냐</b> 넷뿐입니다.</div>
+
+  <div class="legend">
+    <div><span class="sw cyan"></span>아키텍처와 양자화로 줄일 수 있는 항</div>
+    <div><span class="sw amber"></span>사용자가 정하는 값 &mdash; 서비스는 손댈 수 없음</div>
+  </div>
+
+  <div class="f">
+    <span class="lit">KV캐시(byte) &nbsp;=&nbsp; 2 &nbsp;&times;</span>
+
+    <span class="grp">
+      <b class="am-b">batch</b><i class="am-l"></i>
+      <em class="am">1 &middot; 사용자 수</em>
+    </span>
+    <span class="lit">&times;</span>
+
+    <span class="grp">
+      <b class="am-b">seq len</b><i class="am-l"></i>
+      <em class="am">2 &middot; 대화 길이</em>
+    </span>
+    <span class="lit">&times;</span>
+
+    <span class="grp">
+      <b class="cy-b">layer 수 &times; KV head 수 &times; head dim</b><i class="cy-l"></i>
+      <em class="cy">3 &middot; 모델 사이즈</em>
+    </span>
+    <span class="lit">&times;</span>
+
+    <span class="grp">
+      <b class="cy-b">정밀도(byte)</b><i class="cy-l"></i>
+      <em class="cy">4 &middot; 양자화 정도</em>
+    </span>
+  </div>
+
+  <div class="mul">
+    넷은 <b>더해지는 게 아니라 곱해집니다</b> &mdash; 각각은 순한 비례인데, 겹치는 순간 폭발합니다.
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="cnum">1</div>
+      <div class="cname am">사용자 수</div>
+      <div class="cbody">동시 접속 <b>100명이면 캐시도 100배</b>입니다.<br>가중치와 달리 나눠 쓸 수가 없습니다.</div>
+      <div class="chandle" style="color:var(--c-7d8896)">손잡이 없음 &mdash; 사용자가 정합니다</div>
+    </div>
+    <div class="card">
+      <div class="cnum">2</div>
+      <div class="cname am">대화 길이</div>
+      <div class="cbody">길어질수록 <b>선형으로</b> 자랍니다.<br>그리고 이 값이 3년 만에 <b>256배</b>가 됐습니다.</div>
+      <div class="chandle" style="color:var(--c-7d8896)">손잡이 없음 &mdash; 사용자가 정합니다</div>
+    </div>
+    <div class="card">
+      <div class="cnum">3</div>
+      <div class="cname cy">모델 사이즈</div>
+      <div class="cbody">큰 모델일수록 <b>토큰 하나를 기억하는 값</b>도 비쌉니다.<br>레이어와 KV 헤드가 많아서입니다.</div>
+      <div class="chandle cy">6장 &mdash; 아키텍처가 깎습니다</div>
+    </div>
+    <div class="card">
+      <div class="cnum">4</div>
+      <div class="cname cy">양자화 정도</div>
+      <div class="cbody">FP16 &rarr; FP8이면 <b>절반</b>, FP4면 <b>1/4</b>입니다.<br>곱해지는 항이라 효과가 큽니다.</div>
+      <div class="chandle cy">7장 &mdash; 양자화가 깎습니다</div>
+    </div>
+  </div>
+
+  <div class="vs">
+    <div class="vsbox vsw">
+      <div class="vslab am">모델 가중치</div>
+      <div class="vstxt">몇 명이 쓰든 <b>한 벌만</b> 올리면 됩니다 &mdash; 3장의 청구서.</div>
+    </div>
+    <div class="vsbox vsk">
+      <div class="vslab cy">KV캐시</div>
+      <div class="desks">
+        <!-- 열 셋(칸 3·6·10). 칸 24×4 · 세로 간격 7 · 열 간격 30 · 아래 맞춤.
+             맨 아래 칸의 y는 63, 위로 갈수록 7씩 뺍니다. -->
+        <svg width="84" height="67" viewBox="0 0 84 67">
+          <rect class="dbar" x="0"  y="49" width="24" height="4" rx="1"></rect>
+          <rect class="dbar" x="0"  y="56" width="24" height="4" rx="1"></rect>
+          <rect class="dbar" x="0"  y="63" width="24" height="4" rx="1"></rect>
+
+          <rect class="dbar" x="30" y="28" width="24" height="4" rx="1"></rect>
+          <rect class="dbar" x="30" y="35" width="24" height="4" rx="1"></rect>
+          <rect class="dbar" x="30" y="42" width="24" height="4" rx="1"></rect>
+          <rect class="dbar" x="30" y="49" width="24" height="4" rx="1"></rect>
+          <rect class="dbar" x="30" y="56" width="24" height="4" rx="1"></rect>
+          <rect class="dbar" x="30" y="63" width="24" height="4" rx="1"></rect>
+
+          <rect class="dbar" x="60" y="0"  width="24" height="4" rx="1"></rect>
+          <rect class="dbar" x="60" y="7"  width="24" height="4" rx="1"></rect>
+          <rect class="dbar" x="60" y="14" width="24" height="4" rx="1"></rect>
+          <rect class="dbar" x="60" y="21" width="24" height="4" rx="1"></rect>
+          <rect class="dbar" x="60" y="28" width="24" height="4" rx="1"></rect>
+          <rect class="dbar" x="60" y="35" width="24" height="4" rx="1"></rect>
+          <rect class="dbar" x="60" y="42" width="24" height="4" rx="1"></rect>
+          <rect class="dbar" x="60" y="49" width="24" height="4" rx="1"></rect>
+          <rect class="dbar" x="60" y="56" width="24" height="4" rx="1"></rect>
+          <rect class="dbar" x="60" y="63" width="24" height="4" rx="1"></rect>
+        </svg>
+      </div>
+      <div class="vstxt"><b>사람마다 따로</b> 듭니다. 대화가 길수록 책상도 넓어집니다.<br>
+        <span style="font-size:11px;color:var(--c-7d8896)">칸 수는 길이 감각을 위한 도식입니다</span></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    가중치는 <b>한 번</b> 사면 끝이지만, 책상은 <b>손님이 올 때마다</b> 새로 놓아야 합니다.
+  </div>
+</body>
+</html>

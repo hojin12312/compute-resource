@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:84px; }
+  .bar { display:flex; align-items:center; gap:16px; margin-top:36px; }
+  .blab { width:190px; text-align:right; font-size:14px; color:var(--c-c3ccd6); line-height:1.4; }
+  .blab span { display:block; font-size:12px; color:var(--c-7d8896); margin-top:3px; }
+  .track { height:50px; border-radius:3px; min-width:4px; }
+  .bval { font-size:19px; font-weight:700; }
+  .why { font-size:12.5px; color:var(--c-7d8896); margin-left:8px; }
+
+  .rule { display:flex; align-items:baseline; gap:10px; margin-top:15px; font-size:13.5px; color:var(--c-9aa7b4); }
+  .rn { width:20px; height:20px; border-radius:50%; background:var(--c-233039); color:var(--c-c3ccd6);
+        font-size:11.5px; font-weight:700; display:inline-flex; align-items:center;
+        justify-content:center; flex-shrink:0; }
+  .rule b { color:var(--c-e6edf3); font-weight:700; }
+</style>
+</head>
+<body>
+  <h1>가격표는 <span class="cy">연산 구조를 그대로 베낀 것</span>입니다</h1>
+  <div class="sub">왜 출력이 비싸고 캐시 히트는 거의 공짜인가 &mdash; 앞의 두 장을 알면 가격표가 읽힙니다.</div>
+
+  <div style="margin-top:56px; width:1010px">
+    <div class="bar">
+      <div class="blab">출력 (디코딩)<span>토큰마다 모델 전체를 다시 읽음</span></div>
+      <div class="track amber" style="width:620px"></div>
+      <div class="bval am">5</div>
+      <div class="why">가장 비싼 연산</div>
+    </div>
+    <div class="bar">
+      <div class="blab">입력 (프리필)<span>한 번 읽고 전부 병렬 처리</span></div>
+      <div class="track cyan" style="width:124px"></div>
+      <div class="bval cy">1</div>
+      <div class="why">기준</div>
+    </div>
+    <div class="bar">
+      <div class="blab">입력 &mdash; 캐시 히트<span>이미 계산해 둔 것을 재사용</span></div>
+      <div class="track cyan" style="width:12px"></div>
+      <div class="bval cy">0.1</div>
+      <div class="why"><b style="color:var(--c-c3ccd6)">90% 할인</b> &mdash; 연산이 거의 없으니까</div>
+    </div>
+  </div>
+
+  <div class="panels" style="margin-top:101px; gap:58px">
+    <div class="panel" style="width:520px">
+      <div class="ptitle">왜 이런 값이 나오나</div>
+      <div style="margin-top:14px">
+        <div class="rule"><span class="rn">1</span><div>출력은 토큰 하나마다 <b>모델 전체를 메모리에서 다시 읽습니다</b>. 병렬화할 방법이 없습니다.</div></div>
+        <div class="rule"><span class="rn">2</span><div>입력은 <b>한 번 읽고 전부 한꺼번에</b> 계산합니다. 같은 토큰 수라면 훨씬 쌉니다.</div></div>
+        <div class="rule"><span class="rn">3</span><div>캐시 히트는 <b>계산 자체를 건너뜁니다</b>. 저장해 둔 값을 꺼내 쓸 뿐입니다.</div></div>
+      </div>
+    </div>
+
+    <div class="panel" style="width:540px">
+      <div class="ptitle">그래서 실무에서는</div>
+      <!-- 강제 <br>를 쓰지 않습니다 — 문장이 중간에서 끊겨 읽히던 자리였습니다 -->
+      <div class="cap" style="margin-top:16px; line-height:1.85; font-size:14px">
+        <p>같은 질문을 던져도 <b style="color:var(--c-c3ccd6)">앞부분을 고정</b>해두면 요금이 자릿수로 달라집니다.</p>
+        <p style="margin-top:14px">멀티턴 에이전트가 현실적인 가격이 된 것도,
+        <b class="cy">DeepSeek V4가 캐시 히트를 2%까지</b> 내릴 수 있었던 것도 전부 이 구조 위에 있습니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    가격표는 마케팅이 아니라 <b>하드웨어가 실제로 하는 일</b>의 반영입니다.
+  </div>
+</body>
+</html>

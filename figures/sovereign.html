@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:82px; }
+  .layers { display:flex; gap:0; align-items:stretch; margin-top:30px; }
+  .step { width:322px; border:1px solid var(--c-21262d); border-radius:8px; padding:22px 24px; }
+  .step + .arrow { display:flex; align-items:center; padding:0 15px; color:var(--c-4d5661); font-size:24px; }
+  .sn { font-size:11.5px; color:var(--c-7d8896); letter-spacing:.04em; }
+  .sh { font-size:17px; font-weight:700; margin-top:9px; letter-spacing:-.01em; }
+  .sb { font-size:13px; color:var(--c-8b96a3); margin-top:13px; line-height:1.7; }
+  .sb b { color:var(--c-c3ccd6); font-weight:600; }
+
+  .conc { margin-top:36px; display:flex; gap:52px; align-items:flex-start; }
+  .cbox { font-size:14.5px; color:var(--c-c3ccd6); line-height:1.85; }
+  .cbox b { color:var(--c-e6edf3); font-weight:700; }
+  .side { border-left:1px solid var(--c-21262d); padding-left:34px; font-size:13.5px;
+          color:var(--c-8b96a3); line-height:1.8; width:420px; }
+  .side b { color:var(--c-c3ccd6); font-weight:600; }
+</style>
+</head>
+<body>
+  <h1>통제의 범위가 <span class="am">계속 넓어지고 있습니다</span></h1>
+  <div class="sub">GPU를 막는 데서 시작해, 이제는 모델 그 자체가 통제 대상입니다.</div>
+
+  <div class="layers">
+    <div class="step">
+      <div class="sn">1 &nbsp;하드웨어</div>
+      <div class="sh am">GPU 수출 규제</div>
+      <div class="sb">최신 가속기를 구할 수 없는 환경.<br>여기서 모든 게 시작됐습니다.</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="step">
+      <div class="sn">2 &nbsp;모델 설계</div>
+      <div class="sh cy">제약 속의 최적화</div>
+      <div class="sb">MoE · 선형 어텐션 · KV캐시 압축 ·<br>네이티브 저비트 양자화.<br><b>6장에서 본 것들이 전부 여기 있습니다.</b></div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="step">
+      <div class="sn">3 &nbsp;모델 그 자체</div>
+      <div class="sh am">배포 통제</div>
+      <div class="sb">앞선 모델은 국내 전용으로 묶고<br>뒤처진 것만 공개하는 <b>계층화</b>가<br>양국 모두에서 검토·시행되고 있습니다.</div>
+    </div>
+  </div>
+
+  <div class="conc">
+    <div class="cbox">
+      "싸게, 그러나 뛰어나게"는<br>
+      <b>선택이 아니라 제재 환경이 강제한 방향</b>이었습니다.<br>
+      이 문서에서 본 아키텍처 경쟁의 배경이 여기 있습니다.
+    </div>
+    <div class="side">
+      자국 GPU도, 자국 모델도 없는 국가는 이 흐름에서 점점 불리해집니다.
+      그래서 <b>모든 나라가 자기 자신의 AI를 만들어야 하는 시대</b>라는 말이 나옵니다.
+      같은 논리를 개인 단위로 좁혀도 방향은 같습니다 &mdash; 다만 개인은 <b>칩을 설계할 수 없어</b>,
+      국가 간 GPU 배분과 모델 경량화에 그대로 종속됩니다.
+    </div>
+  </div>
+
+  <div class="foot">
+    그리고 이 모든 흐름은 결국 <b>토큰 소모를 더 가속</b>합니다 &mdash; 2장의 폭증은 끝이 아니라 시작이었습니다.
+  </div>
+</body>
+</html>

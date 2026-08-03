@@ -1,0 +1,175 @@
+/* 문서 공통 시각 언어 — 6장 다이어그램 전부 이 파일을 씁니다.
+   색 규칙:  시안 = 싸다/새로 계산/활성    앰버 = 비싸다/전량 계산    회색 = 계산 안 함/재사용 */
+@font-face {
+  font-family:"Pretendard Variable";
+  src:url("../fonts/pretendard.woff2") format("woff2-variations");
+  font-style:normal; font-weight:45 930; font-display:block;
+}
+@font-face { font-family:"IBM Plex Mono"; src:url("../fonts/plexmono-400.woff2") format("woff2");
+  font-style:normal; font-weight:400; font-display:block; }
+@font-face { font-family:"IBM Plex Mono"; src:url("../fonts/plexmono-500.woff2") format("woff2");
+  font-style:normal; font-weight:500; font-display:block; }
+@font-face { font-family:"IBM Plex Mono"; src:url("../fonts/plexmono-600.woff2") format("woff2");
+  font-style:normal; font-weight:600; font-display:block; }
+@font-face { font-family:"IBM Plex Mono"; src:url("../fonts/plexmono-700.woff2") format("woff2");
+  font-style:normal; font-weight:700 900; font-display:block; }
+
+/* ── 색 ────────────────────────────────────────────────────────────────────
+   두 벌을 함께 둡니다. 라이트 값은 lightmap.js에서 옮긴 것이고, 그 근거(대비비와
+   색약 ΔE)는 lightmap.js 주석에 남아 있습니다. 원칙은 반전이 아니라 역할 보존입니다.
+
+   **그림에 새 색을 쓰려면 반드시 여기 두 벌을 추가하세요.** 소스에 색 리터럴을
+   직접 쓰면 라이트 테마에서 다크 색이 얼룩으로 남습니다. figures/check.js가
+   리터럴을 찾아내 실패로 보고합니다.
+
+   변수명이 hex인 이유: lightmap.js의 42개 대응과 1:1로 대조하기 위해서입니다.
+   의미 이름을 새로 지으면 옮기는 동안 오역이 섞입니다. */
+:root {
+  --c-0d1117: #0d1117;
+  --c-161b22: #161b22;
+  --c-1b2027: #1b2027;
+  --c-1c222a: #1c222a;
+  --c-232a33: #232a33;
+  --c-21262d: #21262d;
+  --c-0f2930: #0f2930;
+  --c-12333a: #12333a;
+  --c-17505c: #17505c;
+  --c-221a0d: #221a0d;
+  --c-4a3a1c: #4a3a1c;
+  --c-233039: #233039;
+  --c-2b333d: #2b333d;
+  --c-333d47: #333d47;
+  --c-3b4652: #3b4652;
+  --c-3d4650: #3d4650;
+  --c-3f4c58: #3f4c58;
+  --c-4d5661: #4d5661;
+  --c-5d6773: #5d6773;
+  --c-6b7684: #6b7684;
+  --c-7d8896: #7d8896;
+  --c-8b96a3: #8b96a3;
+  --c-9aa7b4: #9aa7b4;
+  --c-c3ccd6: #c3ccd6;
+  --c-e6edf3: #e6edf3;
+  --c-c47d15: #c47d15;
+  --c-e0912a: #e0912a;
+  --c-0e8fa3: #0e8fa3;
+  --c-22a7bd: #22a7bd;
+  --c-8b6ff0: #8b6ff0;
+  --c-a48cf5: #a48cf5;
+  --c-2f6b78: #2f6b78;
+  --c-3f6f7d: #3f6f7d;
+  --a-34: rgba(13,17,23,.5);
+  --a-35: rgba(14,143,163,.10);
+  --a-36: rgba(14,143,163,.14);
+  --a-37: rgba(196,125,21,.14);
+  /* 아래 다섯은 hex 이름을 쓸 수 없는 것들입니다.
+     --ink-score-cy 와 --ink-on-cy-tint 는 다크에서 같은 #7fbfcd인데 놓이는 자리가
+     달라 라이트 값이 갈립니다(배경 위 vs 시안 틴트 위). 그래서 역할로 이름을 붙였습니다.
+     뒤의 둘은 양쪽 테마에서 대비가 모두 충분해 같은 값을 씁니다. */
+  --ink-score-cy:   #7fbfcd;
+  --ink-on-cy-tint: #7fbfcd;
+  --ink-on-cy-fill: #b8dde5;
+  --c-96590a:       #96590a;
+  --c-6f52d6:       #6f52d6;
+  /* 격자에서 꺼진 점(비활성 전문가). 다크는 기존 값 그대로이고, 라이트만 짙게 잡았습니다 —
+     연한 시안 패널(#b8dde5) 위에서 #c2cad4는 대비 1.14로 사실상 보이지 않았습니다.
+     격자에 밝은 판(--c-0d1117)을 깔고 이 값을 쓰면 판 대비 1.97, 활성 시안 대비 2.03으로
+     양쪽이 균형을 이룹니다(deutan ΔE 26.0). 점을 더 짙게 하면 판 대비는 오르지만 활성과
+     같은 밝기가 되어(#6b7684에서 1.03) 켜진 점을 못 찾습니다. */
+  --c-dot-off:      #2b333d;
+}
+:root[data-theme="light"] {
+  --c-0d1117: #f4f2ee;
+  --c-161b22: #e5e3e0;
+  --c-1b2027: #dedcd9;
+  --c-1c222a: #dcdad6;
+  --c-232a33: #d1cfcb;
+  --c-21262d: #d6d4d0;
+  --c-0f2930: #b8dde5;
+  --c-12333a: #a6d3db;
+  --c-17505c: #7fbfcd;
+  --c-221a0d: #f4e0c0;
+  --c-4a3a1c: #d2b887;
+  --c-233039: #c3d1da;
+  --c-2b333d: #c2cad4;
+  --c-333d47: #b2bdc8;
+  --c-3b4652: #a4b0be;
+  --c-3d4650: #a6b0bb;
+  --c-3f4c58: #9aa9b7;
+  --c-4d5661: #909aa7;
+  --c-5d6773: #7b8694;
+  --c-6b7684: #6b7684;
+  --c-7d8896: #5c6572;
+  --c-8b96a3: #505a65;
+  --c-9aa7b4: #424d58;
+  --c-c3ccd6: #29323c;
+  --c-e6edf3: #15181c;
+  --c-c47d15: #b07113;
+  --c-e0912a: #96590a;
+  --c-0e8fa3: #0d8395;
+  --c-22a7bd: #0a6f80;
+  --c-8b6ff0: #6f52d6;
+  --c-a48cf5: #5a3fc7;
+  --c-2f6b78: #4193a5;
+  --c-3f6f7d: #4f8b9d;
+  --a-34: rgba(244,242,238,.6);
+  --a-35: rgba(14,143,163,.14);
+  --a-36: rgba(13,131,149,.18);
+  --a-37: rgba(176,113,19,.18);
+  /* 다크 9.22 → 5.22. 시안이 '점수'라는 뜻을 지므로 회색으로 바꾸지 않고
+     덱이 쓰는 텍스트 시안(#0a6f80)에 맞췄습니다. */
+  --ink-score-cy:   #0a6f80;
+  /* 틴트 면 위에서는 시안을 또 얹으면 3.60까지 떨어집니다. 면이 이미 시안이라
+     뜻은 유지되므로 먹색을 씁니다 — 다크 6.56 → 8.02. */
+  --ink-on-cy-tint: #29323c;
+  /* 다크 6.21 → 6.34 */
+  --ink-on-cy-fill: #29323c;
+  /* 테두리 3.36 → 5.04 · 선 3.47 → 4.87 (양쪽 모두 비텍스트 3:1 충족) */
+  --c-96590a:       #96590a;
+  --c-6f52d6:       #6f52d6;
+  /* 다크 1.19 → 라이트 1.97 (밝은 판 위 기준). 위 다크 블록의 주석 참고 */
+  --c-dot-off:      #a4b0be;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:1376px; height:768px; }
+body {
+  background:var(--c-0d1117); color:var(--c-e6edf3);
+  font-family:"Pretendard Variable", sans-serif;   /* 시스템 폰트에 기대지 않습니다 —
+     "Apple SD Gothic Neo"를 쓰던 동안은 이 맥에서만 레이아웃이 맞았습니다.
+     그림은 캡처도 하고 실시간 렌더도 하므로 웹폰트여야 어디서나 같습니다. */
+  -webkit-font-smoothing:antialiased;
+  padding:52px 56px 0 56px;
+
+  /* 한글은 기본값에서 **글자 단위**로 줄이 바뀝니다 — "그러니 순 / 서를 지킬",
+     "아직 만들 / 어지지 않았습니다"처럼 단어 한복판에서 끊깁니다.
+     keep-all은 띄어쓰기에서만 끊고, 한 어절이 줄 폭보다 길 때만
+     overflow-wrap이 예외로 끼어들어 넘침을 막습니다. */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+h1 { font-size:28px; font-weight:700; letter-spacing:-.02em; }
+.sub { margin-top:10px; font-size:15px; color:var(--c-9aa7b4); letter-spacing:-.01em; }
+.cy { color:var(--c-22a7bd); } .am { color:var(--c-e0912a); } .vi { color:var(--c-a48cf5); }
+
+.legend { display:flex; gap:26px; margin-top:20px; font-size:13px; color:var(--c-c3ccd6); }
+.legend div { display:flex; align-items:center; gap:8px; }
+.sw { width:13px; height:13px; border-radius:3px; }
+
+.amber { background:var(--c-c47d15); }
+.cyan  { background:var(--c-0e8fa3); }
+.gray  { background:var(--c-2b333d); }
+.violet{ background:var(--c-8b6ff0); }   /* 더 강한 절감 / 두 번째 기법 — dataviz 검증 통과 */
+
+.panels { display:flex; gap:56px; margin-top:34px; align-items:flex-start; }
+.panel { }
+.ptitle { font-size:16px; font-weight:700; letter-spacing:-.01em; margin-bottom:4px; }
+.pdesc { font-size:12.5px; color:var(--c-8b96a3); margin-bottom:18px; }
+
+.cap { margin-top:12px; font-size:12.5px; color:var(--c-7d8896); }
+.cap b { font-weight:700; font-size:14px; }
+
+.foot { position:absolute; left:56px; right:56px; bottom:26px;
+        border-top:1px solid var(--c-21262d); padding-top:16px;
+        font-size:14px; color:var(--c-9aa7b4); text-align:center; }
+.foot b { color:var(--c-e6edf3); font-weight:700; }

@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  .cards { display:flex; gap:16px; margin-top:26px; }
+  .card {
+    width:304px; height:480px; padding:18px 18px 16px;
+    border:1px solid var(--c-333d47); border-radius:13px; background:var(--c-161b22);
+  }
+  .card.mla { border:2px solid var(--c-8b6ff0); padding:17px; }
+  .chead { display:flex; justify-content:space-between; align-items:flex-start; }
+  .kind { font-size:19px; font-weight:700; letter-spacing:-.02em; }
+  .full { margin-top:3px; color:var(--c-8b96a3); font-size:10.5px; }
+  .badge {
+    padding:5px 9px; border-radius:999px; background:var(--c-8b6ff0); color:var(--c-0d1117);
+    font-size:11px; font-weight:700; white-space:nowrap;
+  }
+  .wiring { display:block; width:264px; height:133px; margin-top:20px; }
+  .wire { fill:none; stroke:var(--c-3f6f7d); stroke-width:1.6; }
+  .wire.hot { stroke:var(--c-c47d15); stroke-opacity:.45; }
+  .wire.vi { stroke:var(--c-6f52d6); stroke-opacity:.5; }
+  .qnode { fill:var(--c-c47d15); }
+
+  /* 깊이 축이 "K와 V 두 벌"을 집니다. 뒤(V)는 어두운 시안, 앞(K)은 밝은 시안이고
+     앞 카드가 뒤 카드를 가려 앞뒤로 겹친 것처럼 읽힙니다. MLA만 이 겹침이 없습니다. */
+  .kvback { fill:var(--c-2f6b78); }
+  .kvnode { fill:var(--c-0e8fa3); }
+  /* 압축이므로 다른 카드의 K/V와 같은 크기·같은 자리에 두고, 채움을 희미하게 하고
+     외곽선을 점선으로 씁니다. 겹침이 없다는 것이 "쌍이 아니라 하나"를 뜻합니다. */
+  .lnode  {
+    fill:var(--c-8b6ff0); fill-opacity:.24;
+    stroke:var(--c-8b6ff0); stroke-width:1.6; stroke-dasharray:3 2.4;
+  }
+  .lcap {
+    fill:var(--c-a48cf5); font:700 12px "Pretendard Variable", sans-serif;
+    text-anchor:middle; letter-spacing:0;
+  }
+
+  .node-label {
+    fill:var(--c-0d1117); font:700 10px "IBM Plex Mono", "Pretendard Variable", monospace; text-anchor:middle;
+  }
+  /* 한글은 Plex Mono에 없어 폴백이 걸립니다. 자폭·자간이 어긋나 글자가 틀어져 보이므로
+     한글이 들어가는 라벨은 Pretendard로 따로 씁니다. 모노는 숫자·영문에만. */
+  .row-label {
+    fill:var(--c-8b96a3); font:600 9.5px "IBM Plex Mono", "Pretendard Variable", monospace; letter-spacing:.06em;
+  }
+  .row-label.ko { font:700 10px "Pretendard Variable", sans-serif; letter-spacing:0; }
+
+  .count {
+    display:flex; justify-content:space-between; align-items:flex-end;
+    padding-top:22px; border-top:1px solid var(--c-333d47);
+  }
+  .ratio { font:700 27px "IBM Plex Mono", "Pretendard Variable", monospace; letter-spacing:-.04em; }
+  .meaning { color:var(--c-8b96a3); font-size:11.5px; line-height:1.45; text-align:right; }
+  /* 개수 축과 차원 축을 갈라 보여줍니다 — 쌍이 하나로(6.25%) 준 뒤 차원을 4.5배로 키워
+     28.1%가 됩니다. 네 카드의 퍼센트는 모두 이 그림의 8헤드를 분모로 씁니다. */
+  .steps { margin-top:12px; }
+  .steps div {
+    display:flex; justify-content:space-between; align-items:baseline;
+    padding:4px 0; border-bottom:1px solid var(--c-21262d);
+    font-size:11.5px; color:var(--c-9aa7b4);
+  }
+  .steps div:last-child { border-bottom:0; }
+  .steps b { font:700 13px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-a48cf5); }
+  .cache-label { margin-top:22px; display:flex; justify-content:space-between;
+                 font-size:11.5px; color:var(--c-9aa7b4); }
+  .cache-label b { font:700 15px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-e6edf3); }
+  .meter { width:100%; height:14px; margin-top:10px; border-radius:4px;
+           background:var(--c-21262d); overflow:hidden; }
+  .fill { height:100%; background:var(--c-0e8fa3); min-width:4px; }
+  .fill.vi { background:var(--c-8b6ff0); }
+  .card.mla .cache-label { margin-top:16px; }
+  .card.mla .takeaway { margin-top:14px; }
+  .takeaway { margin-top:18px; font-size:12px; line-height:1.55; color:var(--c-c3ccd6); }
+</style>
+</head>
+<body>
+  <h1>같은 Q 8개 &mdash; <span class="cy">캐시에 남는 것만 달라집니다</span></h1>
+  <div class="sub">앞뒤로 겹친 두 장이 <b>K와 V</b>입니다. 왼쪽 셋은 그 두 장을 저장하고,
+    맨 오른쪽 MLA는 <b>갈라지기 전 하나</b>만 저장해 겹침이 없습니다.
+    퍼센트는 모두 <b>이 그림의 8헤드</b>를 분모로 씁니다.</div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="chead">
+        <div>
+          <div class="kind"><span class="am">MHA</span></div>
+          <div class="full">Multi-Head Attention</div>
+        </div>
+      </div>
+      <svg class="wiring" viewBox="0 0 374 188"
+           aria-label="Q 8개가 각각 자기 K/V 한 쌍과 연결됩니다. 쌍은 앞뒤로 겹친 두 장으로 그렸습니다">
+        <text class="row-label" x="0" y="30">QUERY</text>
+        <text class="row-label" x="0" y="153">K / V</text>
+        <g class="wire hot">
+          <path d="M56 48 L56 131"/><path d="M98 48 L98 131"/>
+          <path d="M140 48 L140 131"/><path d="M182 48 L182 131"/>
+          <path d="M224 48 L224 131"/><path d="M266 48 L266 131"/>
+          <path d="M308 48 L308 131"/><path d="M350 48 L350 131"/>
+        </g>
+        <g class="kvback">
+          <rect x="52" y="127" width="24" height="24" rx="4"/><rect x="94" y="127" width="24" height="24" rx="4"/><rect x="136" y="127" width="24" height="24" rx="4"/><rect x="178" y="127" width="24" height="24" rx="4"/><rect x="220" y="127" width="24" height="24" rx="4"/><rect x="262" y="127" width="24" height="24" rx="4"/><rect x="304" y="127" width="24" height="24" rx="4"/><rect x="346" y="127" width="24" height="24" rx="4"/>
+        </g>
+        <g class="kvnode">
+          <rect x="44" y="135" width="24" height="24" rx="4"/><rect x="86" y="135" width="24" height="24" rx="4"/><rect x="128" y="135" width="24" height="24" rx="4"/><rect x="170" y="135" width="24" height="24" rx="4"/><rect x="212" y="135" width="24" height="24" rx="4"/><rect x="254" y="135" width="24" height="24" rx="4"/><rect x="296" y="135" width="24" height="24" rx="4"/><rect x="338" y="135" width="24" height="24" rx="4"/>
+        </g>
+        <g>
+          <circle class="qnode" cx="56" cy="34" r="14"/><circle class="qnode" cx="98" cy="34" r="14"/>
+          <circle class="qnode" cx="140" cy="34" r="14"/><circle class="qnode" cx="182" cy="34" r="14"/>
+          <circle class="qnode" cx="224" cy="34" r="14"/><circle class="qnode" cx="266" cy="34" r="14"/>
+          <circle class="qnode" cx="308" cy="34" r="14"/><circle class="qnode" cx="350" cy="34" r="14"/>
+          <text class="node-label" x="56" y="38">Q</text><text class="node-label" x="98" y="38">Q</text>
+          <text class="node-label" x="140" y="38">Q</text><text class="node-label" x="182" y="38">Q</text>
+          <text class="node-label" x="224" y="38">Q</text><text class="node-label" x="266" y="38">Q</text>
+          <text class="node-label" x="308" y="38">Q</text><text class="node-label" x="350" y="38">Q</text>
+        </g>
+      </svg>
+      <div class="count"><div class="ratio am">8Q : 8KV</div><div class="meaning">K·V 한 쌍씩<br>공유 없음</div></div>
+      <div class="cache-label"><span>KV캐시 (기준)</span><b>100%</b></div>
+      <div class="meter"><div class="fill" style="width:100%"></div></div>
+      <div class="takeaway">표현력은 최대, <b>저장량도 최대</b></div>
+    </div>
+
+    <div class="card">
+      <div class="chead">
+        <div>
+          <div class="kind"><span class="cy">GQA</span></div>
+          <div class="full">Grouped-Query Attention</div>
+        </div>
+      </div>
+      <svg class="wiring" viewBox="0 0 374 188"
+           aria-label="Q 8개가 그룹별로 K/V 한 쌍을 공유해 쌍이 2개로 줄어듭니다">
+        <text class="row-label" x="0" y="30">QUERY</text>
+        <text class="row-label" x="0" y="153">K / V</text>
+        <g class="wire">
+          <path d="M56 48 L119 131"/><path d="M98 48 L119 131"/>
+          <path d="M140 48 L119 131"/><path d="M182 48 L119 131"/>
+          <path d="M224 48 L287 131"/><path d="M266 48 L287 131"/>
+          <path d="M308 48 L287 131"/><path d="M350 48 L287 131"/>
+        </g>
+        <g class="kvback">
+          <rect x="115" y="127" width="24" height="24" rx="4"/><rect x="283" y="127" width="24" height="24" rx="4"/>
+        </g>
+        <g class="kvnode">
+          <rect x="107" y="135" width="24" height="24" rx="4"/><rect x="275" y="135" width="24" height="24" rx="4"/>
+        </g>
+        <g>
+          <circle class="qnode" cx="56" cy="34" r="14"/><circle class="qnode" cx="98" cy="34" r="14"/>
+          <circle class="qnode" cx="140" cy="34" r="14"/><circle class="qnode" cx="182" cy="34" r="14"/>
+          <circle class="qnode" cx="224" cy="34" r="14"/><circle class="qnode" cx="266" cy="34" r="14"/>
+          <circle class="qnode" cx="308" cy="34" r="14"/><circle class="qnode" cx="350" cy="34" r="14"/>
+          <text class="node-label" x="56" y="38">Q</text><text class="node-label" x="98" y="38">Q</text>
+          <text class="node-label" x="140" y="38">Q</text><text class="node-label" x="182" y="38">Q</text>
+          <text class="node-label" x="224" y="38">Q</text><text class="node-label" x="266" y="38">Q</text>
+          <text class="node-label" x="308" y="38">Q</text><text class="node-label" x="350" y="38">Q</text>
+        </g>
+      </svg>
+      <div class="count"><div class="ratio cy">8Q : 2KV</div><div class="meaning">4개씩<br>한 쌍을 공유</div></div>
+      <div class="cache-label"><span>KV캐시 (MHA 대비)</span><b>25%</b></div>
+      <div class="meter"><div class="fill" style="width:25%"></div></div>
+      <div class="takeaway">절충안 &mdash; 실제 모델은 대개 <b>8그룹</b>입니다(Llama 2 70B가 64:8)</div>
+    </div>
+
+    <div class="card">
+      <div class="chead">
+        <div>
+          <div class="kind">MQA</div>
+          <div class="full">Multi-Query Attention</div>
+        </div>
+      </div>
+      <svg class="wiring" viewBox="0 0 374 188"
+           aria-label="Q 8개가 K/V 한 쌍을 모두 공유합니다. 쌍이 하나로 줄었지만 여전히 두 장입니다">
+        <text class="row-label" x="0" y="30">QUERY</text>
+        <text class="row-label" x="0" y="153">K / V</text>
+        <g class="wire">
+          <path d="M56 48 L203 131"/><path d="M98 48 L203 131"/>
+          <path d="M140 48 L203 131"/><path d="M182 48 L203 131"/>
+          <path d="M224 48 L203 131"/><path d="M266 48 L203 131"/>
+          <path d="M308 48 L203 131"/><path d="M350 48 L203 131"/>
+        </g>
+        <g class="kvback">
+          <rect x="199" y="127" width="24" height="24" rx="4"/>
+          <text class="row-label" x="228" y="133">V</text>
+        </g>
+        <g class="kvnode">
+          <rect x="191" y="135" width="24" height="24" rx="4"/>
+          <text class="row-label" x="172" y="152">K</text>
+        </g>
+        <g>
+          <circle class="qnode" cx="56" cy="34" r="14"/><circle class="qnode" cx="98" cy="34" r="14"/>
+          <circle class="qnode" cx="140" cy="34" r="14"/><circle class="qnode" cx="182" cy="34" r="14"/>
+          <circle class="qnode" cx="224" cy="34" r="14"/><circle class="qnode" cx="266" cy="34" r="14"/>
+          <circle class="qnode" cx="308" cy="34" r="14"/><circle class="qnode" cx="350" cy="34" r="14"/>
+          <text class="node-label" x="56" y="38">Q</text><text class="node-label" x="98" y="38">Q</text>
+          <text class="node-label" x="140" y="38">Q</text><text class="node-label" x="182" y="38">Q</text>
+          <text class="node-label" x="224" y="38">Q</text><text class="node-label" x="266" y="38">Q</text>
+          <text class="node-label" x="308" y="38">Q</text><text class="node-label" x="350" y="38">Q</text>
+        </g>
+      </svg>
+      <div class="count"><div class="ratio">8Q : 1KV</div><div class="meaning">전부<br>한 쌍을 공유</div></div>
+      <div class="cache-label"><span>KV캐시 (MHA 대비)</span><b>12.5%</b></div>
+      <div class="meter"><div class="fill" style="width:12.5%"></div></div>
+      <div class="takeaway"><b>저장량은 최소</b>인데도 쓰이지 않는 이유는 품질입니다 &mdash;
+        7B에서 MMLU 37.9 (MHA 45.2)</div>
+    </div>
+
+    <div class="card mla">
+      <div class="chead">
+        <div>
+          <div class="kind"><span class="vi">MLA</span></div>
+          <div class="full">Multi-head Latent Attention</div>
+        </div>
+        <div class="badge">R1 · GLM-5.2</div>
+      </div>
+      <svg class="wiring" viewBox="0 0 374 188"
+           aria-label="Q 8개가 가운데 점선 상자 하나로 모입니다. 다른 카드와 같은 크기이지만 앞뒤로
+                       겹치지 않은 한 장이고, K와 V가 갈라지기 전 상태로 압축돼 있습니다 —
+                       토큰당 576개(잠재 512 + 모든 헤드가 함께 쓰는 위치키 64)">
+        <text class="row-label" x="0" y="30">QUERY</text>
+        <text class="row-label ko" x="0" y="152">압축 KV</text>
+        <g class="wire vi">
+          <path d="M56 48 L203 131"/><path d="M98 48 L203 131"/>
+          <path d="M140 48 L203 131"/><path d="M182 48 L203 131"/>
+          <path d="M224 48 L203 131"/><path d="M266 48 L203 131"/>
+          <path d="M308 48 L203 131"/><path d="M350 48 L203 131"/>
+        </g>
+        <g>
+          <circle class="qnode" cx="56" cy="34" r="14"/><circle class="qnode" cx="98" cy="34" r="14"/>
+          <circle class="qnode" cx="140" cy="34" r="14"/><circle class="qnode" cx="182" cy="34" r="14"/>
+          <circle class="qnode" cx="224" cy="34" r="14"/><circle class="qnode" cx="266" cy="34" r="14"/>
+          <circle class="qnode" cx="308" cy="34" r="14"/><circle class="qnode" cx="350" cy="34" r="14"/>
+          <text class="node-label" x="56" y="38">Q</text><text class="node-label" x="98" y="38">Q</text>
+          <text class="node-label" x="140" y="38">Q</text><text class="node-label" x="182" y="38">Q</text>
+          <text class="node-label" x="224" y="38">Q</text><text class="node-label" x="266" y="38">Q</text>
+          <text class="node-label" x="308" y="38">Q</text><text class="node-label" x="350" y="38">Q</text>
+
+          <!-- Q 8개(56~350)의 가로 정중앙은 203입니다. MQA의 앞 사각형과 같은 자리 —
+               위 CSS 주석의 "다른 카드의 K/V와 같은 크기·같은 자리"가 이 좌표입니다. -->
+          <rect class="lnode" x="191" y="135" width="24" height="24" rx="4"/>
+          <text class="row-label" x="223" y="152">C</text>
+          <text class="lcap" x="203" y="178">C = 압축 &middot; K와 V가 하나 &middot; 576개</text>
+        </g>
+      </svg>
+      <div class="count"><div class="ratio vi">8Q : 1C</div><div class="meaning">쌍이 아니라 하나<br>단, 폭은 4.5배</div></div>
+      <div class="steps">
+        <div><span>쌍 &rarr; 하나</span><b>6.25%</b></div>
+        <div><span>차원 &times;4.5</span><b>28.1%</b></div>
+      </div>
+      <div class="cache-label"><span>KV캐시 (MHA 대비)</span><b>28.1%</b></div>
+      <div class="meter"><div class="fill vi" style="width:28.1%"></div></div>
+      <div class="takeaway"><b>GQA 2.25그룹과 같은 양</b>인데 품질은 MHA보다 높습니다 &mdash;
+        배포되는 GQA(8그룹)보다는 약 3.6배 작습니다</div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>MLA는 그 &times;2를 아껴 차원에 씁니다.</b> 쌍이 하나가 되어 6.25%로 내려간 뒤 폭을 4.5배로 키워 28.1%.
+    헤드가 늘어도 이 값은 그대로라 128헤드에서는 <b>1.4%</b>가 됩니다 &mdash; MHA만 헤드 수에 비례합니다.
+  </div>
+</body>
+</html>

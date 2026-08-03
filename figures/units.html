@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:40px; }
+
+  /* 두 패널의 골격을 같게 둡니다 — 격자 · 읽기와 토큰 · 산술 강도 · 천장.
+     같은 자리에 같은 종류가 놓여야 "무엇이 다른가"가 한눈에 잡힙니다. */
+  .head { display:flex; align-items:baseline; gap:10px; }
+  .head b { font-size:17px; font-weight:700; letter-spacing:-.01em; }
+  .head span { font-size:12px; color:var(--c-7d8896); }
+  .tagp { font-size:11.5px; font-weight:700; padding:3px 9px; border-radius:4px; }
+  .tagp.cy { background:var(--a-36); color:var(--c-22a7bd); }
+  .tagp.am { background:var(--a-37); color:var(--c-e0912a); }
+
+  /* 격자 — 100칸이 연산 능력 100%입니다. 칸 하나가 1%. */
+  .gridwrap { display:flex; gap:18px; align-items:flex-start; margin-top:16px; }
+  /* 칸은 SVG로 그립니다(2026-08-03). 25px 칸이 캡처 배율(zoom 1.395 × DPR 2 = 2.79)에서
+     69.75 디바이스픽셀이라 크로미움이 박스마다 정수로 스냅해 칸이 갈렸습니다.
+     SVG는 viewBox를 통째로 변환하므로 균일합니다. **div로 되돌리지 마세요.**
+     칸 25 + 틈 4(피치 29) · 10열 10행 → 286×286. */
+  .grid { flex:0 0 auto; display:block; }
+  .grid rect { fill:var(--c-dot-off); }
+  .grid rect.on { fill:var(--c-0e8fa3); }
+  /* 반 칸은 CSS 그라디언트를 SVG 그라디언트로 옮긴 것입니다 — 50%에서 딱 끊깁니다. */
+  .grid rect.half { fill:url(#halffill); }
+  .grid stop.a { stop-color:var(--c-e0912a); }
+  .grid stop.b { stop-color:var(--c-dot-off); }
+  .gnote { flex:1 1 auto; font-size:12px; color:var(--c-8b96a3); line-height:1.7; }
+  .gbig { font-size:26px; font-weight:700; letter-spacing:-.02em; }
+  .gbig.cy { color:var(--c-22a7bd); } .gbig.am { color:var(--c-e0912a); }
+  .gnote b { color:var(--c-c3ccd6); font-weight:700; }
+
+  /* 한 번 읽어서 몇 개를 만드나 */
+  .rd { margin-top:18px; padding-bottom:26px; }
+  /* padding-bottom 26px = 아래 가로선과 이 블록 사이의 **최소** 숨 자리입니다
+     (2026-07-31 추가). 아래 .mrow가 margin-top:auto로 바닥에 붙어 있고 오른쪽
+     패널은 읽기 행이 하나 더 많아 auto 여백이 0이 됩니다 — 그래서 "한 번 읽어
+     한 개를 만듭니다" 줄이 가로선에 그대로 붙어 답답했습니다(호진님 지적).
+     이 padding은 두 패널이 함께 갖는 최소 간격이라 가로선과 그 아래 블록이
+     양쪽에서 같이 26px 내려갑니다 — 두 패널의 골격 정렬은 그대로입니다.
+     왼쪽 패널은 읽기 행이 하나 적어 auto 여백 25px이 더해져 51px이 됩니다. */
+  .rdrow { display:flex; align-items:center; gap:9px; margin-top:6px; }
+  .rbar { flex:0 0 auto; height:19px; border-radius:3px; background:var(--c-c47d15);
+          color:var(--c-0d1117); font-size:11px; font-weight:700;
+          display:flex; align-items:center; padding-left:9px; white-space:nowrap; }
+  .rarw { flex:0 0 auto; font-size:12px; color:var(--c-5d6773); }
+  /* 같은 이유로 SVG입니다 — 13px 칸 = 36.27 디바이스픽셀. 칸 13 + 틈 3(피치 16). */
+  .rtok { flex:0 0 auto; display:block; }
+  .rtok rect { fill:var(--c-0e8fa3); }
+  .rcap { font-size:11.5px; color:var(--c-7d8896); white-space:nowrap; }
+  .rcap b { color:var(--c-c3ccd6); font-weight:700; }
+
+  /* 산술 강도와 천장 — 두 패널의 아래 두 블록을 바닥에 붙여 골격을 맞춥니다.
+     오른쪽 패널이 읽기 행을 하나 더 갖고 있어 그냥 두면 25px 어긋납니다.
+     남는 여백은 mrow 위로 모입니다(패널 높이를 고정하지 않는 쪽이 안전합니다). */
+  .panel { display:flex; flex-direction:column; }
+  .mrow { display:flex; align-items:baseline; justify-content:space-between;
+          margin-top:auto; padding-top:12px; border-top:1px solid var(--c-1b2027);
+          font-size:12.5px; color:var(--c-8b96a3); }
+  .mrow em { font-style:normal; font-size:16px; font-weight:700; }
+  .mrow em.cy { color:var(--c-22a7bd); } .mrow em.am { color:var(--c-e0912a); }
+  .ceil { margin-top:14px; border-radius:6px; padding:13px 15px; font-size:12.5px; }
+  .ceil.cy { background:var(--a-36); border:1px solid var(--c-17505c); color:var(--c-9aa7b4); }
+  .ceil.am { background:var(--a-37); border:1px solid var(--c-4a3a1c); color:var(--c-9aa7b4); }
+  .ceil b { font-size:14.5px; font-weight:700; }
+  .ceil.cy b { color:var(--c-22a7bd); } .ceil.am b { color:var(--c-e0912a); }
+  .ceil span { display:block; margin-top:4px; font-size:11.5px; color:var(--c-7d8896); }
+</style>
+</head>
+<body>
+  <h1>입력은 유닛을 <span class="cy">다 쓰고</span>, 출력은 <span class="am">반 칸도 못 씁니다</span></h1>
+  <div class="sub">H200 기준입니다 &mdash; 연산 1,979 TFLOPS ÷ 대역폭 4.8TB/s = <b style="color:var(--c-c3ccd6)">바이트 하나를 읽는 동안 412번 계산할 수 있습니다.</b> 그 412를 채우면 연산이 천장이고, 못 채우면 대역폭이 천장입니다.</div>
+
+  <div class="panels" style="margin-top:22px; gap:72px; align-items:stretch">
+
+    <div class="panel" style="width:596px">
+      <div class="head"><span class="tagp cy">프리필</span><b class="cy">병렬</b><span>입력 1,024토큰을 한꺼번에</span></div>
+
+      <div class="gridwrap">
+        <svg class="grid" id="ga" width="286" height="286" viewBox="0 0 286 286"></svg>
+        <div class="gnote"><span class="gbig cy">100%</span><br>
+          쓸 수 있는 연산 능력을 <b>전부</b> 씁니다.<br>
+          칸 하나가 연산 능력의 1%입니다.</div>
+      </div>
+
+      <div class="rd">
+        <div class="rdrow">
+          <div class="rbar" style="width:212px">가중치 읽기 1회</div>
+          <span class="rarw">&rarr;</span>
+          <svg class="rtok" width="125" height="19" viewBox="0 0 125 19"><rect x="0" y="0" width="13" height="19" rx="2"></rect><rect x="16" y="0" width="13" height="19" rx="2"></rect><rect x="32" y="0" width="13" height="19" rx="2"></rect><rect x="48" y="0" width="13" height="19" rx="2"></rect><rect x="64" y="0" width="13" height="19" rx="2"></rect><rect x="80" y="0" width="13" height="19" rx="2"></rect><rect x="96" y="0" width="13" height="19" rx="2"></rect><rect x="112" y="0" width="13" height="19" rx="2"></rect></svg>
+        </div>
+        <div class="rcap" style="margin-top:7px">한 번 읽어 <b>1,024개</b>를 만듭니다 &mdash; 토큰이 서로를 기다리지 않습니다</div>
+      </div>
+
+      <div class="mrow"><span>산술 강도 &mdash; 바이트당 계산 횟수</span><span><em class="cy">2,048</em> FLOP/byte</span></div>
+      <div class="ceil cy">천장은 <b>연산 속도</b>입니다 &mdash; 412를 5배 넘겼습니다.
+        <span>8×H200 배치 1 실측 초당 2,097토큰</span></div>
+    </div>
+
+    <div class="panel" style="width:596px">
+      <div class="head"><span class="tagp am">디코딩</span><b class="am">직렬</b><span>출력 토큰 하나씩</span></div>
+
+      <div class="gridwrap">
+        <svg class="grid" id="gb" width="286" height="286" viewBox="0 0 286 286"><defs><linearGradient id="halffill" x1="0" y1="0" x2="1" y2="0"><stop class="a" offset="50%"></stop><stop class="b" offset="50%"></stop></linearGradient></defs></svg>
+        <div class="gnote"><span class="gbig am">0.5%</span><br>
+          100칸 중 <b>반 칸</b>입니다.<br>
+          나머지 유닛은 메모리를 기다립니다.</div>
+      </div>
+
+      <div class="rd">
+        <div class="rdrow">
+          <div class="rbar" style="width:212px">가중치 읽기 1회</div>
+          <span class="rarw">&rarr;</span>
+          <svg class="rtok" width="13" height="19" viewBox="0 0 13 19"><rect x="0" y="0" width="13" height="19" rx="2"></rect></svg>
+        </div>
+        <div class="rdrow">
+          <div class="rbar" style="width:212px">가중치 읽기 1회</div>
+          <span class="rarw">&rarr;</span>
+          <svg class="rtok" width="13" height="19" viewBox="0 0 13 19"><rect x="0" y="0" width="13" height="19" rx="2"></rect></svg>
+        </div>
+        <div class="rcap" style="margin-top:7px">한 번 읽어 <b>한 개</b>를 만듭니다 &mdash; 앞 토큰이 나와야 다음을 시작합니다</div>
+      </div>
+
+      <div class="mrow"><span>산술 강도 &mdash; 바이트당 계산 횟수</span><span><em class="am">2</em> FLOP/byte</span></div>
+      <div class="ceil am">천장은 <b>메모리 대역폭</b>입니다 &mdash; 412의 206분의 1입니다.
+        <span>8×H200 배치 1 실측 초당 133토큰 &mdash; 프리필의 16분의 1</span></div>
+    </div>
+
+  </div>
+
+  <div class="foot">
+    같은 가중치 읽기 한 번으로 프리필은 <b>수천 토큰</b>을, 디코딩은 <b>한 토큰</b>을 만듭니다.
+    격자의 칸은 물리적 유닛이 아니라 <b>쓸 수 있는 연산 능력의 몫</b>입니다 &mdash; 디코딩에서도 유닛은 켜져 있지만 기다립니다.
+  </div>
+
+<script>
+/* 100칸 = 연산 능력 100%. 왼쪽은 전부 켜고, 오른쪽은 첫 칸의 절반만 채웁니다(0.5%). */
+var SVGNS = 'http://www.w3.org/2000/svg';
+function fill(host, mode) {
+  for (var i = 0; i < 100; i++) {
+    var c = document.createElementNS(SVGNS, 'rect');
+    c.setAttribute('x', (i % 10) * 29);
+    c.setAttribute('y', Math.floor(i / 10) * 29);
+    c.setAttribute('width', 25); c.setAttribute('height', 25); c.setAttribute('rx', 3);
+    if (mode === 'all') c.setAttribute('class', 'on');
+    else if (i === 0) c.setAttribute('class', 'half');
+    host.appendChild(c);
+  }
+}
+fill(document.getElementById('ga'), 'all');
+fill(document.getElementById('gb'), 'half');
+</script>
+</body>
+</html>

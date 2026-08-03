@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:42px; }
+  h1 { font-size:29px; }
+  .sub { margin-top:9px; font-size:13.5px; }
+
+  .legend { margin-top:16px; font-size:12.5px; gap:22px; }
+
+  .panels { gap:38px; margin-top:20px; align-items:stretch; }
+  .panel {
+    display:flex;
+    flex-direction:column;
+    width:396px;
+    padding:19px 20px;
+    border-radius:12px;
+    border:1px solid var(--c-333d47);
+    background:var(--c-161b22);
+  }
+  .panel.store { background:var(--c-221a0d); border-color:var(--c-4a3a1c); }
+  .panel.read  { background:var(--c-0f2930); border-color:var(--c-17505c); }
+
+  .kicker {
+    font:700 10px "IBM Plex Mono", "Pretendard Variable", monospace;
+    color:var(--c-8b96a3);
+    letter-spacing:.09em;
+  }
+  .ptitle { margin-top:6px; font-size:17px; }
+  .total { margin-top:8px; font-size:34px; font-weight:800; letter-spacing:-.03em; line-height:1; }
+  .total span { margin-left:2px; font-size:17px; font-weight:700; color:var(--c-9aa7b4); }
+  .pdesc { margin-top:6px; margin-bottom:0; font-size:11.5px; }
+
+  /* 실제 비율 자 — 두 번째 패널이 첫 패널의 어디쯤인지.
+     **왼쪽 패널의 누적 막대를 그대로 깔고**, 이 토큰에 켜지지 않는 몫에 빗금을 칩니다.
+     한 색으로 칠하면 5.4%라는 크기는 보이지만 **총 파라미터 중 어디가 켜졌는지**는
+     보이지 않습니다. 빗금을 치면 전문가 신경망의 꼬리만 살아 있는 것이 드러납니다. */
+  .ruler { margin-top:15px; }
+  .rlab { display:flex; justify-content:space-between; gap:10px; font-size:10.5px; color:var(--c-8b96a3); }
+  .rtrack {
+    position:relative;
+    height:19px;
+    margin-top:4px;
+    border-radius:3px;
+    border:1px solid var(--c-3f4c58);
+    background:var(--c-1b2027);
+    overflow:hidden;
+  }
+  .rstack { display:flex; height:100%; }
+  .rstack i { display:block; height:100%; }
+  /* 빗금 — 밑색은 그 항목의 색을 그대로 두고 대각선만 얹습니다.
+     base.css의 .amber/.cyan/.gray는 background 단축 속성이라 background-image를
+     none으로 되돌립니다. .hatch가 뒤에 오므로 같은 특이도에서 이깁니다.
+
+     비율을 뒤집었습니다(2026-07-31) — 예전에는 어두운 줄 2px + 색 줄 3.5px이라
+     **색 줄이 더 넓어서** 꺼진 몫이 여전히 "쓰이는 것"처럼 읽혔습니다. 지금은
+     어두운 줄 5.5px + 색 줄 1.5px로, 꺼진 구역이 비어 보이고 색은 어느 항목의
+     몫인지 알려주는 실오라기만 남습니다. 주기는 7px입니다. */
+  .hatch {
+    background-image:repeating-linear-gradient(45deg,
+      var(--c-0d1117) 0 5.5px, transparent 5.5px 7px);
+  }
+  .zoom { margin-top:10px; font-size:10.5px; color:var(--c-7d8896); text-align:center; }
+
+  /* 누적 막대 — 폭이 곧 비중입니다(최소폭을 주지 않아 0.2%는 실선 한 줄로 보입니다) */
+  .stack { display:flex; height:26px; margin-top:14px; border-radius:4px; overflow:hidden; }
+  .stack i { display:block; height:100%; }
+
+  .rows { margin-top:13px; }
+  .row {
+    display:grid;
+    grid-template-columns:15px 1fr auto 52px;
+    align-items:center;
+    gap:9px;
+    padding:9px 0;
+    border-bottom:1px solid var(--c-21262d);
+  }
+  .row:last-child { border-bottom:0; }
+  .row .sw { width:11px; height:11px; }
+  .rname { font-size:12.5px; color:var(--c-c3ccd6); line-height:1.25; }
+  .rname span { display:block; font-size:10px; color:var(--c-7d8896); }
+  .rval { font-size:13.5px; font-weight:700; color:var(--c-e6edf3); white-space:nowrap; }
+  .rpct { font-size:12.5px; color:var(--c-9aa7b4); text-align:right; white-space:nowrap; }
+  .row.hi .rname { color:var(--c-e6edf3); font-weight:700; }
+  .row.hi .rpct { color:var(--c-22a7bd); font-weight:700; font-size:14px; }
+
+  .pnote { margin-top:auto; padding-top:15px; font-size:11.5px; color:var(--c-8b96a3); line-height:1.6; }
+  .pnote b { color:var(--c-c3ccd6); font-weight:700; }
+
+  /* 세 번째 패널 — 4장 공식에 전문가 수가 없다는 것을 항으로 보여줍니다 */
+  .terms { margin-top:15px; border-radius:8px; border:1px solid var(--c-333d47); overflow:hidden; }
+  .term {
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:8px;
+    padding:7px 11px;
+    border-bottom:1px solid var(--c-21262d);
+    font-size:11.5px;
+    color:var(--c-9aa7b4);
+  }
+  .term:last-child { border-bottom:0; }
+  .term b { font:700 13px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-e6edf3); }
+  .term em { font-style:normal; font-size:10px; color:var(--c-7d8896); }
+  .term.none { background:var(--a-37); }
+  .term.none b { color:var(--c-e0912a); }
+
+  .cmp { margin-top:16px; }
+  .ctitle { font-size:11.5px; color:var(--c-8b96a3); line-height:1.5; }
+  .ctitle em { font-style:normal; display:block; margin-top:2px; font-size:10.5px; color:var(--c-7d8896); }
+  .crow { margin-top:10px; }
+  .chead { display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
+  .chead span { font-size:12px; color:var(--c-c3ccd6); }
+  .chead em { font-style:normal; font-size:11.5px; color:var(--c-9aa7b4); white-space:nowrap; }
+  .chead em b { font-size:13.5px; font-weight:700; }
+  /* 위 막대는 여러 색이 섞이므로(가운데 패널의 활성 조각 그대로) 숫자는 중립색을 씁니다.
+     아래 막대는 자기 색과 같은 보라를 씁니다. */
+  .crow.cut b { color:var(--c-e6edf3); }
+  .crow.keep b { color:var(--c-a48cf5); }
+  .cbar { display:block; height:20px; margin-top:5px; border-radius:3px; }
+  /* 활성 조각을 그대로 잘라 오는 막대 */
+  .cbar.mix { display:flex; overflow:hidden; }
+  .cbar.mix i { display:block; height:100%; }
+  /* KV캐시는 파라미터 구성 색(앰버=전문가 · 시안=어텐션 · 회색=그 밖)과 뜻이 겹치지 않게
+     이 그림에서 쓰지 않던 보라를 씁니다. 같은 색을 다른 뜻으로 두 번 쓰면
+     같은 것으로 읽힙니다. */
+  .cbar.kvc { background:var(--c-8b6ff0); }
+</style>
+</head>
+<body>
+  <h1>MoE가 깎는 것은 <span class="cy">대역폭</span> 하나입니다</h1>
+  <div class="sub">DeepSeek R1을 항목별로 센 값입니다. 공표된 671B &middot; 활성 37B는 반올림이고,
+    <span style="color:var(--c-c3ccd6)">config.json</span>의 항목을 하나씩 세면 670.9B &middot; 36.5B입니다.</div>
+
+  <div class="legend">
+    <div><span class="sw amber"></span>전문가 신경망 &middot; 일부만 켭니다</div>
+    <div><span class="sw cyan"></span>어텐션 &middot; 61층을 매 토큰 전부</div>
+    <div><span class="sw gray"></span>그 밖 &middot; Dense 신경망 &middot; 임베딩</div>
+    <div><span class="sw amber hatch"></span>빗금 &middot; 이 토큰에 켜지지 않는 몫</div>
+  </div>
+
+  <div class="panels">
+    <div class="panel store">
+      <div class="kicker">담는 값 &middot; 용량</div>
+      <div class="ptitle">올려 두는 파라미터</div>
+      <div class="total">670.9<span>B</span></div>
+      <div class="pdesc">한 벌만 올리고 모든 사용자가 함께 씁니다</div>
+
+      <div class="stack" id="s-store" aria-label="저장 파라미터의 97.8%가 전문가 신경망이고 어텐션은 1.7%입니다"></div>
+      <div class="rows" id="r-store"></div>
+
+      <div class="pnote">전문가가 <b>58층 × 257개</b>(라우팅 256 + 공유 1)라
+        저장은 사실상 전문가 신경망 혼자 채웁니다. <b>어텐션은 눈에 보이지도 않습니다.</b></div>
+    </div>
+
+    <div class="panel read">
+      <div class="kicker">시키는 값 하나 &middot; 대역폭</div>
+      <div class="ptitle">토큰마다 읽는 양</div>
+      <div class="total">36.5<span>B</span></div>
+      <div class="pdesc">전문가 9개만 켜므로 읽기가 18.4배로 줄어듭니다</div>
+
+      <div class="ruler">
+        <div class="rlab"><span>왼쪽 패널의 막대 그대로</span><span>670.9B</span></div>
+        <div class="rtrack"><div class="rstack" id="ruler"
+             aria-label="왼쪽 패널과 같은 누적 막대에서, 이 토큰에 켜지지 않는 전문가 633.5B에 빗금을 쳤습니다. 빗금이 없는 맨 오른쪽 5.4%만 살아 있습니다"></div></div>
+      </div>
+      <div class="zoom">&darr; 아래는 이 <b style="color:var(--c-c3ccd6)">5.4%</b> 구간을 18.4배 늘린 것입니다</div>
+
+      <div class="stack" id="s-read" aria-label="토큰마다 읽는 양의 63.0%가 전문가 신경망이고 어텐션이 31.3%입니다"></div>
+      <div class="rows" id="r-read"></div>
+
+      <div class="pnote">전문가만 줄었고 <b>어텐션은 11.4B 그대로</b>입니다.
+        그래서 담는 값에서 1.7%였던 어텐션이 여기서는 <b>3분의 1</b>이 됩니다.</div>
+    </div>
+
+    <div class="panel">
+      <div class="kicker">시키는 값 둘 &middot; KV캐시</div>
+      <div class="ptitle">사용자마다 새로 드는 값</div>
+      <div class="total">4.29<span>GiB</span></div>
+      <div class="pdesc">128K 한 사용자 &middot; FP8 기준</div>
+
+      <div class="terms">
+        <div class="term">토큰 &middot; 레이어당 <em>잠재 512 + 위치키 64</em><b>576</b></div>
+        <div class="term">&times; 레이어 <em>61층 전부</em><b>61</b></div>
+        <div class="term">&times; 토큰 <em>128K</em><b>131,072</b></div>
+        <div class="term none">&times; 전문가 수 <em>이 곱셈에 등장하지 않습니다</em><b>없음</b></div>
+      </div>
+
+      <div class="cmp">
+        <div class="ctitle">MoE를 지나고 남는 비율
+          <em>위 막대는 가운데 패널에서 빗금을 뺀 조각 그대로입니다</em></div>
+        <div class="crow cut">
+          <div class="chead"><span>토큰마다 읽는 양</span><em><b>5.4%</b> &middot; 18.4배 깎았습니다</em></div>
+          <div class="cbar mix" id="c-read"
+               aria-label="가운데 패널에서 켜져 있던 조각만 같은 색으로 그대로 옮긴 막대입니다"></div>
+        </div>
+        <div class="crow keep">
+          <div class="chead"><span>KV캐시</span><em><b>100%</b> &middot; 그대로입니다</em></div>
+          <i class="cbar kvc" style="width:100%"></i>
+        </div>
+      </div>
+
+      <div class="pnote">전문가를 256개로 불려도, 9개만 켜도 토큰당 KV는 같습니다.
+        이 칸을 정하는 것은 <b>어텐션 설계</b>뿐입니다.</div>
+    </div>
+  </div>
+
+  <div class="foot">
+    MoE는 전문가 신경망의 <b>읽기</b>만 깎습니다. 어텐션은 61층을 매 토큰 전부 읽고,
+    <b>KV캐시는 사용자마다 따로</b> 붙습니다 &mdash; 그래서 6.2부터는 전부 어텐션 이야기입니다.
+  </div>
+
+<script>
+/* 값은 config.json에서 항목별로 센 것 — README 6.1 각주와 같은 출처입니다.
+   누적 막대의 폭은 이 원값에서 계산하므로 표시 반올림과 어긋나지 않습니다. */
+/* on = 그 항목에서 토큰마다 실제로 읽는 몫. 아래 READ와 항목이 1:1로 맞고,
+   합이 어긋나면 콘솔에 실패를 던집니다(수치를 손볼 때 자동으로 걸립니다). */
+const STORE = [
+  { n:'전문가 신경망', s:'58층 × 257개',   v:656.463, on:22.989, c:'amber' },
+  { n:'어텐션',        s:'61층 · MLA',     v:11.413,  on:11.413, c:'cyan', hi:true },
+  { n:'임베딩 · 출력', s:'어휘 129,280',   v:1.853,   on:0.927,  c:'gray' },
+  { n:'Dense 신경망',  s:'앞 3층',         v:1.189,   on:1.189,  c:'gray' },
+];
+const READ = [
+  { n:'전문가 신경망', s:'전문가 8 + 공유 1', v:22.989, c:'amber' },
+  { n:'어텐션',        s:'61층 · 하나도 안 빼고', v:11.413, c:'cyan', hi:true },
+  { n:'Dense 신경망',  s:'앞 3층',           v:1.189,  c:'gray' },
+  { n:'출력 투사',     s:'어휘 129,280',     v:0.927,  c:'gray' },
+];
+const sum = list => list.reduce((a, d) => a + d.v, 0);
+
+function draw(list, stackId, rowsId) {
+  const total = sum(list);
+  const stack = document.getElementById(stackId);
+  const rows = document.getElementById(rowsId);
+  list.forEach(d => {
+    const seg = document.createElement('i');
+    seg.className = d.c;
+    seg.style.width = (d.v / total * 100) + '%';
+    stack.appendChild(seg);
+
+    const row = document.createElement('div');
+    row.className = 'row' + (d.hi ? ' hi' : '');
+    row.innerHTML =
+      '<span class="sw ' + d.c + '"></span>' +
+      '<span class="rname">' + d.n + '<span>' + d.s + '</span></span>' +
+      '<span class="rval">' + d.v.toFixed(1) + 'B</span>' +
+      '<span class="rpct">' + (d.v / total * 100).toFixed(1) + '%</span>';
+    rows.appendChild(row);
+  });
+}
+draw(STORE, 's-store', 'r-store');
+draw(READ, 's-read', 'r-read');
+
+/* 자 — 왼쪽 패널과 같은 누적 막대를 깔고, 꺼지는 몫에 빗금을 칩니다.
+   항목 순서를 왼쪽 그대로 두므로 켜진 조각들이 오른쪽 끝에 모입니다. */
+const onSum = STORE.reduce((a, d) => a + d.on, 0);
+if (Math.abs(onSum - sum(READ)) > 0.001)
+  throw new Error('STORE.on 합과 READ 합이 다릅니다: ' + onSum + ' vs ' + sum(READ));
+
+const rtotal = sum(STORE);
+function seg(host, cls, pct) {
+  const i = document.createElement('i');
+  i.className = cls;
+  i.style.width = pct + '%';
+  host.appendChild(i);
+}
+
+/* 자 — 꺼진 몫에 빗금, 켜진 몫은 실선 */
+const ruler = document.getElementById('ruler');
+STORE.forEach(d => {
+  if (d.v - d.on > 0) seg(ruler, d.c + ' hatch', (d.v - d.on) / rtotal * 100);
+  if (d.on > 0)       seg(ruler, d.c,            d.on / rtotal * 100);
+});
+
+/* 세 번째 패널의 '토큰마다 읽는 양' 막대 — 위 자에서 **빗금 아닌 조각만** 그대로 옮깁니다.
+   전체 폭이 5.4%이고 그 안의 색 구성은 가운데 패널과 같습니다. */
+const cread = document.getElementById('c-read');
+cread.style.width = (onSum / rtotal * 100) + '%';
+STORE.forEach(d => {
+  if (d.on > 0) seg(cread, d.c, d.on / onSum * 100);
+});
+</script>
+</body>
+</html>

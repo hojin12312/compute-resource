@@ -1,0 +1,2177 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LLM과 컴퓨팅 자원의 역학관계</title>
+<meta name="description" content="두 개의 청구서 — 모델 용량과 KV캐시, 그리고 2026년의 아키텍처가 그것을 깎는 여섯 가지 방법">
+<!-- 본문 폰트를 먼저 당겨옵니다. @font-face는 CSS를 받은 뒤에야 발견되므로,
+     preload가 없으면 표지가 한 박자 늦게 뜹니다(font-display:block이라 그동안 글자가 비어 보임). -->
+<link rel="preload" href="../fonts/pretendard.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../fonts/plexmono-600.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="vendor/reveal/reset.css">
+<link rel="stylesheet" href="vendor/reveal/reveal.css">
+<link rel="stylesheet" href="deck.css?v=20260731e">
+<!-- 저장된 테마를 CSS보다 먼저 적용합니다. 뒤에서 적용하면 라이트로 열 때
+     다크가 한 프레임 스쳐 지나갑니다(발표 중에 눈에 띕니다). -->
+<script>try{if(localStorage.getItem('cr-deck-theme')==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}</script>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- ══════════════════════════════════════ 표지 ══════════════════════════ -->
+<section class="cover">
+  <div class="cmark">2.8T<span>PARAMETERS</span></div>
+  <div class="ctitle">LLM과<br>컴퓨팅 자원의<br>역학관계</div>
+  <div class="rule"></div>
+  <div class="csub">
+    모델은 점점 효율적으로 바뀌는데<br>
+    GPU와 메모리 수요는 왜 계속 늘어나는가
+  </div>
+  <div class="cby">
+    <div class="cname">이호진</div>
+    <div class="corg">삼성전자 메모리사업부 Design Technology 팀<br>
+      Technology Enablement 그룹 &middot; Analog DTCO 파트</div>
+  </div>
+  <div class="cmeta">
+    <span>2026 · COMPUTE RESOURCE</span>
+  </div>
+  <aside class="notes">
+    오늘 이야기는 "모델이 크다/작다"가 아니라 <b>그 모델을 돌리는 데 무엇이 얼마나 드는가</b>입니다.
+    끝까지 따라오시면 Kimi K3가 왜 증시를 흔들었는지를 구조로 설명할 수 있게 됩니다.
+    넘기기는 스페이스, 발표자 노트는 S, 전체 슬라이드 보기는 ESC입니다.
+  </aside>
+</section>
+
+<!-- 목차 — 전반부 -->
+<section data-chapter="목차">
+  <div class="eyebrow">오늘의 차례</div>
+  <h2>청구서를 <span class="am">정의</span>하고, 그다음 <span class="cy">깎습니다</span></h2>
+  <div class="body">
+    <div class="cols c2">
+      <div class="tochalf on">
+        <div class="hk">전반부 · 1~5장</div>
+        <div class="hw">무엇이 얼마나 드는가</div>
+        <div class="tocl">
+          <div class="ti"><span class="tn">1</span><span class="tt">Kimi K3의 증시 충격<em>효율이 자본의 신화를 흔든 날</em></span></div>
+          <div class="ti"><span class="tn">2</span><span class="tt">추론 시장으로의 전환<em>수요는 어디서 오는가</em></span></div>
+          <div class="ti"><span class="tn">3</span><span class="tt">용량 청구서<em>모델을 담는 값</em></span></div>
+          <div class="ti"><span class="tn">4</span><span class="tt">KV캐시 청구서<em>일을 시키는 값</em></span></div>
+          <div class="ti"><span class="tn">5</span><span class="tt">프리필과 디코딩<em>시간은 어디서 새는가</em></span></div>
+        </div>
+      </div>
+      <div class="tochalf">
+        <div class="hk">후반부 · 6~9장</div>
+        <div class="hw">그것을 어떻게 깎는가</div>
+        <div class="tocl">
+          <div class="ti"><span class="tn">6</span><span class="tt">아키텍처 살펴보기<em>여섯 모델의 여섯 전략</em></span></div>
+          <div class="ti"><span class="tn">7</span><span class="tt">양자화<em>비트를 줄여 둘 다 깎기</em></span></div>
+          <div class="ti"><span class="tn">8</span><span class="tt">AI 소버린<em>누가 소유하고 어디서 돌리는가</em></span></div>
+          <div class="ti"><span class="tn">9</span><span class="tt">GPU 로드맵<em>하드웨어는 어디로 가는가</em></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    전반부는 <b>왜 비싼지</b>를 숫자로 확인하고, 후반부는 <b>그 값을 깎는 방법</b>을 하나씩 봅니다.
+  </div>
+  <aside class="notes">
+    구조만 잡고 가겠습니다. 앞의 다섯 장은 전부 "무엇이 얼마나 드는가"를 세우는 과정이고,
+    뒤의 네 장은 그 값을 깎는 이야기입니다. 6장 들어갈 때 이 목차를 한 번 더 띄웁니다.
+  </aside>
+</section>
+
+<!-- ══════════════════════════════════════ 1장 ══════════════════════════ -->
+<section class="chapter">
+  <div class="cnum">01</div>
+  <div class="ctag">Chapter 01</div>
+  <h2>Kimi K3는 어떻게<br>미국 증시를 흔들었나?</h2>
+  <blockquote>"거대 자본의 신화를 흔든 효율의 반격"</blockquote>
+  <div class="cwhat">2026년 7월 16일에 무슨 일이 있었고, <b>시장은 왜 그것을 위협으로 읽었는지</b>.</div>
+</section>
+
+<section data-chapter="1. 증시 충격">
+  <div class="eyebrow">2026. 07. 16 · WAIC</div>
+  <h2>Moonshot AI, <span class="cy">Kimi K3</span> 발표</h2>
+  <div class="body">
+    <div class="cols c2u">
+      <div>
+        <table class="mid">
+          <tr><td>총 파라미터</td><td class="n am"><b>2.8조 (2.8T)</b></td></tr>
+          <tr class="hi"><td>MoE 구조</td><td class="n">전문가 <b>896개 중 16개</b>만 활성</td></tr>
+          <tr><td>컨텍스트</td><td class="n">100만 토큰</td></tr>
+          <tr><td>어텐션</td><td class="n">Kimi Delta Attention (KDA)</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <span class="k">기시감</span>
+        <p>2025년 1월 <b>DeepSeek-R1</b>이 촉발한<br>"딥시크 모먼트"와 패턴이 <b>거의 똑같습니다.</b></p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">발표 다음날, 반도체가 흔들렸습니다.</div>
+  <aside class="notes">
+    숫자를 다 외울 필요는 없습니다. 두 개만 — <b>2.8조</b>라는 크기, 그리고 <b>896개 중 16개</b>라는 희소함.
+    이 둘이 6장에서 다시 나옵니다. 16/896은 전문가 개수 비율이고,
+    실제 활성 파라미터 비율은 104B/2.8T = 3.7%입니다. 그래도 DeepSeek R1의 5.5%보다 희소합니다.
+    <b>KDA는 여기서 설명하지 않습니다.</b> 이름만 스쳐 두고 6장 마지막(6.6)에서 제대로 다룹니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="1. 증시 충격">
+  <img src="../assets/stock_shock.webp?v=20260731e" alt="Kimi K3 발표 다음날의 반도체 하락률 — TSMC -7.3%, TAIEX -6.5% 등">
+  <aside class="notes">
+    나스닥 선물 약 1~1.7%(매체별 편차), S&P 500 선물 약 0.8% 하락, NVDA 2% 이상.
+    블룸버그 아시아 반도체 지수는 6% 넘게 빠졌습니다.
+    다만 정직하게 덧붙이면 — 2026년 6월 22일 이후 누적 3.3조 달러 증발은
+    <b>K3 발표 이전부터 진행 중이던 밸류에이션 조정</b>이고, 발표가 이를 가속시켰다는 분석입니다.
+    그리고 이건 <b>당시 투자자의 해석</b>이지, K3가 실제로 Nvidia 수요를 줄였다는 증거는 아닙니다.
+  </aside>
+</section>
+
+<section data-chapter="1. 증시 충격">
+  <div class="eyebrow">1.1 투입 — 미국 vs 중국</div>
+  <h2>돈만 적은 게 아니라<br><span class="am">살 수 있는 물건</span>이 다릅니다</h2>
+  <div class="body">
+    <table class="mid">
+      <tr><th>항목</th><th>미국</th><th>중국</th></tr>
+      <tr><td><b>최신 가속기</b></td><td>Blackwell · Vera Rubin</td><td>수출 규제로 <b>차단</b></td></tr>
+      <tr><td><b>주력 AI 칩</b></td><td>Nvidia · AMD · 자체 칩(TPU · Trainium)</td><td>Huawei Ascend · Cambricon</td></tr>
+      <tr class="hi-am"><td><b>조달 현황</b></td><td>규제 없음 — <b>공급이 병목</b></td><td>Nvidia 인도 <b>0</b> → 자국 <b>75만 개</b> 계획</td></tr>
+    </table>
+  </div>
+  <div class="foot am-l">
+    그럼 돈은 얼마나 차이 날까요? &mdash; 다음 장에서 <b>6년치를 나란히</b> 놓습니다.
+  </div>
+  <aside class="notes">
+    이 표의 요점은 한 줄입니다 — 중국은 <b>돈으로도 못 사는</b> 상태라는 것.
+    Nvidia는 중국 하이퍼스케일러에서 H200을 40만 개 넘게 수주했지만 실제 인도는 0이고,
+    중국 정부가 자국 칩을 쓰라고 지시한 결과입니다.
+    이 조건에서 나온 모델이 K3라는 게 뒤 두 장의 배경입니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="1. 증시 충격">
+  <img src="../assets/us_china_capex.webp?v=20260731e" alt="미국과 중국의 연간 AI 설비투자 비교 — 2022년 19.5배에서 2027년 8.3배까지 격차가 7~8배로 고정된 막대 그래프">
+  <aside class="notes">
+    Goldman Sachs 추정입니다. 2023년부터 <b>7~8배에서 고정</b>돼 있다는 게 핵심입니다.
+    비율은 그대로인데 절대 금액의 차이는 계속 벌어집니다 —
+    2022년엔 1,480억 달러 차이였는데 2027년엔 9천억 달러 차이입니다.
+    2026·2027은 추정치라고 부제에 밝혀 뒀습니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="1. 증시 충격">
+  <img src="../assets/frontier_bench.webp?v=20260731e" alt="상위 15개 모델의 종합 지능 지수 가로 막대 그래프 — Kimi K3가 4위, GLM-5.2와 Qwen3.7 Max도 상위권에 있음">
+  <aside class="notes">
+    Artificial Analysis Intelligence Index, 7월 28일 스냅샷입니다. 여러 벤치마크를 하나로 묶은 종합 점수고,
+    모델 계열마다 최고 점수를 대표값으로 삼아 상위 15개를 그렸습니다.
+    짚을 곳은 K3 막대 하나 — <b>4위</b>, 1위와 3.6점 차이입니다.
+    그리고 K3만 올라온 게 아닙니다. GLM-5.2가 11위, 그 아래로 Qwen3.7 Max·MiniMax M3·
+    DeepSeek V4 Pro·Hy3가 40점대에 줄지어 있습니다 — <b>한 점이 아니라 층</b>입니다.
+    다만 이 지수는 미·중 모델을 같은 수로 표본화한 것이 아니라 리더보드 상위 순서 그대로이므로,
+    국가별 <b>모델 수의 비율</b>을 이 그림에서 읽으면 안 됩니다.
+  </aside>
+</section>
+
+<section data-chapter="1. 증시 충격">
+  <div class="eyebrow">1장 정리</div>
+  <h2>시장이 반응한 것은 이 <span class="am">불균형</span>입니다</h2>
+  <div class="body">
+    <div class="cols c2">
+      <div class="card am-b">
+        <span class="k">투입 · 연간 설비투자</span>
+        <div class="big sm am">8×</div>
+        <div class="big-cap">미국 <b>7,640억 달러</b> 대 중국 <b>1,020억 달러</b> (2026년 추정)</div>
+      </div>
+      <div class="card cy-b">
+        <span class="k">결과 · 종합 지능 지수</span>
+        <div class="big sm cy">6%</div>
+        <div class="big-cap">15개 중 <b>4위</b>, 1위와 <b>3.6점</b> 차이</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    그렇다면 <b>"구세대 GPU로 저렴하게 만들었다"</b>는 말은 정확히 무슨 뜻이고,
+    왜 GPU에 이어 <b>메모리 수요까지</b> 폭증할까요?
+  </div>
+  <aside class="notes">
+    투입은 8배 차이, 결과는 6% 차이. 이 한 줄이 1장 전체입니다.
+    여기서 두 갈래 질문이 나옵니다 — 하나는 "어떻게 그게 가능한가"(6장 아키텍처),
+    다른 하나는 "그런데 왜 그 와중에 메모리는 더 부족한가"(2장부터).
+    발표는 두 번째 질문부터 갑니다. 첫 번째 질문의 답이 두 번째 위에 서 있기 때문입니다.
+  </aside>
+</section>
+
+<!-- ══════════════════════════════════════ 2장 ══════════════════════════ -->
+<section class="chapter">
+  <div class="cnum">02</div>
+  <div class="ctag">Chapter 02</div>
+  <h2>추론 시장으로의 전환</h2>
+  <blockquote>"만드는 시대를 넘어, 매일 쏟아내는 시대로"</blockquote>
+  <div class="cwhat">왜 <b>지금</b> 추론 비용이 이렇게 중요해졌는지.</div>
+</section>
+
+<section data-chapter="2. 추론 시장">
+  <div class="eyebrow">무슨 일이 벌어지고 있나</div>
+  <h2><span class="am">에이전트</span>가 토큰을 먹습니다</h2>
+  <div class="lead">챗봇은 한 번 답하고 끝나지만, 에이전트는 여러 도구를 오가며
+    <b>긴 맥락을 반복해서</b> 읽고 씁니다.</div>
+  <div class="body">
+    <ul>
+      <li><b>AI 기업</b> — 자체 서버를 늘리고도 외부 연산까지 장기로 임대합니다.</li>
+      <li><b>일반 기업</b> — 보안·데이터 통제·규제 대응을 위해 온프레미스·하이브리드로 갑니다.</li>
+      <li><b>개인</b> — 로컬 서빙에 뛰어들며 DGX Spark·고메모리 Mac이 품절됐습니다.</li>
+    </ul>
+  </div>
+  <div class="foot">
+    세 층이 전부 <b>큰 메모리와 높은 대역폭</b>이라는 같은 물건을 놓고 경쟁합니다.
+  </div>
+  <aside class="notes">
+    핵심은 사용자 수가 아니라 <b>사용자당 토큰</b>이 함께 늘었다는 것입니다.
+    수요층이 AI 기업 → 일반 기업 → 개인으로 넓어졌고, 셋이 원하는 물건이 같습니다.
+    다음 세 장에서 이 흐름을 숫자로 따라갑니다 — 토큰량, 연산 임대 계약, 그리고 기기 가격표.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="2. 추론 시장">
+  <img src="../assets/token_growth.webp?v=20260731e" alt="OpenRouter 주간 토큰 처리량이 6개월 만에 5조에서 25조로 늘고, 요청당 프롬프트·응답 토큰과 프로그래밍 용도 비중이 함께 커진 것을 보여주는 막대 그래프">
+  <aside class="notes">
+    전 세계 추론량이 아니라 모델 라우터 <b>한 곳</b>의 처리량입니다 — 그래도 방향은 분명합니다.
+    왼쪽은 6개월에 5배, 가운데는 요청 하나가 무거워진 것(프롬프트 1.5K→6K, 응답 150→400),
+    오른쪽은 무엇이 태우는가(프로그래밍 11%→50% 이상).
+    <b>수요를 끄는 건 사람의 수가 아니라 코딩 에이전트의 왕복 횟수</b>입니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="2. 추론 시장">
+  <img src="../assets/compute_lease.webp?v=20260731e" alt="Anthropic과 Google의 외부 연산 임대 목적·월 지출·임대 자원·계약 기간을 나란히 정리한 표">
+  <aside class="notes">
+    자체 데이터센터를 계속 늘리면서도 <b>외부 연산을 따로 빌려야</b> 할 만큼 수요가 빨랐다는 증거입니다.
+    Google은 이를 Gemini Enterprise의 예상을 웃돈 수요에 대응하는 <b>브리지 용량</b>이라고 설명했습니다.
+    두 수치는 우열을 가리는 비교값이 아니라 서로 다른 확보 사례입니다.
+    Anthropic 수치는 SpaceX 공식 EU 투자설명서 4.3.4.5절의 Colossus I·II 합계이고,
+    초기 기사의 "Colossus 1 한 곳 22만 장"과 혼동하지 않아야 합니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="2. 추론 시장">
+  <img src="../assets/memory_price_chain.webp?v=20260731e" alt="DRAM 계약가 급등이 DGX Spark·MacBook·iPad의 실제 판매가 인상으로 이어진 과정을 보여주는 막대 그래프">
+  <aside class="notes">
+    여기가 이 발표에서 청중과 가장 가까운 슬라이드입니다.
+    일반 DRAM 계약가가 2026년 1분기에만 분기 대비 <b>93~98%</b> 뛰었고,
+    NVIDIA는 DGX Spark를 $3,999 → $4,699로, Apple은 MacBook·iPad를 최대 $300 올렸습니다.
+    둘 다 인상 사유로 <b>AI 데이터센터발 메모리 공급 부족</b>을 명시했습니다.
+    소비자 GPU 소매가는 1차 출처를 확인하지 못해 넣지 않았습니다.
+  </aside>
+</section>
+
+<section class="stmt" data-chapter="2. 추론 시장">
+  <div class="eyebrow">여기서 질문이 달라집니다</div>
+  <div class="sq">이제 경쟁의 중심은 모델을 <span class="gr">만드는</span> 것이 아니라,<br>
+    만들어진 모델을 <span class="cy">얼마나 많이 돌릴 수 있느냐</span>입니다.</div>
+  <div class="sqs">그래서 다음 질문은 하나뿐입니다 — <b>돌리는 데 정확히 무엇이 얼마나 드는가.</b><br>
+    청구서는 두 장 날아옵니다. 3장이 첫 장, 4장이 둘째 장입니다.</div>
+  <aside class="notes">
+    여기서 한 박자 쉬어 갑니다. 1·2장은 "왜 지금 이 이야기인가"였고,
+    3장부터는 "그래서 얼마가 드는가"입니다. 여기서 청구서가 두 장이라는 것만 못 박고 넘어갑니다.
+  </aside>
+</section>
+
+<!-- ══════════════════════════════════════ 3장 ══════════════════════════ -->
+<section class="chapter">
+  <div class="cnum">03</div>
+  <div class="ctag">Chapter 03 · 청구서 1</div>
+  <h2>LLM을 담으려면<br>메모리가 얼마나 필요할까요?</h2>
+  <blockquote>"덩치만큼 정확히 매겨지는 자릿세"</blockquote>
+  <div class="cwhat">첫 번째 청구서 — <b>모델을 올려두기만 한 상태</b>의 비용.</div>
+</section>
+
+<section data-chapter="3. 용량 청구서">
+  <div class="eyebrow">외울 건 하나입니다</div>
+  <h2>8비트에서는</h2>
+  <div class="body">
+    <div class="cols c2">
+      <div>
+        <div class="big am">1B = 1GB</div>
+        <div class="big am" style="margin-top:18px">1T = 1TB</div>
+        <div class="big-cap">8비트 = 1바이트 → <b>파라미터 하나 = 1바이트</b>.<br>
+          파라미터 수를 그대로 GB로 읽으면 그게 적재 비용입니다.</div>
+      </div>
+      <div class="card am-b">
+        <span class="k">정밀도를 바꾸면 곱하기</span>
+        <p>BF16은 <b>×2</b>, FP4는 <b>×0.5</b>.<br>
+        막대에 배수를 곱하는 것으로 끝납니다.<br><br>
+        어느 정밀도를 <b>네이티브로 가속</b>하느냐는 가속기 세대가 정합니다 —
+        암페어 FP16, 호퍼 <b>FP8</b>, 블랙웰 FP4.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot am-l">
+    아키텍처가 아무리 영리해도 이 비례는 못 피합니다. 손잡이는 <b>파라미터 하나에 몇 비트를 쓰느냐</b>뿐입니다.
+  </div>
+  <aside class="notes">
+    이 슬라이드가 3장 전체입니다. 8비트로 눌렀을 때 품질 저하는 대체로 무손실 수준이라,
+    이 기준선은 실무에서도 그대로 씁니다.
+    극한까지 밀면 1B당 0.3GB 수준까지 내려가지만 압축이 세질수록 품질 손실이 커지고,
+    <b>작은 모델일수록 양자화에 약하고 큰 모델일수록 강합니다.</b> 그게 7장입니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="3. 용량 청구서">
+  <img src="../assets/model_capacity.webp?v=20260731e" alt="2026년 모델 15개의 총 파라미터를 오름차순 가로 막대로 그린 그림 — 27B는 27GB, 2.8T는 2.8TB로 파라미터 수가 그대로 용량이 되고, 막대는 H200 한 장(141GB)씩 칸으로 끊겨 있으며 위 차트의 가로축 끝이 H200 8장 한 노드(1,128GB)입니다. 오른쪽에는 정밀도별 배수를 길이로 비교하는 막대가 있습니다 — BF16 ×2.0, FP8 ×1.0, FP4 ×0.5, 극한 압축 ×0.3">
+  <aside class="notes">
+    막대를 다 읽지 마시고 <b>범위</b>만 봐주세요 — 27B부터 2.8T까지 100배 차이가 납니다.
+    그리고 위쪽 큰 모델이 대부분 중국 회사라는 점은 8장에서 다시 이야기합니다.
+    칸 하나가 <b>H200 한 장(141GB)</b>이고, 위 차트의 가로축 끝이 <b>8장 한 노드(1,128GB)</b>입니다 —
+    그래서 위 차트의 모델은 전부 한 노드에 들어가고, 아래 세 모델은 들어가지 않습니다.
+    GLM-5.2를 FP8로 올리면 753GB니까 <b>여덟 칸 중 여섯 칸</b>입니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="3. 용량 청구서">
+  <img src="../assets/node_memory_budget.webp?v=20260731e" alt="H200 8장 한 노드 1,128GB를 세 몫으로 나눈 띠 그림 — 가중치 753GB가 66.8%, KV캐시 풀 311GB가 27.6%, CUDA 그래프와 활성값과 여유가 64GB로 5.7%입니다. GPU 한 장(141GB)에서도 94.1 대 38.9 대 8GB로 같은 비율이고, 그 311GB에 들어가는 대화는 64K가 약 100명, 128K가 약 50명, 250K가 약 25명입니다">
+  <aside class="notes">
+    앞 장이 "들어간다"였고 이 장은 <b>"들어가고 나면 얼마 남나"</b>입니다.
+    여덟 장에 올리면 <b>3분의 2가 가중치</b>로 찹니다.
+    남는 자리에서 활성값과 CUDA 그래프 몫(엔진 권고 GPU당 5~8GB)을 빼면
+    <b>KV캐시 자리는 311GB</b>입니다. 이건 설정을 최대로 올렸을 때의 상한이고,
+    엔진이 자동으로 잡으면 200GB대로 내려갑니다.
+    짚을 곳은 오른쪽 칸입니다 — <b>128K 대화가 쉰 명</b>이고, 길이가 두 배가 되면 절반이 됩니다.
+    가중치는 한 번 올리면 모두가 함께 쓰는데 <b>KV캐시는 사람마다 새로</b> 듭니다.
+    그래서 두 번째 청구서가 결국 동시 사용자 수를 정합니다 — 다음 장입니다.
+  </aside>
+</section>
+
+<!-- ══════════════════════════════════════ 4장 ══════════════════════════ -->
+<section class="chapter">
+  <div class="cnum">04</div>
+  <div class="ctag">Chapter 04 · 청구서 2</div>
+  <h2>일을 시키려면<br>메모리가 얼마나 필요할까요?</h2>
+  <blockquote>"손님마다 따로 내고, 이내 자릿세를 넘어서는 값"</blockquote>
+  <div class="cwhat">두 번째 청구서 — 그리고 <b>6장 아키텍처 경쟁이 벌어지는 전장</b>.</div>
+</section>
+
+<section class="fig" data-chapter="4. KV캐시 청구서">
+  <img src="../assets/next_token_all.webp?v=20260731e" alt="한 토큰을 더 만들 때 앞의 전부를 다시 보는 과정을 여섯 걸음으로 그린 그림 — 걸음마다 새로 계산하는 토큰은 언제나 한 칸이고 나머지는 캐시에서 읽습니다. 토큰 하나가 층마다 K·V 한 쌍씩 남겨 GLM-5.2 기준 43.9KiB가 되고, 캐시를 지우면 1,000걸음에 토큰을 500,500번 처리해야 해서 약 500배 차이가 납니다">
+  <aside class="notes">
+    이 장의 출발점입니다 — <b>한 글자를 더 쓰려면 지금까지의 전부를 봅니다.</b>
+    왼쪽 계단을 위에서 아래로 짚어 주세요. 걸음마다 <b>새로 계산하는 것은 언제나 한 칸</b>(시안)이고
+    나머지는 앞 걸음에서 계산해 둔 것을 꺼내 씁니다(회색). 그 꺼내 쓰는 더미가 KV캐시입니다.
+    1,000번째 줄이 요점입니다 — 앞의 999개를 <b>계산하지 않고 읽습니다.</b>
+    오른쪽 위는 그 더미의 단가입니다. 토큰 하나가 층마다 K·V 한 쌍을 남기고,
+    GLM-5.2는 78층이라 <b>토큰 하나가 43.9KiB</b>, 1M 대화 하나가 <b>46.5GiB</b>입니다 —
+    앞 장의 311GB에 여섯 명이 들어간다던 그 값입니다.
+    오른쪽 아래 삼각형은 <b>캐시가 없으면 어떻게 되는가</b>입니다. 면적이 총 계산량이고,
+    1,000걸음이면 500,500번 대 1,000번 — 약 500배입니다.
+    단, 정직하게 덧붙이면 <b>읽는 양은 줄지 않습니다.</b> 매 걸음 캐시 전체를 읽어야 하고,
+    그래서 5장의 디코딩이 대역폭에 묶입니다. 6장은 그 읽는 양을 줄이는 싸움입니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="4. KV캐시 청구서">
+  <img src="../assets/kv_cache_desk.webp?v=20260731e" alt="KV캐시 공식을 네 항으로 해부한 그림 — 사용자 수·대화 길이·모델 사이즈·양자화 정도가 곱해지며, 앞의 둘은 서비스가 손댈 수 없고 뒤의 둘은 아키텍처와 양자화로 깎을 수 있음">
+  <aside class="notes">
+    실무에서 기억할 건 <b>무엇에 비례하느냐 넷</b>뿐입니다.
+    핵심은 이 넷이 더해지는 게 아니라 <b>곱해진다</b>는 점 — 각각은 순한 비례인데 겹치면 폭발합니다.
+    그리고 왼쪽 둘(사용자 수·대화 길이)은 <b>사용자가 정하는 값</b>이라 서비스가 손댈 수 없습니다.
+    손댈 수 있는 건 오른쪽 둘 — 모델 사이즈는 6장 아키텍처가, 정밀도는 7장 양자화가 다룹니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="4. KV캐시 청구서">
+  <img src="../assets/kv_cache_calc.webp?v=20260731e" alt="Llama 2 7B·13B·65B의 1K 토큰당 KV캐시 실측 계산 — 각각 0.50GB·0.78GB·2.50GB이며, 1만~2만 토큰에서 KV캐시가 FP8 가중치를 따라잡음">
+  <aside class="notes">
+    구형 덴스 모델이라 KV캐시를 줄이는 장치가 없어 <b>공식이 그대로 드러납니다.</b>
+    설정값은 Hugging Face config.json 실측이고, 사용자 1명(batch 1) 기준입니다.
+    짚을 곳은 오른쪽 — <b>1만~2만 토큰이면 KV캐시가 가중치를 따라잡습니다.</b>
+    요즘 에이전트가 한 번에 쓰는 양이고, 여기에 동시 사용자 수가 다시 곱해집니다.
+    단서 하나: "모델 사이즈에 비례"는 <b>같은 아키텍처 안에서만</b> 참입니다.
+    Llama 2 70B는 GQA라 1K당 0.31GB로 7B(0.50GB)보다 오히려 작습니다 — 그 이야기가 6장입니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="4. KV캐시 청구서">
+  <img src="../assets/context_growth.webp?v=20260731e" alt="컨텍스트 길이의 확장 — 2023년 4K에서 2026년 1M까지 로그 눈금 막대 그래프">
+  <aside class="notes">
+    손댈 수 없다던 그 값이 <b>가만히 있어 주지도 않았습니다.</b>
+    3년 만에 256배 — 모델을 하나도 바꾸지 않아도 KV캐시가 256배가 된다는 뜻입니다.
+    세로축이 로그 눈금이라 실제 격차는 보이는 것보다 훨씬 큽니다.
+    오픈웨이트는 HF config 실측이고, GPT·Claude·Gemini는 비공개라 발표 수치 기준입니다.
+    실제 지형은 "프론티어급은 1M, 중형 오픈웨이트는 지금도 256K"입니다.
+  </aside>
+</section>
+
+<section data-chapter="4. KV캐시 청구서">
+  <div class="eyebrow">4장 정리</div>
+  <h2>1M은 여유분이 아니라<br><span class="am">이미 쓰이는 값</span>입니다</h2>
+  <div class="body">
+    <div class="cols c2">
+      <div class="card">
+        <span class="k">사람이 챗봇에 물을 때</span>
+        <p>몇 천 토큰이면 충분합니다.</p>
+      </div>
+      <div class="card am-b">
+        <span class="k">에이전트가 일할 때</span>
+        <p>코드베이스를 <b>통째로</b> 읽고,<br>
+        쓸 수 있는 도구 설명을 <b>전부 앞에</b> 붙이고,<br>
+        <b>수십 턴</b>을 이어갑니다.</p>
+      </div>
+    </div>
+    <div class="lead" style="margin-top:34px">
+      예전에는 컨텍스트를 다 쓰는 게 특수한 사용법이었다면, 지금은 <b>기본값</b>입니다.
+    </div>
+  </div>
+  <div class="foot cy-l">
+    "총 파라미터가 작다"와 "KV캐시가 작다"는 <b>별개의 축</b>입니다 — 지금 경쟁은 이 축에서 벌어집니다.
+  </div>
+  <aside class="notes">
+    공식에서 가장 빠르게 자란 항이 여기고, 6장 아키텍처 경쟁의 이유이기도 합니다.
+    다만 5장을 먼저 봅니다 — <b>메모리가 얼마나 드는가</b>를 봤으니,
+    이번엔 <b>시간이 어디서 새는가</b>를 봐야 아키텍처가 왜 그렇게 설계됐는지 읽힙니다.
+  </aside>
+</section>
+
+<!-- ══════════════════════════════════════ 5장 ══════════════════════════ -->
+<section class="chapter">
+  <div class="cnum">05</div>
+  <div class="ctag">Chapter 05</div>
+  <h2>프리필과 디코딩</h2>
+  <blockquote>"한꺼번에 삼키는 입력, 한 땀 한 땀 뱉어내는 출력"</blockquote>
+  <div class="cwhat">같은 연산인데 <b>속도가 16배 차이</b> 나는 이유, 그리고 그것이 만든 가격표.</div>
+</section>
+
+<section class="fig" data-chapter="5. 프리필·디코딩">
+  <img src="../assets/compute_units.webp?v=20260731e" alt="프리필과 디코딩의 연산 유닛 활용률을 나란히 놓은 그림 — 왼쪽 프리필은 100칸 격자가 전부 켜지고 가중치 한 번 읽기로 1,024토큰을 병렬 처리하며 산술 강도 2,048 FLOP/byte로 연산이 천장, 오른쪽 디코딩은 100칸 중 반 칸만 켜지고 읽기 한 번에 토큰 하나씩 직렬 진행하며 산술 강도 2 FLOP/byte로 대역폭이 천장">
+  <aside class="notes">
+    이 그림이 5장 전체의 뼈대입니다. 뒤의 그림 셋은 이걸 각각 풀어 보여 주는 것뿐입니다.
+    맨 위 한 줄만 잡아 주세요 — H200은 <b>바이트 하나를 읽는 동안 412번 계산할 수 있습니다.</b>
+    그 412를 채우면 연산이 천장, 못 채우면 대역폭이 천장입니다.
+    왼쪽은 1,024토큰을 한꺼번에 넣어 412를 <b>다섯 배</b> 넘깁니다 — 격자가 전부 켜집니다.
+    오른쪽은 토큰 하나라 <b>2번</b>밖에 못 씁니다. <b>100칸 중 반 칸</b>입니다.
+    가운데 줄이 왜 그렇게 되는지입니다 — 같은 가중치 읽기 한 번으로 왼쪽은 1,024개를 만들고
+    오른쪽은 하나를 만듭니다. 앞 토큰이 나와야 다음을 시작할 수 있으니까요.
+    정직하게 덧붙이면 격자의 칸은 <b>물리적 유닛이 아니라 쓸 수 있는 연산 능력의 몫</b>입니다 —
+    디코딩에서도 유닛은 켜져 있고 메모리를 기다립니다.
+    그리고 산술 강도 차이는 1,024배인데 <b>실측 격차는 16배</b>입니다. 프리필도 연산 천장에
+    한참 못 미친다는 뜻입니다 — 그 실측이 바로 다음다음 장입니다.
+    이게 6장에서 MoE와 KV캐시 압축이 전부 같은 방향으로 몰려 있는 이유입니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="5.1 프리필">
+  <img src="../assets/prefill_parallel.webp?v=20260731e" alt="프리필 — 계단 전체를 한꺼번에 계산하고 가중치는 한 번만 읽는다">
+  <aside class="notes">
+    왼쪽 계단이 "누가 누구를 보는가"입니다. 각 토큰이 자기 앞만 본다는 규칙은
+    입력을 받은 순간 <b>이미 다 정해져</b> 있으니, 세 줄의 계산이 서로를 기다릴 이유가 없습니다.
+    이 계단이 5.3에서 다시 나옵니다 — 캐시 히트를 설명할 때 같은 그림을 씁니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="5.2 디코딩">
+  <img src="../assets/decoding_sequential.webp?v=20260731e" alt="디코딩 — 한 단계씩 순차 진행, 100GB를 500GB/s로 읽으면 초당 5토큰">
+  <aside class="notes">
+    새 토큰 하나마다 <b>모델 전체를 처음부터 다시</b> 읽어야 합니다.
+    100GB를 500GB/s로 읽으면 토큰 하나에 0.2초, 초당 5토큰 — 이게 디코딩이 느린 이유의 전부입니다.
+    병렬화할 방법이 없다는 데는 예외가 하나 있고, 5.4에서 따로 다룹니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="5. 프리필·디코딩">
+  <img src="../assets/prefill_decode_bench.webp?v=20260731e" alt="8×H200 실측 — 배치 1에서 프리필 2,097 대 디코딩 133 tok/s, 동시 100명일 때의 변화">
+  <aside class="notes">
+    이야기가 아니라 실측입니다. H200 8장 한 노드, 사용자 한 명 기준으로
+    프리필 초당 <b>2,097토큰</b>, 디코딩 초당 <b>133토큰</b> — 16배이고,
+    요청 처리 시간의 <b>92%가 디코딩</b>입니다.
+    오른쪽 칸도 함께 짚어 주세요: 동시 100명으로 올리면 노드 전체 출력은 10배가 되지만
+    한 사람이 받는 속도는 1/5로 떨어지고 첫 토큰은 0.29초 → 20.6초로 밀립니다.
+    "디코딩이 병목"이라는 말은 이 <b>두 얼굴</b>을 함께 가리킵니다.
+    GLM-5.2의 같은 조건 실측은 공개된 것이 없어 GLM-5-FP8 공식 수치를 썼습니다.
+  </aside>
+</section>
+
+<section data-chapter="5.3 캐시 히트">
+  <div class="eyebrow">5.3 KV 캐시 히트</div>
+  <h2>작업 일지는 <span class="cy">책갈피</span>에서 이어 읽습니다</h2>
+  <div class="lead">에이전트는 매 턴 새 지시만 받지 않습니다.
+    이전 대화·읽은 파일·도구 결과가 쌓인 <b>작업 기록 전체</b>가 다시 입력됩니다.</div>
+  <div class="body">
+    <div class="cols c2">
+      <div class="card am-b">
+        <span class="k">캐시 미스</span>
+        <h4>매 턴 처음부터 다시</h4>
+        <p>턴이 쌓일수록 프리필 연산량이 <b class="am">제곱</b>으로 늘어납니다.</p>
+      </div>
+      <div class="card cy-b">
+        <span class="k">캐시 히트</span>
+        <h4>책갈피 뒤만 프리필</h4>
+        <p>앞부분이 <b>같은 순서·같은 내용</b>이면 저장된 KV를 그대로 씁니다.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot cy-l">
+    단, <b>재계산하지 않는다</b>는 뜻이지 <b>보지 않는다</b>는 뜻은 아닙니다 — 두 번째 그림에서 뒤집습니다.
+  </div>
+  <aside class="notes">
+    컨텍스트가 길어질수록 디코딩만이 아니라 <b>프리필 병목</b>도 무시할 수 없습니다.
+    조건은 하나입니다 — 앞부분(prefix)이 같은 순서·같은 내용이어야 합니다.
+    중간의 시스템 지침이나 도구 결과가 바뀌면 그 지점 뒤부터 다시 계산합니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="5.3 캐시 히트">
+  <img src="../assets/kv_cache_hit_chart.webp?v=20260731e" alt="멀티턴 에이전트에서 시스템 지침·파일·도구 결과가 작업 기록으로 누적되고, KV 책갈피 뒤의 새 기록만 프리필하는 과정 — 새로 계산하는 몫이 4/4에서 2/6, 1/7로 줄어든다">
+  <aside class="notes">
+    왼쪽에서 짚을 것은 <b>회색이 늘어나는 속도</b>입니다. 기록은 계속 길어지는데
+    시안(새로 계산하는 몫)은 <b>4/4 → 2/6 → 1/7</b>로 줄어듭니다.
+    책갈피는 지우는 표시가 아니라 <b>이어 읽는 지점</b>이라는 게 이 그림의 전부입니다.
+    오른쪽은 같은 턴 3을 두 가지로 청구한 것 — 컨텍스트 길이는 같고 새로 계산하는 범위만 다릅니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="5.3 캐시 히트">
+  <img src="../assets/cache_hit_row_cost.webp?v=20260731e" alt="같은 길이의 새 입력은 한 블록만 프리필하지만 그 블록이 과거 KV 전부를 읽어야 하고, 턴이 쌓일 때 연산량이 캐시 미스는 6→15→28로, 캐시 히트는 3→5→7로 늘어 상수가 아님을 보이는 막대그래프">
+  <aside class="notes">
+    앞 그림을 뒤집는 슬라이드입니다. 새로 <b>계산</b>하는 건 늘 한 블록이지만,
+    그 블록의 Query는 앞에 저장된 KV <b>전부</b>를 읽어야 답이 나옵니다 —
+    점선 아크가 턴마다 늘어나는 게 그 뜻입니다.
+    아래 막대에서 세 선을 같이 짚어 주세요. 캐시 미스는 <b>6 → 15 → 28</b>로 제곱,
+    캐시 히트는 <b>3 → 5 → 7</b>로 선형, 그리고 "새로 계산하는 블록 수만" 세면
+    <b>1 → 1 → 1</b>인 납작한 회색 막대 — <b>실제 청구서는 저 회색 선이 아닙니다.</b>
+    캐시는 과거의 <b>계산 결과</b>를 재사용할 뿐, 과거를 <b>참조하는 비용</b>까지 없애지는 않습니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="5.3 캐시 히트">
+  <img src="../assets/cache_hit_pricing_new.webp?v=20260731e" alt="출력 5 대 입력 1 대 캐시 히트 0.1의 가격 구조와 그 이유">
+  <aside class="notes">
+    가격표는 마케팅이 아니라 하드웨어가 실제로 하는 일의 반영입니다.
+    출력이 입력보다 5배 비싼 이유 — 디코딩은 토큰 하나마다 모델 전체를 다시 읽으니까요.
+    캐시 히트가 90% 할인인 이유 — 이미 계산해 둔 KV를 재사용할 뿐 프리필 연산이 거의 없으니까요.
+    이 "10%"라는 업계 관행을 기억해 두세요. 6.4에서 DeepSeek V4가 이걸 <b>2%와 0.83%</b>로 깨버립니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="5.3 캐시 히트">
+  <img src="../assets/kv_tier.webp?v=20260731e" alt="KV캐시 계층 두 패널 — 왼쪽은 G1 GPU HBM(B300 8TB/s · Vera Rubin 22TB/s)에서 G2 호스트 CPU 메모리(Grace C2C 900GB/s · Vera C2C 1.8TB/s), G3 NVMe SSD(PCIe 5.0 x4 16GB/s · 6.0 32GB/s), G4 원격 객체 스토리지로 내려가는 이름과 대역폭, 그리고 단방향으로 통일한 로그 눈금 막대차트로 옆 GPU가 한 칸 아래 x86 호스트 DRAM보다 14배·같은 G2 안에서도 7배 차이가 나 계층이 사다리가 아니라 그래프임을 보여줍니다. 오른쪽은 1M 프리픽스를 다시 프리필하는 477초와 디스크에서 읽는 0.2~12.5초를 같은 배율로 비교하고, DeepSeek V4 Flash 5.7GB·GLM-5.2 49.9GB·압축 없는 Llama 2 7B 550GB의 KV 용량을 로그 막대로 나란히 놓습니다">
+  <aside class="notes">
+    판단 기준은 <b>"SSD가 느린가"가 아닙니다</b> &mdash; 읽는 시간이 다시 계산하는 시간보다 짧은가입니다.
+    왼쪽 위는 <b>이름과 대역폭</b>만 봐 주세요. G1이 B300 8TB/s에서 Vera Rubin <b>22TB/s</b>로,
+    G2가 Grace C2C 900GB/s에서 Vera C2C <b>1.8TB/s</b>로 올라갑니다.
+    왼쪽 아래 차트가 이 그림의 요점입니다 &mdash; <b>사다리가 아니라 그래프</b>입니다.
+    NVLink로 붙은 <b>옆 GPU가 한 칸 아래 x86 호스트 DRAM보다 14배</b> 빠르고,
+    같은 G2 안에서도 Grace와 x86이 <b>7배</b> 차이입니다. 원격 DRAM과 로컬 SSD는 같은 급입니다.
+    단방향으로 통일한 값이라고 축에 적어 뒀습니다 &mdash; C2C 제조사 표기는 양방향 합이라 그 절반입니다.
+    오른쪽은 손익분기입니다. 1M 재계산 477초 대 디스크 최악 12.5초 &mdash; <b>37배</b>입니다.
+    표의 세 번째 행이 반대 사례입니다 &mdash; 압축 없는 <b>Llama 2 7B는 1M이 550GB</b>이고
+    PCIe 3.0에서 137초입니다. 그런데 7B는 <b>프리필도 빠르니</b> 그 시절에는 읽는 쪽이 졌습니다.
+    <b>손익분기를 넘긴 것은 PCIe 세대가 아니라 어텐션 압축</b>이라는 게 결론입니다.
+  </aside>
+</section>
+
+<section data-chapter="5.4 투기적 디코딩">
+  <div class="eyebrow">5.4 투기적 디코딩</div>
+  <h2>초안을 먼저 쓰고,<br>맞았는지 <span class="cy">한꺼번에</span> 채점합니다</h2>
+  <div class="lead">디코딩의 순차 병목을 없애지는 못하지만, 본 모델을 한 번 호출할 때
+    <b>토큰 하나보다 많이 확정</b>하는 우회로입니다.</div>
+  <div class="body">
+    <div class="cols c3">
+      <div class="card"><span class="k">1 · Draft</span><h4>작은 모델이 초안</h4><p>가중치가 작아서 <b>여러 번 돌려도</b> 쌉니다.</p></div>
+      <div class="card cy-b"><span class="k">2 · Verify</span><h4>본 모델이 병렬 채점</h4><p>가중치를 <b>한 번</b> 읽어 초안 전체를 검증합니다.</p></div>
+      <div class="card vi-b"><span class="k">3 · Accept</span><h4>맞은 데까지 확정</h4><p>분포를 보정하므로 <b>출력 품질은 동일</b>합니다.</p></div>
+    </div>
+  </div>
+  <div class="foot">
+    <b>연산을 더 써서 가중치를 다시 읽는 빈도를 낮추는 거래</b>입니다 — 그래서 조합에 따라 이득이 사라질 수도 있습니다.
+  </div>
+  <aside class="notes">
+    5.2에서 "병렬화할 방법이 없다"고 했던 것의 유일한 예외입니다.
+    맞은 데까지만 채택하므로 <b>결과는 바뀌지 않습니다</b> — 이 점을 꼭 짚어 주세요.
+    다음 그림에서 앰버 막대의 <b>크기 차이</b>를 짚어 주세요 — 초안 모델은 작아서
+    여러 번 읽어도 본 모델 한 번보다 쌉니다. 거래가 성립하는 이유가 그것뿐입니다.
+    <b>몇 개를 미리 찍을지는 설정값입니다.</b> 그림은 5개로 그렸지만 GLM-5.2의 SGLang
+    권장값은 3단계(초안 3번 읽기 → 본 모델이 4자리를 한 번에 채점)입니다.
+    질문이 나오면: 초안이 자기회귀라 순차로 읽는 것이 고전 알고리즘이고,
+    Medusa처럼 <b>여러 헤드가 한 번의 forward에서 여러 자리를 동시에</b> 찍는 방식은
+    초안 순차 읽기가 아예 없습니다. 트리 초안(topk&gt;1)이면 N번 읽어 N개보다 많이 뽑습니다.
+    그리고 수락 길이는 곧 속도 배수가 아닙니다. 다음 그림은 초안·검증 비용과 배치까지 포함한
+    <b>실제 디코딩 tok/s</b> 기준입니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="5.4 투기적 디코딩">
+  <img src="../assets/speculative_decoding.webp?v=20260731e" alt="투기적 디코딩의 세 단계 — 작은 초안 모델의 가중치를 여러 번 읽어 토큰 5개를 제안하고, 큰 본 모델의 가중치를 한 번 읽어 병렬 채점한 뒤 맞은 데까지 확정하는 흐름과, MTP 1.57배·DSpark 1.60~1.85배·DFlash 6배 이상 디코딩 가속을 공통 축에서 비교한 막대그래프">
+  <aside class="notes">
+    위쪽이 흐름, 아래쪽이 <b>공통 축에서 비교한 실제 속도 배수</b>입니다.
+    GLM-5.2의 MTP가 1.57배, DSpark은 발표 범위 1.60~1.85배(옅은 구간),
+    DFlash는 6배 이상(막대 끝의 `›››`가 "이상"이라는 뜻)입니다.
+    같은 축에 올렸다는 게 이 그림의 요점입니다 — 셋 다 논문·발표의 자체 측정치이므로
+    엔진 실측과 같은 지표처럼 섞어 읽지 않아야 합니다.
+    <b>DSpark 줄의 "노드 총처리량은 같게 고정"이 무슨 뜻이냐는 질문이 나올 수 있습니다.</b>
+    노드가 초당 뱉는 <b>총</b> 토큰 수를 기준선과 같게 맞춰 놓고, 그 상태에서
+    <b>사용자 한 명이 체감하는</b> 속도를 비교했다는 뜻입니다 — 5장의 "노드 총량 대 한 사람의 체감"과 같은 축입니다.
+    기준선 MTP-1은 다음 토큰 <b>하나만</b> 추가 제안하는 고정 깊이이고, DSpark는 깊이를 고정하지 않고
+    초안 생존 확률과 GPU 부하를 보고 요청마다 검증 길이를 바꿉니다.
+    그러니 이 배수는 "동시성을 올려도 유지된다"는 뜻이 아니라 "총처리량을 맞춰 재면 이만큼"이라는 뜻입니다.
+  </aside>
+</section>
+
+<!-- 후반부 진입 — 목차 재등장 -->
+<section data-chapter="목차">
+  <div class="eyebrow">여기까지가 전반부입니다</div>
+  <h2>이제 <span class="cy">깎는 이야기</span>로 갑니다</h2>
+  <div class="body">
+    <div class="cols c2">
+      <div class="tochalf">
+        <div class="hk">전반부 · 완료</div>
+        <div class="hw">무엇이 얼마나 드는가</div>
+        <div class="tocl">
+          <div class="ti"><span class="tn">1</span><span class="tt">Kimi K3의 증시 충격<em>투입 8배, 결과 6%</em></span></div>
+          <div class="ti"><span class="tn">2</span><span class="tt">추론 시장으로의 전환<em>수요를 끄는 것은 에이전트</em></span></div>
+          <div class="ti"><span class="tn">3</span><span class="tt">용량 청구서<em>1B = 1GB, 손잡이는 정밀도뿐</em></span></div>
+          <div class="ti"><span class="tn">4</span><span class="tt">KV캐시 청구서<em>넷이 곱해지고, 사람마다 따로</em></span></div>
+          <div class="ti"><span class="tn">5</span><span class="tt">프리필과 디코딩<em>시간은 출력에서 샌다</em></span></div>
+        </div>
+      </div>
+      <div class="tochalf on">
+        <div class="hk">후반부 · 6~9장</div>
+        <div class="hw">그것을 어떻게 깎는가</div>
+        <div class="tocl">
+          <div class="ti"><span class="tn">6</span><span class="tt">아키텍처 살펴보기<em>여섯 모델의 여섯 전략</em></span></div>
+          <div class="ti"><span class="tn">7</span><span class="tt">양자화<em>비트를 줄여 둘 다 깎기</em></span></div>
+          <div class="ti"><span class="tn">8</span><span class="tt">AI 소버린<em>누가 소유하고 어디서 돌리는가</em></span></div>
+          <div class="ti"><span class="tn">9</span><span class="tt">GPU 로드맵<em>하드웨어는 어디로 가는가</em></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot cy-l">
+    여기서부터 나오는 모든 기법은 <b>두 청구서 중 무엇을 깎는가</b>로 분류됩니다.
+  </div>
+  <aside class="notes">
+    전반부에서 세운 것은 딱 두 가지입니다 — <b>용량</b>과 <b>KV캐시</b>.
+    후반부의 모든 기법은 이 둘 중 하나(또는 연산)를 깎습니다.
+    6장 도입부에 그 지도를 두 장 준비해 뒀습니다.
+  </aside>
+</section>
+<!-- ══════════════════════════════════════ 6장 ══════════════════════════ -->
+<section class="chapter">
+  <div class="cnum">06</div>
+  <div class="ctag">Chapter 06 · 본론</div>
+  <h2>아키텍처 살펴보기</h2>
+  <blockquote>두 개의 청구서를 깎는 여섯 가지 전략</blockquote>
+  <div class="cwhat">여기서부터가 본론입니다. 각 장을 <b>"무엇을 깎는가"</b>로만 보시면 됩니다.</div>
+</section>
+
+<section class="fig" data-chapter="6. 아키텍처">
+  <img src="../assets/architecture_efficiency_map.webp?v=20260731e" alt="2~5장에서 부담을 확인하고 6~7장에서 효율로 전환하는 지도 — 6장의 기술이 MoE와 어텐션 두 경로로 갈린다">
+  <aside class="notes">
+    2장부터 5장까지가 <b>청구서를 정의한 구간</b>이고, 여기서부터가 깎는 구간입니다. 갈래가 둘뿐입니다 — 모델 안에서 <b>필요한 전문가만 켜는 길</b>(6.1)과 <b>긴 컨텍스트를 압축·선택·요약하는 길</b>(6.2~6.6).
+  </aside>
+</section>
+
+<section data-chapter="6. 아키텍처">
+  <div class="eyebrow">6장의 지도</div>
+  <h2>무엇을 깎는가</h2>
+  <div class="body">
+    <table class="tight">
+      <tr><th>장</th><th>모델</th><th>기법</th><th>무엇을 깎나</th><th>한 줄 요약</th></tr>
+      <tr><td class="n">6.1</td><td>DeepSeek R1</td><td>MoE</td><td class="vi"><b>파라미터 읽는 양</b></td><td>"다 있지만 매번 다 쓰진 않는다"</td></tr>
+      <tr><td class="n">6.2</td><td>Gemma 4</td><td>Sliding Window</td><td class="cy">KV캐시</td><td>"먼 과거는 대부분 레이어에서 잊는다"</td></tr>
+      <tr><td class="n">6.3</td><td>Qwen3-Next</td><td>Gated DeltaNet</td><td class="cy">KV캐시</td><td>"과거를 통째로 요약 노트 한 장에"</td></tr>
+      <tr><td class="n">6.4</td><td>DeepSeek V4</td><td>CSA + HCA</td><td class="cy">KV캐시 <span class="gr">+</span> <span class="am">연산</span></td><td>"과거를 압축해서, 필요한 것만 펼쳐본다"</td></tr>
+      <tr><td class="n">6.5</td><td>GLM-5.2</td><td>IndexShare (DSA)</td><td class="am">연산</td><td>"어디를 볼지 고르는 일을 4번에 한 번만"</td></tr>
+      <tr><td class="n">6.6</td><td>Kimi K3</td><td>KDA</td><td class="cy">KV캐시</td><td>6.3의 요약 노트를 <b>2.8T 규모</b>로</td></tr>
+    </table>
+  </div>
+  <div class="foot cy-l">
+    이 중 <b>어느 것도 서로 배타적이지 않습니다.</b> 실제 모델들은 여러 개를 겹쳐 씁니다.
+  </div>
+  <aside class="notes">
+    이 표가 6장 전체의 목차입니다. 슬라이드를 넘기다 길을 잃으면 여기로 돌아옵니다.
+    겹쳐 쓰는 예 — Gemma 4는 슬라이딩 윈도우, Qwen3-Next는 MoE와 DeltaNet을 동시에,
+    Kimi K3는 MoE와 KDA를 동시에 씁니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="6. 아키텍처">
+  <img src="../assets/sparse_attention_map.webp?v=20260731e" alt="긴 컨텍스트를 줄이는 네 갈래 — 창문, 요약 상태, 압축 후 선택, 인덱스 재사용">
+</section>
+
+<!-- 6.1 -->
+<section data-chapter="6.1 MoE">
+  <div class="eyebrow">6.1 DeepSeek R1 · Mixture of Experts</div>
+  <blockquote>"거대한 도서관, 그 중 당장 필요한 책만"</blockquote>
+  <h2 style="margin-top:26px">R1이 <span class="am">발명</span>한 건 없습니다 &mdash; 셋이 <span class="cy">겹쳤습니다</span></h2>
+  <div class="lead">MoE는 Mixtral·GPT-4에 이미 있었고 CoT는 2022년 논문의 기법입니다.
+    오래 생각하는 상용 모델도 R1보다 앞서 나왔습니다.</div>
+  <div class="body">
+    <div class="cols c2">
+      <div>
+        <ul>
+          <li><b>고도화</b> &mdash; "정답이면 보상"만 걸고 강화학습을 돌렸더니
+            <b>자기 검증이 저절로</b> 생겼습니다.</li>
+          <li><b>공개</b> &mdash; MIT 라이선스로 가중치와 방법론, 1.5B~70B 증류 6종까지.</li>
+          <li><b>사고 과정 노출</b> &mdash; <span class="num">&lt;think&gt;</span>에 날것 그대로.
+            당시 상용 모델은 요약만 보여줬습니다.</li>
+        </ul>
+      </div>
+      <div class="card cy-b">
+        <span class="k">그 밑을 받친 구조</span>
+        <h4>토큰마다 <b>극소수</b>만 켭니다</h4>
+        <p>각 층을 작은 신경망(<b>전문가</b>)으로 쪼개고, <b>라우터</b>가 점수를 매겨 상위 몇 개만 고릅니다.
+          나머지는 그 토큰 계산에 <b>참여하지 않습니다.</b></p>
+        <div class="big cy" style="margin-top:14px">5.5<span style="font-size:.5em">%</span></div>
+        <div class="big-cap">DeepSeek-V3/R1 &mdash; 총 <b class="num">671B</b> 중 토큰당 <b class="num cy">37B</b>만 활성</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot cy-l">
+    <b>"이미 있던 재료로, 훨씬 잘 만들어서, 전부 공개했다"</b> &mdash; 아키텍처 혁신이 아니라 <b>접근 가능성의 혁신</b>.
+  </div>
+  <aside class="notes">
+    2025년 1월, R1이 나오며 미국 증시가 흔들렸습니다 &mdash; <b>"딥시크 모먼트"</b>.
+    1장에서 본 것과 똑같은 패턴이고, 증시가 반응한 대상도 기술이 아니라
+    <b>"이 정도가 공짜로 풀린다"</b>는 사실이었습니다.
+    R1은 DeepSeek-V3의 몸통을 <b>그대로</b> 물려받았습니다 &mdash; 아키텍처는 완전히 동일하고
+    그 위에 강화학습으로 추론 능력을 얹은 것입니다.
+    겹친 것을 둘로 갈라 보면 <b>행동</b>과 <b>구조</b>입니다 &mdash; 답하기 전에 혼잣말로 풀이를 적는
+    "추론 모델"이라는 장르(암산 대신 연습장), 그리고 오래 생각하는 장르를 감당할 만큼
+    <b>토큰당 단가를 싸게</b> 만든 MoE. 2장의 토큰 소비 폭증이 여기서 옵니다 &mdash;
+    <b>답 한 줄 뒤에서 수천 토큰</b>을 태우니까요.
+    <b>흔한 오해 하나</b>: "전문가"는 의사·변호사 같은 분야 전문가가 <b>아닙니다.</b>
+    사람이 분야를 정해주지 않았고 학습 중 저절로 갈라진 통계적 분업이라 하나를 열어봐도
+    이름을 붙일 수 없습니다. 배정 단위도 질문이 아니라 <b>토큰</b>이라 한 문장 안에서도
+    단어마다 다른 조합이 켜집니다 &mdash; 분야별 전문의가 아니라
+    <b>문장마다 손이 바뀌는 공동 작업실</b>입니다.
+    다음 장 그림이 이 구조를 그림으로 보여주고, 그 뒤가 이 발표의 핵심입니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="6.1 MoE">
+  <img src="../assets/moe_active.webp?v=20260731e" alt="MoE — 읽는 양은 37B로 줄지만 메모리에 올릴 양은 671B 그대로">
+</section>
+
+<section data-chapter="6.1 MoE">
+  <div class="eyebrow">흔한 오해 2 · 여기가 이 발표의 핵심</div>
+  <h2>싸진 건 <span class="cy">속도</span>지 <span class="am">메모리</span>가 아닙니다</h2>
+  <div class="lead">"671B 중 37B만 쓴다"를 들으면 <b>"메모리도 37B어치면 되겠네"</b>로 이어지기 쉽습니다.
+    <b class="am">아닙니다.</b> 어떤 전문가가 호출될지는 토큰이 들어와 봐야 알기에,
+    <b>671B 전부를 미리 올려두고 대기</b>해야 합니다.</div>
+  <div class="body">
+    <table class="mid">
+      <tr><th></th><th>Dense 671B</th><th>MoE 671B (37B 활성)</th></tr>
+      <tr class="hi-am"><td>메모리에 올려둘 양</td><td class="n">671B</td><td class="n am"><b>671B (그대로)</b></td></tr>
+      <tr class="hi"><td>토큰당 읽는 양</td><td class="n">671B</td><td class="n cy"><b>37B</b></td></tr>
+      <tr><td>디코딩 속도</td><td>기준</td><td class="n cy">이론상 약 <b>18배</b></td></tr>
+    </table>
+  </div>
+  <div class="foot">
+    MoE가 깎는 건 <b class="cy">메모리 대역폭</b>이지 <b class="am">메모리 용량</b>이 아닙니다 —
+    창고 크기는 그대로, 매번 꺼내오는 짐만 줄었습니다.
+  </div>
+  <aside class="notes">
+    이게 2026년 지형을 설명합니다. Kimi K3 2.8T, GLM-5.2 753B처럼 총 파라미터를 겁 없이 키울 수 있는 건
+    <b>속도를 지킬 수 있어서</b>고, 그런데도 개인 PC에서 안 돌아가는 건 <b>용량 청구서가 그대로</b>라서입니다.
+    로컬에서 Qwen3.6 27B 같은 게 반가운 이유가 여기 있습니다 — 총 파라미터가 작으면 두 청구서가 함께 작아집니다.
+  </aside>
+</section>
+
+<!-- 6.2 -->
+<section class="fig" data-chapter="6.1 MoE">
+  <img src="../assets/moe_scope.webp?v=20260731e" alt="R1을 항목별로 센 세 패널 — 담는 값 670.9B, 토큰마다 읽는 양 36.5B(같은 자에서 5.4%), 그리고 KV캐시 공식에 전문가 수 항이 없다는 것">
+  <aside class="notes">
+    왼쪽 자에서 빗금이 <b>이 토큰에 켜지지 않는 전문가</b>입니다. 살아 있는 오른쪽 끝이 5.4%고, 그걸 18.4배 늘린 것이 아래 막대입니다. <b>세 번째 패널이 이 그림의 목적</b>입니다 — 4장 공식에 "× 전문가 수"라는 항이 아예 없습니다. 그래서 MoE를 아무리 밀어도 KV캐시는 1원도 안 깎입니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="6.1 MoE">
+  <img src="../assets/gqa_head_sharing.webp?v=20260731e" alt="MHA, GQA, MQA의 K/V 공유 관계와 KV캐시 비율, 그리고 잠재 벡터 하나만 저장하는 MLA 비교">
+  <aside class="notes">
+    <b>여기서 어휘를 잡아 둡니다 — R1의 어텐션은 MLA입니다.</b>
+    R1 설정에 <span class="num">kv_lora_rank: 512</span>가 있으니 <b>여기가 첫 등장</b>이고,
+    6.2부터 6.6까지가 전부 어텐션 이야기라 이 낱말 넷으로 굴러갑니다.
+    그림에서 짚을 것은 <b>축이 둘</b>이라는 점입니다 —
+    왼쪽 셋은 <b>헤드 개수를 줄이는 축</b>(MHA 8쌍 → GQA 2쌍 → MQA 1쌍)이고,
+    맨 오른쪽 MLA는 <b>차원을 줄이는 축</b>입니다. 갈라지기 전 잠재 벡터 하나만 저장해
+    쌍이 하나가 되고(6.25%), 아낀 것을 폭에 써서 28.1%로 올립니다.
+    <b>퍼센트는 모두 이 그림의 8헤드를 분모로 씁니다</b> — 헤드가 늘어도 MLA 값은 그대로라
+    128헤드에서는 1.4%가 됩니다. MHA만 헤드 수에 비례합니다.
+    함정 하나: <span class="num">num_key_value_heads</span>만 보면 R1이 풀 MHA로 읽힙니다(128로 적혀 있습니다).
+    <b><span class="num">kv_lora_rank</span>가 있으면 그 값은 명목상의 헤드 수</b>이고 캐시에 남는 것은 잠재 벡터입니다 —
+    이 문서의 이전 판이 GLM-5.2에서 똑같이 오독했습니다.
+  </aside>
+</section>
+
+<section data-chapter="6.2 SWA">
+  <div class="eyebrow">6.2 Gemma 4 · Sliding Window Attention</div>
+  <blockquote>"회의록 전체를 매번 다시 읽지는 않잖아요"</blockquote>
+  <div class="body" style="margin-top:34px">
+    <div class="card cy-b" style="max-width:1000px">
+      <h4>아이디어는 한 문장입니다</h4>
+      <p style="font-size:24px; color:var(--fg)"><b>모든 레이어가 과거 전부를 볼 필요는 없다.</b></p>
+    </div>
+    <div class="lead" style="margin-top:26px">Gemma 4 31B의 창문은 <b class="num cy">1,024 토큰</b>입니다 &mdash;
+      10만 번째 토큰을 만들 때도 <b>직전 1,024개만</b> 봅니다.
+      <b>어떻게 생긴 것인지 먼저 보겠습니다.</b></div>
+  </div>
+  <div class="foot cy-l">그림으로 창문을 본 뒤 <b>"그럼 1,024개 전에 한 말은 까먹나요?"</b>에 답합니다.</div>
+  <aside class="notes">
+    <b>여기서는 설명하지 마시고 다음 장 그림으로 넘어가세요.</b> 창문을 보여드리기 전에
+    말로 풀면 청자가 따라오지 못합니다 — 이 장은 "한 문장"과 "1,024"만 남겼습니다.
+    수치는 Gemma 4 31B의 <b>config.json 실측</b>입니다 — sliding_window 1024,
+    60레이어의 layer_types가 sliding 5 : full 1 패턴, GQA(Q 32 : KV 16), head_dim 256,
+    최대 컨텍스트 262,144.
+    <b>이어지는 두 장</b>: 첫 장이 창문·배합·KV 절감이고, 둘째 장이
+    "그럼 창문 밖은?"에 답하는 두 장치(릴레이 · 멀리 보는 눈)입니다.
+    슬라이딩 레이어 50개는 컨텍스트가 아무리 길어져도 1024개어치만 들고 있으면 되니
+    <b>고정 비용</b>으로 바뀝니다 — 컨텍스트에 비례해 자라는 건 Full 10개분뿐입니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="6.2 SWA">
+  <img src="../assets/swa_layers.webp?v=20260731e" alt="슬라이딩 윈도우 어텐션 — 레이어가 보는 범위, 5:1 레이어 구성, 256K에서의 KV캐시 비교">
+  <aside class="notes">
+    <b>왼쪽 위부터 짚으세요.</b> 창문이 현재 토큰을 따라 오른쪽으로 이동하고, 창문 밖은
+    이 레이어에서 보지 않습니다. 오른쪽이 <b>배합</b>입니다 — 여섯 층 중 다섯은 창문,
+    하나는 Full. 아래가 <b>256K 계산</b>: 60레이어 전부 Full이면 약 <b>240GB</b>,
+    실제 배합(슬라이딩 50 + Full 10)은 약 <b>41GB</b>로 <b>약 1/6</b>입니다.
+    여기까지가 "무엇을 하는가"이고, 다음 장이 "그런데 창문 밖은 어떻게 되나"입니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="6.2 SWA">
+  <img src="../assets/swa_reach.webp?v=20260731e" alt="창문 밖 이야기를 막아주는 두 장치 — 층을 지날 때마다 유효 시야가 한 창문씩 넓어지는 릴레이(1층 1,024에서 5층 5,120까지)와, 여섯 층에 한 번 전체를 직접 보는 Full Attention 레이어">
+  <aside class="notes">
+    <b>이 장이 "그럼 까먹나요?"의 답입니다.</b>
+    왼쪽 <b>릴레이</b> — 1층의 100번 토큰은 76~99번만 봅니다. 2층에서 그 99번을 볼 때
+    99번은 이미 자기 창문을 흡수한 상태라 2층의 100번은 75번까지 <b>간접으로</b> 닿습니다.
+    층을 지날 때마다 창문 하나씩 넓어져 다섯 층이면 <b>5,120토큰</b>입니다.
+    소문이 사람을 건너 퍼지는 것과 같습니다.
+    오른쪽 <b>멀리 보는 눈</b> — 간접 정보는 압축된 요약이라 먼 과거의 <b>특정 토큰을
+    정확히 짚는 일</b>은 못 합니다. 그 일은 여섯 층에 한 번 있는 Full 레이어가 합니다.
+    <b>이 두 장치가 창문을 쓸 수 있게 만드는 조건</b>입니다 — 둘 없이 창문만 좁히면 품질이 떨어집니다.
+    근거는 README <span class="num">[^swa-receptive]</span>이고, 5,120은 슬라이딩이 연속하는
+    다섯 층 안에서의 유도값입니다.
+  </aside>
+</section>
+
+<!-- 6.3 -->
+<section data-chapter="6.3 GDN">
+  <div class="eyebrow">6.3 Qwen3-Next-80B-A3B · Gated DeltaNet</div>
+  <blockquote>"왜 전부 다 적어? 요약해"</blockquote>
+  <h2 style="margin-top:26px">원본 기록 대신 <span class="cy">요약 노트 한 장</span>을 고쳐 씁니다</h2>
+  <div class="body" style="margin-top:30px">
+    <div class="card cy-b" style="max-width:1000px">
+      <h4>바뀌는 것은 하나입니다</h4>
+      <p style="font-size:22px; color:var(--fg)">과거 원본 전부 &rarr;
+        <b class="cy">고정 크기 상태 하나</b>를 계속 갱신</p>
+    </div>
+    <div class="lead" style="margin-top:26px">컨텍스트가 짧든 길든 <b>노트 크기는 같습니다.</b>
+      <b>그림으로 먼저 보시죠</b> &mdash; 이름 풀이와 정직한 단서는 그다음 장에 있습니다.</div>
+  </div>
+  <div class="foot cy-l">6.2가 <b>보는 범위</b>를 줄였다면, 6.3은 <b>남기는 형태</b>를 바꿉니다.</div>
+  <aside class="notes">
+    <b>여기서 수식이나 배합을 말하지 마세요 — 다음 장 그림에 다 있습니다.</b>
+    Qwen3-Next-80B-A3B는 총 80B에 활성 3B입니다.
+    <b>Full Attention이 비싼 이유</b>만 한 번 짚어 주세요 — 매 토큰마다 지금까지 나온 모든
+    토큰과 다시 내적하므로 메모리도 연산량도 컨텍스트에 비례하고, 그래서 전체 연산량이
+    <b>길이의 제곱</b>입니다. 상태 하나만 갱신하면 그 자리가 <b>고정</b>이 됩니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="6.3 GDN">
+  <img src="../assets/gdn_summary_note.webp?v=20260731e" alt="Gated DeltaNet — 원본 기록 대신 고정 크기 요약 노트 한 장, 48레이어의 3:1 구성">
+  <aside class="notes">
+    <b>왼쪽부터</b> — 짧은 문맥·중간·긴 문맥이 전부 <b>같은 크기의 상태 S</b>로 들어갑니다.
+    가운데가 <b>갱신식</b>인데 읽으실 필요는 없습니다: <span class="num">v − Sk</span>가
+    "새 값 − 기존 기억"이고 <span class="num">β</span>가 "얼마나 고쳐 쓸지"입니다.
+    오른쪽이 <b>배합</b> — 48레이어를 넷씩 묶어 셋은 DeltaNet, 하나는 Gated Attention.
+    <b>다음 장에서 이름 풀이와 단서 하나를 붙입니다.</b>
+  </aside>
+</section>
+
+<section data-chapter="6.3 GDN">
+  <div class="eyebrow">6.3 · 그림에 붙이는 세 가지</div>
+  <h2>이름이 <span class="cy">동작</span>을 그대로 말합니다</h2>
+  <div class="body" style="margin-top:24px">
+    <div class="cols c3">
+      <div class="card cy-b">
+        <span class="k">이름 풀이 1</span>
+        <h4>Delta &mdash; 고쳐 쓰기</h4>
+        <p>누적이 아닙니다. 같은 키의 <b class="cy">옛 값을 지우고</b> 그 자리에 씁니다.<br><br>
+          덧쓰기만 하면 노트가 지저분해지니까요. 매 스텝이
+          <b>온라인 경사하강 한 스텝</b>과 같아 단순 누적보다 정보 검색이 정확합니다.</p>
+      </div>
+      <div class="card cy-b">
+        <span class="k">이름 풀이 2</span>
+        <h4>Gated &mdash; 능동적 망각</h4>
+        <p>감쇠 게이트가 <b class="cy">오래된 것의 영향을 줄입니다</b>(Mamba-2 스타일).<br><br>
+          노트 한 장이 고정 크기라 <b>무엇을 지울지</b>가 성능을 좌우합니다.</p>
+      </div>
+      <div class="card am-b">
+        <span class="k">단, 정직하게</span>
+        <h4>KV캐시가 0은 아닙니다</h4>
+        <p>"약 <b class="am">1/4</b>"은 전체 메모리가 1/4이라는 뜻이 아니라
+          <b>길이에 비례해 자라는 레이어가 12/48</b>이라는 뜻입니다.<br><br>
+          고정 크기 상태 36개분은 <b>그대로 남습니다.</b></p>
+      </div>
+    </div>
+    <div class="lead" style="margin-top:24px">상태 갱신이 <b>한 번</b>이라 토큰당 상수 시간이고, 전체가
+      <b class="cy">O(n)</b>입니다 &mdash; 그래서 <b>"선형 어텐션"</b>이라고 부릅니다.
+      Full Attention은 길이의 <b class="am">제곱</b>이었습니다.</div>
+  </div>
+  <div class="foot">이 <b>"고정 크기 상태"</b>라는 성질이 6.4에서 DeepSeek V4와 갈리는 지점입니다 &mdash; 기억해 두세요.</div>
+  <aside class="notes">
+    <b>수식은 읽을 필요가 없습니다.</b> 순수 선형 어텐션은
+    <span class="num">S_t = S_(t−1) + v_t k_t^T</span>로 그냥 더하는데,
+    DeltaNet은 <span class="num">S_t = S_(t−1)(I − β_t k_t k_t^T) + β_t v_t k_t^T</span>로
+    괄호가 하나 더 붙습니다 — 그 괄호가 <b>"같은 키로 저장된 옛 값을 먼저 지운다"</b>는 뜻입니다.
+    앞 장 그림의 <span class="num">S_t = S_(t−1) + β_t(v_t − S_(t−1)k_t)k_t^T</span>와 같은 식입니다.
+    Gated Attention 12개는 <b>GQA</b>(Q 16 : KV 2, head_dim 256)입니다.
+    상태 크기는 <b class="num">head_dim × head_dim</b>이라 컨텍스트와 무관합니다.
+    <b>6.4로 넘어가는 다리</b>: V4는 여기서 갈립니다 — 고정 크기 상태가 아니라
+    <b>압축한 요약본을 개수만큼 쌓습니다.</b>
+  </aside>
+</section>
+
+<!-- 6.4 -->
+<section data-chapter="6.4 V4">
+  <div class="eyebrow">6.4 DeepSeek V4 · Hybrid Attention (CSA + HCA)</div>
+  <blockquote>"이거보다 더 싸게 만들 수 있어?"</blockquote>
+  <div class="body" style="margin-top:34px">
+    <div class="card cy-b" style="max-width:1000px">
+      <h4>아이디어는 한 문장입니다</h4>
+      <p style="font-size:24px; color:var(--fg)">과거를 <b>그대로 쌓지 않고</b>,
+        몇 개씩 묶어 <b class="cy">요약본 하나</b>로 줄여 둡니다.</p>
+    </div>
+    <div class="lead" style="margin-top:26px">그 <b>줄이는 강도</b>를 두 가지로 나눠 레이어마다 번갈아 깝니다 &mdash;
+      <b class="cy">CSA</b>는 약하게, <b class="vi">HCA</b>는 세게.
+      <b>얼마나 줄어드는지 먼저 보겠습니다.</b></div>
+  </div>
+  <div class="foot cy-l">그림을 본 뒤 <b>비유 두 개</b>와 <b>실제 설정값</b>을 붙입니다.</div>
+  <aside class="notes">
+    <b>여기서 CSA·HCA를 풀지 마세요 — 다음 장 그림이 압축 비율을 눈으로 보여줍니다.</b>
+    이름만 흘려 두고 넘어가시면 됩니다. 6.2가 <b>보는 범위</b>, 6.3이 <b>남기는 형태</b>였다면
+    6.4는 <b>남기는 해상도</b>를 바꿉니다 — 세 장의 축이 다릅니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="6.4 V4">
+  <img src="../assets/v4_compression.webp?v=20260731e" alt="DeepSeek V4의 CSA·HCA 압축 방식과 레이어별 KV캐시 크기, V3.2 대비 절감 수치">
+  <aside class="notes">
+    <b>위 세 줄이 압축 강도입니다.</b> 같은 원본 N토큰을 두고 무압축은 N개 그대로,
+    <b class="num">CSA는 N/4(25%)</b>를 남긴 뒤 그중 <b>DSA 인덱서가 고른 것만</b> 읽고,
+    <b class="num">HCA는 N/128(0.8%)</b>만 남겨 <b>전부</b> 읽습니다.
+    막대 안의 흐린 칸이 "남겼지만 이번엔 안 읽은 것"입니다.
+    <b>아래 왼쪽</b> — 실제 KV 바이트는 압축률 하나로 정해지지 않습니다. 공유 KV(MQA)와
+    혼합 정밀도(RoPE만 BF16)가 함께 곱해집니다.
+    <b>아래 가운데</b>가 층 배합입니다 — Flash 43층은 무압축 2 · CSA 21 · HCA 20이고,
+    <b>큰 쪽인 Pro 61층에는 무압축 층이 아예 없습니다.</b>
+    <b>아래 오른쪽</b>이 결론 — V3.2 대비 <b>7~10%</b>입니다.
+    비유와 나머지 수치는 다음 장에서 붙입니다.
+  </aside>
+</section>
+
+<section data-chapter="6.4 V4">
+  <div class="eyebrow">6.4 · 그림에 붙이는 비유와 실제값</div>
+  <h2>둘은 <span class="cy">다른 지점</span>에서 균형을 잡습니다</h2>
+  <div class="body" style="margin-top:24px">
+    <div class="cols c2">
+      <div class="card cy-b">
+        <span class="k">CSA · 25%를 남긴 쪽</span>
+        <h4>많이 남기고 그중 일부만 보기</h4>
+        <p>페이지 <b>4장을 한 장</b>으로 압축한 뒤, 그 요약본 중 지금 필요할 것 같은
+          몇 개만 골라(<b>sparse</b>) 자세히 읽습니다.<br><br>
+          압축은 약하게, 선택은 좁게 &mdash; 고르는 일은 레이어마다 있는 <b>DSA 인덱서</b>가 합니다.</p>
+      </div>
+      <div class="card vi-b">
+        <span class="k">HCA · 0.8%만 남긴 쪽</span>
+        <h4>적게 남기고 전부 보기</h4>
+        <p><b>챕터 하나를 한 문장</b>으로 세게 압축해 요약본 개수 자체를 확 줄입니다.<br><br>
+          남은 게 적으니 골라 읽지 않고 <b>전부(dense)</b> 읽어도 부담이 없습니다.</p>
+      </div>
+    </div>
+    <div class="cols c2" style="margin-top:26px">
+      <table class="mid">
+        <tr><th>V3.2 대비</th><th>토큰당 FLOPs</th><th>KV캐시</th></tr>
+        <tr><td>V4 Pro</td><td class="n">27%</td><td class="n">10%</td></tr>
+        <tr class="hi"><td><b>V4 Flash</b></td><td class="n cy"><b>10%</b></td><td class="n cy"><b>7%</b></td></tr>
+      </table>
+      <div class="card am-b">
+        <span class="k">섞으면 안 되는 두 기준</span>
+        <p><b class="cy">25% · 0.8%</b>는 레이어별 <b>문맥 엔트리</b> 비율이고,
+          <b class="am">7% · 10%</b>는 공유 KV·혼합 정밀도까지 합친 <b>모델 전체 KV 바이트</b>입니다.
+          같은 막대에 올리면 안 됩니다.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">앞 그림의 막대는 실제 <span class="num">compress_ratios</span> 배열을 그대로 렌더한 것입니다 &mdash; 축약이 아닙니다.</div>
+  <aside class="notes">
+    배열은 HF에서 config.json을 직접 열어 확인했습니다 — <b>43개 레이어 + MTP 1개 = 44개</b>이고,
+    무압축은 Flash 2개(MTP 층까지 세면 3개), Pro는 0개입니다.
+    흥미로운 건 <b>Flash 쪽이 Pro보다 효율이 더 좋다</b>는 점입니다 — 작은 모델이 더 공격적으로
+    압축할 여지가 있습니다.
+    <b>비유의 한계도 한 줄 밝혀 두세요</b> — "4장을 한 장으로 묶는다"는 그림이지만 실제 압축은
+    단순 묶기가 아니라 <b>학습된 게이트 풀링</b>이고 창이 겹칩니다. K와 V가 같은 텐서라는 것까지
+    부록 A에 적어 뒀습니다.
+  </aside>
+</section>
+
+<section data-chapter="6.4 V4">
+  <div class="eyebrow">6.3과 헷갈리기 쉬운 지점</div>
+  <h2>그래도 이건 <span class="am">"선형"</span>입니다</h2>
+  <div class="lead">둘 다 KV캐시를 줄이지만 <b>줄이는 방식의 종류가 다릅니다.</b></div>
+  <div class="body">
+    <table class="mid">
+      <tr><th></th><th>컨텍스트가 2배가 되면</th></tr>
+      <tr class="hi"><td>Gated DeltaNet · KDA <span class="gr">6.3 · 6.6</span></td><td class="cy"><b>그대로</b> — 고정 크기 상태</td></tr>
+      <tr class="hi-am"><td><b>CSA · HCA</b> <span class="gr">6.4</span></td><td class="am"><b>2배</b> — 압축했을 뿐 여전히 쌓인다</td></tr>
+    </table>
+    <div class="lead" style="margin-top:38px">
+      V4가 한 일은 <b class="am">기울기를 눕힌 것</b>이지 기울기를 없앤 게 아닙니다.
+      128토큰을 하나로 묶어도 <b>토큰이 늘면 묶음도 늘어나니까요.</b>
+    </div>
+  </div>
+  <div class="foot">이 구분이 6.3과 6.4를 가르는 <b>핵심</b>입니다.</div>
+</section>
+
+<section class="fig" data-chapter="6.4 V4">
+  <img src="../assets/v4_api_pricing.webp?v=20260731e" alt="출력 1M 토큰 가격 비교 — V4 Flash $0.28을 1배로 놓았을 때 폐쇄 모델까지의 배수">
+  <aside class="notes">
+    <b>이 가격표의 근거가 방금 본 CSA·HCA입니다 &mdash; 아키텍처가 가격표를 만듭니다.</b>
+    출력 1M 토큰 <b class="num">$0.28</b>을 1배로 놓은 배수입니다.
+    다만 <b>배수만 보고 "89배 손해"로 읽으면 안 됩니다</b> — 용도가 다른 모델끼리의 비교이고,
+    같은 일을 끝내는 데 필요한 토큰 수도 다릅니다. 점수가 가까운 상대와 견주는 것은
+    이 장 마지막 스펙 카드입니다.
+    다음 장에 <b>캐시 히트</b>가 왜 거의 공짜인지가 있습니다 &mdash; 이 그림에 없는 이야기입니다.
+  </aside>
+</section>
+
+<section data-chapter="6.4 V4">
+  <div class="eyebrow">가격표에서 더 특이한 칸</div>
+  <h2>캐시 히트가 <span class="cy">거의 공짜</span>입니다</h2>
+  <div class="body">
+    <div class="cols c2">
+      <table class="mid">
+        <tr><th>1M 토큰당 · USD</th><th>입력</th><th>캐시 히트</th><th>출력</th></tr>
+        <tr><td>V4 Flash</td><td class="n">$0.14</td><td class="n cy">$0.0028</td><td class="n">$0.28</td></tr>
+        <tr><td>V4 Pro</td><td class="n">$0.435</td><td class="n cy">$0.003625</td><td class="n">$0.87</td></tr>
+      </table>
+      <table class="mid">
+        <tr><th></th><th>캐시 히트 / 입력 정가</th></tr>
+        <tr class="hi-am"><td>업계 관행 <span class="gr">5.3장</span></td><td class="n am">10%</td></tr>
+        <tr class="hi"><td>V4 Flash</td><td class="n cy"><b>2.0%</b></td></tr>
+        <tr class="hi"><td>V4 Pro</td><td class="n cy"><b>0.83%</b></td></tr>
+      </table>
+    </div>
+    <div class="card cy-b" style="margin-top:30px">
+      <span class="k">가능한 이유 — KV캐시가 작아져서만이 아닙니다</span>
+      <p><b>On-Disk KV Cache</b> — 압축된 KV를 아예 <b>디스크에 통째로 저장</b>해 둡니다.
+      캐시 히트는 GPU 메모리를 차지하지 않고 <b>디스크에서 읽어오는 일</b>이 되고, 그래서 거의 공짜로 팔 수 있습니다.<br>
+      같은 이유로 <b>동시 접속 허용치도 큽니다</b> — Flash <b class="num">2,500</b> 세션, Pro <b class="num">500</b>.</p>
+    </div>
+  </div>
+  <div class="foot cy-l">압축이 <b>KV 크기</b>를 줄이고, 그 작아진 KV가 <b>디스크로 나갈 수 있게</b> 만들었습니다.</div>
+  <aside class="notes">
+    5.3장에서 본 업계 관행이 입력 정가의 <b>10%</b>였습니다. V4는 그 관행의
+    <b>1/5(Flash)</b>과 <b>1/12(Pro)</b>입니다.
+    <b>순서를 짚어 주세요</b> — 압축이 먼저고, 작아진 덕에 디스크에 둘 수 있고,
+    디스크에 두니 GPU 메모리를 안 먹고, 그래서 거의 공짜로 팔 수 있습니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="6.4 V4">
+  <img src="../assets/v4_spec.webp?v=20260731e" alt="DeepSeek V4 스펙 한 장 — 왼쪽은 모델 12개의 종합 지능 지수(회색)와 출력 1M 단가(보라) 막대를 상하로 짝지은 차트, 오른쪽은 Flash와 Pro를 담는 값(총 파라미터·가중치 GB를 B300 288GB 칸으로 나눈 막대)과 일 시키는 값(1M KV캐시·출력 단가)으로 나눠 지표마다 다른 색으로 그린 비교">
+  <aside class="notes">
+    <b>색이 뜻을 나릅니다</b> &mdash; 회색은 규모(점수·파라미터), 앰버는 용량 청구서(가중치),
+    시안은 KV캐시 청구서, 보라는 돈입니다. 그림 전체에서 한 색은 한 뜻입니다.
+    왼쪽에서 짚을 것은 하나입니다 &mdash; <b>V4의 장점은 값</b>입니다.
+    다만 <b>점수 축과 단가 축을 나눠 "가성비"로 읽지는 마세요</b> — 점수 몇 점 차이로 되는 일과
+    안 되는 일이 갈리면 값을 얼마 더 주고라도 그 모델을 쓰는 것이 맞습니다.
+    오른쪽 가중치 막대의 <b>칸 하나가 B300 한 장(288GB)</b>입니다. Pro가 3칸을 딱 넘겨 4장이 되는데
+    넘긴 양이 <b>0.7GB</b>뿐입니다.
+    그리고 파라미터는 5.6배인데 <b>1M KV캐시는 1.1배</b>뿐인 것이 이 장의 요점입니다 &mdash;
+    압축이 거기서 일합니다. 싼 값이 구조에서 나온다는 게 이 카드의 결론입니다.
+  </aside>
+</section>
+
+<section data-chapter="6.5 IndexShare">
+  <div class="eyebrow">6.5 GLM-5.2 · IndexShare</div>
+  <blockquote>"볼 곳을 고르는 일도 비용이다"</blockquote>
+  <h2 style="margin-top:24px">출시 당시 <span class="cy">오픈웨이트가 폐쇄 모델과 같은 표에</span> 올랐습니다</h2>
+  <div class="lead" style="margin-top:22px">2026년 오픈웨이트 코딩 모델 중 가장 널리 쓰이는 축입니다.
+    총 <b class="num">753B</b> · 토큰당 활성 약 <b class="num">40B</b> · 컨텍스트 <b class="num">1M</b> ·
+    라이선스 <b class="num cy">MIT</b>.</div>
+  <div class="body" style="margin-top:28px">
+    <div class="card cy-b" style="max-width:1000px">
+      <h4>이 장에서 볼 것은 둘입니다</h4>
+      <p style="font-size:23px; color:var(--fg)"><b class="cy">성적표</b>가 먼저,
+        그 성적을 <b>그 값에 내는 장치</b>가 다음입니다.</p>
+    </div>
+  </div>
+  <div class="foot cy-l">성적과 스펙이 <b>한 카드</b>에 있습니다 &mdash; 먼저 그것부터 봅니다.</div>
+  <aside class="notes">
+    <b>여기서 구조를 설명하지 마세요 — 다음 장 카드가 성적과 스펙을 함께 보여줍니다.</b>
+    어텐션은 <b>MLA</b>입니다(6.1에서 잡은 어휘) — 헤드별 K/V가 아니라 압축된 잠재 벡터를 캐시하므로
+    128K 한 사용자가 FP8로 <b>5.5GiB</b>뿐입니다. 같은 구성을 헤드별로 저장했다면 305GiB로 <b>56배</b>입니다.
+    수치는 HF config.json 원본에서 직접 확인했고, 2026-07-30에 MLA로 정정했습니다
+    (<span class="num">num_key_value_heads</span>만 보고 MHA로 읽었던 오류입니다).
+  </aside>
+</section>
+
+<section class="fig" data-chapter="6.5 IndexShare">
+  <img src="../assets/glm_spec.webp?v=20260731e" alt="GLM-5.2 스펙 카드 — 자체 발표표에서 폐쇄 모델과 겨룬 8개 벤치마크, 총 파라미터·가중치 실측·레이어 구성·KV캐시·API 가격·최소 하드웨어, 그리고 MLA와 DSA는 가져온 것이고 IndexShare가 자체 기여라는 출처 구분">
+  <aside class="notes">
+    <b>왼쪽이 이 장의 논지입니다</b> — 여덟 항목 모두 <b>GLM-5.2 자체 발표표</b>의 값이고,
+    아래 막대가 그 표에서 가장 높은 <b>다른</b> 모델입니다. 6.4의 V4 카드는 왼쪽이 단가였는데
+    이 카드는 벤치마크입니다 — <b>V4는 값이 논지, GLM-5.2는 성적이 논지</b>라서요.
+    <b>가운데</b>가 서빙에 필요한 것, <b>오른쪽</b>이 "이 기법은 누구 것인가"입니다.
+    오른쪽은 IndexShare를 설명한 뒤 다시 짚습니다.
+    <b>카드끼리 막대를 비교하지 마세요</b> — 같은 FrontierSWE가 이 표에서 74.4, K3 카드에서 67.3입니다.
+  </aside>
+</section>
+
+<section data-chapter="6.5 IndexShare">
+  <div class="eyebrow">6.5 · 카드의 왼쪽을 읽는 법</div>
+  <h2>여덟 항목 중 <span class="cy">둘이 1위</span>, 셋이 1점 안쪽입니다</h2>
+  <div class="body" style="margin-top:24px">
+    <div class="cols c3">
+      <div class="card cy-b">
+        <span class="k">1위 둘</span>
+        <h4>AIME 2026 <b class="cy">99.2</b><br>IMOAnswerBench <b class="cy">91.0</b></h4>
+        <p>각각 GPT-5.5 98.3 · Qwen3.7-Max 90.0을 넘었습니다.</p>
+      </div>
+      <div class="card">
+        <span class="k">1점 안쪽 · 사실상 대등</span>
+        <h4>MCP-Atlas 76.8<br>Terminal-Bench 82.7<br>FrontierSWE 74.4</h4>
+        <p>상대는 Opus 4.8 77.8 · GPT-5.5 83.4 · Opus 4.8 75.1입니다.<br>
+          SWE-bench Pro는 <b class="cy">62.1</b>로 GPT-5.5(58.6) 위, Opus 4.8(69.2) 아래.</p>
+      </div>
+      <div class="card am-b">
+        <span class="k">벌어지는 둘 — 정직하게</span>
+        <h4>HLE 40.5 · DeepSWE 46.2</h4>
+        <p>폐쇄 모델과 크게 벌어집니다.<br><br>
+          단 DeepSWE의 다른 <b>오픈웨이트</b>는 GLM-5.1 <b>18</b> ·
+          MiniMax M3 <b>20</b> · V4 Pro <b>8</b>입니다.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">하네스가 항목마다 다릅니다 &mdash; <b>AAII 종합 점수와 섞지 않습니다.</b>
+    그럼 이 성적을 <b class="cy">그 값에</b> 내는 장치를 보겠습니다.</div>
+  <aside class="notes">
+    카드 각주가 하네스를 밝힙니다 — SWE-bench Pro는 OpenHands, ProgramBench는 Claude Code 2.1.156,
+    Terminal-Bench는 Terminus-2, FrontierSWE는 Proximal 대행입니다. 그래서 1.2장의 원칙대로
+    AAII 점수와 같은 자에 놓지 않았습니다.
+    <b>강조할 것</b> — 폐쇄 모델과 "같은 표에서 겨룬다"는 상태 자체가 이 시점의 사건이고,
+    그것을 <b>MIT 라이선스로</b> 받아 자기 클러스터에서 돌릴 수 있다는 것이 6.5의 논지입니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="6.5 IndexShare">
+  <img src="../assets/indexshare.webp?v=20260731e" alt="IndexShare — 인덱서를 4개 레이어에 한 번만 돌리고 공유하는 구조, KV 헤드는 64개를 유지">
+</section>
+<section data-chapter="6.5 IndexShare">
+  <div class="eyebrow">6.5 · 그림에 붙이는 수치</div>
+  <h2>고르는 일을 <span class="cy">4번에 한 번만</span></h2>
+  <div class="body" style="margin-top:24px">
+    <div class="cols c2">
+      <div class="card cy-b">
+        <span class="k">아낀 것 1 · 연산</span>
+        <h4>인덱서를 4층에 한 번만</h4>
+        <p>1M 문맥에서 <b>2,048개</b>를 고른 결과를 다음 세 레이어가 그대로 씁니다.<br><br>
+          토큰당 FLOPs <b class="cy">1/2.9</b> &mdash; Z.ai 발표 기준.</p>
+      </div>
+      <div class="card cy-b">
+        <span class="k">아낀 것 2 · 체감 속도</span>
+        <h4>같은 공유가 <b class="cy">MTP 초안</b>으로 이어집니다</h4>
+        <p>초안 층이 인덱스와 KV를 <b>다시 만들지 않습니다.</b>
+          수락 길이가 <b class="num">5.10 → 5.29 → 5.47</b>토큰 &mdash; 모델 카드 표현으로 <b class="cy">최대 20%</b>.<br><br>
+          8×H200 실측 단일 스트림 <b class="num">75 → 118 tok/s = 1.57배</b>.</p>
+      </div>
+    </div>
+    <div class="lead" style="margin-top:24px">"인덱스를 층끼리 재사용"은 이미 공용 방향입니다 &mdash;
+      논문 <b>IndexCache</b>가 일반화했고 <b>You Only Index Once</b>가 독립적으로 같은 제안을 냈습니다.
+      <b class="cy">먼저 제품에 실어 1M에서 FLOPs를 2.9배 줄인 것</b>이 GLM의 몫입니다.</div>
+  </div>
+  <div class="foot">수락 길이는 <b>초안·검증 시간을 뺀 값이 아닙니다</b> &mdash; 5.47토큰이 속도 5.47배는 아닙니다.</div>
+  <aside class="notes">
+    <b>MTP를 꼭 짚어 주세요 — 체감이 가장 큰 항목입니다.</b> 모델 카드가 IndexShare와 짝지어
+    새 항목으로 세운 것이 이 MTP 개선입니다.
+    다만 배치가 커지면 가속폭이 줄어듭니다 — 같은 실측에서 8K 입력·1K 출력·동시 16은
+    658 → 733 tok/s로 <b>1.11배</b>입니다. 5.4장에서 본 "노드 총량 대 한 사람의 체감"과 같은 축입니다.
+    V3.2의 DSA는 레이어마다 인덱서를 둡니다. 그래서 다른 예시 모델이 이 이름의 기능을
+    그대로 쓰는 것은 아닙니다.
+  </aside>
+</section>
+
+<!-- 6.6 -->
+
+<section data-chapter="6.5 IndexShare">
+  <div class="eyebrow">구조가 아니라 학습 쪽</div>
+  <h2>비동기 <span class="cy">강화학습</span></h2>
+  <div class="lead">이쪽은 <b class="am">GLM-5.2가 아니라 GLM-5의 것</b>입니다 &mdash; 5.2는 자체 기술 리포트 없이
+    GLM-5 리포트를 자기 리포트로 인용하고, 모델 카드가 IndexShare와 짝지은 새 항목은 <b>MTP 개선</b>입니다.</div>
+  <div class="foot cy-l">
+    그런데 리포트 후반부에 <b>5·7·8장의 기법이 그대로</b> 나옵니다 &mdash; 답을 생성하는 쪽이 곧 <b class="cy">추론 서버</b>라서요.
+  </div>
+  <aside class="notes">
+    소유권도 갈라 둡니다. 인프라는 GLM-4.5의 slime 위에 세운 것이고 리포트가 스스로
+    <b>"새 시스템 부품을 도입한 것이 아니다"</b>라고 적습니다. 새것은 알고리즘 쪽이고, 그 클리핑조차
+    IcePop과 비슷하다고 자인합니다. <b>가져온 것 위의 단순화</b>입니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="6.5 IndexShare">
+  <img src="../assets/glm_async_rl.webp?v=20260731e" alt="비동기 강화학습 — 같은 시간 축·같은 폭으로 동기(왼쪽)와 비동기(오른쪽)를 나란히 놓은 도표. 각각 생성 슬롯 12개와 학습 엔진 한 줄이고, 동기는 배치가 가장 느린 궤적을 기다려 생성 슬롯과 학습 엔진이 함께 유휴가 되고, 비동기는 유휴가 사라지는 대신 궤적 하나가 여러 모델 버전에 걸친다">
+  <aside class="notes">
+    위쪽 회색이 <b>노는 시간</b>입니다. 에이전트 궤적은 길이가 크게 달라서, 배치가 가장 느린 하나를 기다리는 동안 먼저 끝난 슬롯도 학습 엔진도 놉니다. 아래는 그 회색이 사라졌지만 <b>넷째 슬롯의 긴 궤적이 세 버전에 걸칩니다</b> &mdash; 그게 비동기가 내는 대가입니다.
+  </aside>
+</section>
+
+<section data-chapter="6.6 KDA">
+  <div class="eyebrow">6.6 Kimi K3 · Kimi Delta Attention</div>
+  <blockquote>"지금까지 나온 수법을 전부, 2.8조 규모로"</blockquote>
+  <h2 style="margin-top:24px">변곡점은 기술이 아니라 <span class="cy">공개된 성능</span>입니다</h2>
+  <div class="lead" style="margin-top:22px">1장에서 증시를 흔든 그 모델입니다. 그런데 6장을 여기까지 봤으면
+    <b>K3의 부품은 전부 낯익습니다</b> &mdash; KDA는 <b class="cy">6.3의 Gated DeltaNet</b>,
+    896개 중 16개는 <b class="cy">6.1의 MoE</b>, MXFP4는 <b class="cy">7장의 양자화</b>입니다.</div>
+  <div class="body" style="margin-top:26px">
+    <div class="card cy-b" style="max-width:1050px">
+      <h4>그래서 이 장의 논지는 부품이 아닙니다</h4>
+      <p style="font-size:23px; color:var(--fg)">폐쇄 모델과 <b>같은 표에 오르는 성적</b>을
+        <b class="cy">가중치째 공개</b>했다는 것 &mdash; 세계 첫 공개 <b>3조급</b> 모델입니다.</p>
+    </div>
+  </div>
+  <div class="foot cy-l">성적 &middot; 스펙 &middot; "이 기법은 누구 것인가"가 <b>한 카드</b>에 있습니다.</div>
+  <aside class="notes">
+    <b>여기서 세 축을 설명하지 마세요 — 뒤에 그림이 있습니다.</b> 이 장에서 힘을 줄 곳은
+    <b>공개</b>입니다. 2.8T를 받아 자기 클러스터에 올릴 수 있다는 것이 9장 소버린으로 이어집니다.
+    다만 라이선스는 <b>MIT나 Apache가 아니라 자체 Kimi K3 License</b>입니다 — 오픈웨이트지만
+    조건이 붙는다는 것을 함께 말해 주세요.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="6.6 KDA">
+  <img src="../assets/k3_spec.webp?v=20260731e" alt="Kimi K3 스펙 한 장 — 자체 발표표에서 1위를 셋 가져간 8개 벤치마크, 같은 GB 자에 MXFP4 원본을 B300 칸으로 FP8 변환분을 H200 칸으로 나눈 막대 둘, 그리고 KDA와 AttnRes는 자체 기여라는 출처 구분">
+  <aside class="notes">
+    <b>왼쪽이 이 장의 논지입니다</b> — 여덟 항목 전부 <b>K3 자체 발표표</b>(6개 모델 비교, 전부
+    최고 노력 설정)의 값이고 아래 막대가 그 표에서 가장 높은 다른 모델입니다.
+    <b>오픈웨이트가 1위를 셋 가져갑니다.</b>
+    <b>가운데</b>가 서빙에 필요한 것 — 두 막대가 같은 GB 자이고 칸 크기만 다릅니다
+    (MXFP4 배포 원본은 칸 = B300 288GB, FP8로 올리면 칸 = H200 141GB).
+    <b>오른쪽</b>이 "이 기법은 누구 것인가"입니다 — KDA·AttnRes·Stable LatentMoE는 자체 기여,
+    Gated MLA와 MXFP4 QAT는 가져온 것. <b>KDA를 기준선으로 삼은 후속 논문이 둘 나왔다</b>는 것이
+    자체 기여의 증거입니다.
+    <b>카드끼리 막대를 비교하지 마세요</b> — 같은 FrontierSWE가 GLM 카드에서 74.4, 이 표에서 67.3입니다.
+  </aside>
+</section>
+
+<section data-chapter="6.6 KDA">
+  <div class="eyebrow">6.6 · 카드의 왼쪽을 읽는 법</div>
+  <h2>여덟 항목 중 <span class="cy">셋이 1위</span>, 둘이 1점 안쪽입니다</h2>
+  <div class="body" style="margin-top:24px">
+    <div class="cols c3">
+      <div class="card cy-b">
+        <span class="k">1위 셋 — 오픈웨이트가 표의 맨 위</span>
+        <h4>AA-LCR <b class="cy">74.7</b><br>ProgramBench <b class="cy">77.8</b><br>SWE-Marathon <b class="cy">42.0</b></h4>
+        <p>상대는 GPT-5.5 74.3 · Opus 4.8 77.6 · Opus 4.8 40.0입니다.</p>
+      </div>
+      <div class="card">
+        <span class="k">1점 안쪽 · 사실상 대등</span>
+        <h4>Terminal-Bench 2.1 88.3<br>GPQA Diamond 93.5</h4>
+        <p>둘 다 상대는 <b>GPT-5.6 Sol</b>(88.8 · 94.1)입니다.</p>
+      </div>
+      <div class="card am-b">
+        <span class="k">벌어지는 셋 — 정직하게</span>
+        <h4>HLE-Full 43.5 · FrontierSWE 81.2 · DeepSWE 67.5</h4>
+        <p>앞선 쪽은 <b>Fable 5</b>(53.3 · 86.6)와 GPT-5.6 Sol(73.0)입니다.<br><br>
+          전문 지식과 장기 코딩에서는 아직 폐쇄 모델이 위입니다.</p>
+      </div>
+    </div>
+    <div class="lead" style="margin-top:24px">여기서 중요한 것은 순위가 아니라 <b>같은 표에 올랐다는 상태</b>입니다 &mdash;
+      그 성적을 <b class="cy">가중치째 받아</b> 자기 클러스터에서 돌릴 수 있습니다.
+      단, 라이선스는 MIT가 아니라 <b>자체 Kimi K3 License</b>입니다.</div>
+  </div>
+  <div class="foot">카드 오른쪽 "특성"에 <b>앞에서 나오지 않은 이름</b>이 하나 있습니다 &mdash; AttnRes.</div>
+  <aside class="notes">
+    하네스는 항목마다 다르고 <b>전부 자체 발표표</b>입니다 — 제3자 검증이 아니라는 것을 함께 말해 주세요.
+    <b>[근거 확인 대기 · 지금은 말하지 마세요]</b> 호진님 현장 체감 둘 — (1) 이 표에서 K3를 앞선
+    항목의 상대가 대개 <b>Fable 5</b>인데, 그 모델은 실사용에서 보안 사유로 작업을 거부하는 일이
+    잦고 K3는 그렇지 않다는 것. (2) 미국 최상위 모델들이 "성능이 강력해 정부 규제가 필요한
+    수준"으로 서술됐다는 것. <b>둘 다 저장소에 1차 근거가 없습니다</b> — 출처를 정하면 본문으로
+    올립니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="6.6 KDA">
+  <img src="../assets/attention_residuals.webp?v=20260731e" alt="일반 잔차 연결의 고정 덧셈과 Attention Residuals의 깊이 방향 softmax 혼합 비교">
+  <aside class="notes">
+    <b>두 그림의 골격이 같습니다.</b> 지나온 길과 이 레이어가 방금 계산한 것을 한 번 합치는데,
+    <b>왼쪽(일반 잔차)</b>은 계수가 늘 <b>1 대 1</b>이고 <b>오른쪽(AttnRes)</b>은 그 계수를
+    토큰마다 다시 정해 <b>39%와 61%</b>처럼 비율로 섞습니다.
+    오른쪽 아래 띠가 요점입니다 — <b>후보가 둘이 아니라 지나온 모든 블록</b>이고
+    softmax가 그 위에 비율을 놓습니다. 다음 장에 이름 주의와 계보를 붙입니다.
+  </aside>
+</section>
+
+<section data-chapter="6.6 KDA">
+  <div class="eyebrow">6.6 · 그림에 붙이는 세 가지</div>
+  <h2>Attention <span class="vi">Residuals</span> &mdash; 이름이 뜻을 가립니다</h2>
+  <div class="body" style="margin-top:24px">
+    <div class="cols c3">
+      <div class="card am-b">
+        <span class="k">먼저 이름 주의</span>
+        <h4>토큰 사이가 아니라 <b class="am">깊이 방향</b>입니다</h4>
+        <p>이 장에서 본 어텐션은 전부 <b>토큰끼리</b> 보는 것이었습니다.<br><br>
+          AttnRes의 어텐션은 <b>어느 단계의 표현을 다시 볼지</b> 고릅니다 &mdash;
+          축이 다릅니다.</p>
+      </div>
+      <div class="card vi-b">
+        <span class="k">무엇이 새로운가</span>
+        <h4>고정 합 &rarr; <b class="vi">학습되는 비율</b></h4>
+        <p>잔차 연결 자체는 오래된 것입니다. 새로운 것은 그 <b>1 대 1 고정 합</b>을
+          학습 가능한 어텐션으로 바꾼 것입니다.<br><br>
+          후보는 둘이 아니라 <b>지나온 모든 블록</b>이고, softmax가 그 위에 비율을 놓습니다.</p>
+      </div>
+      <div class="card">
+        <span class="k">누구 것인가 &mdash; 카드 오른쪽의 판정</span>
+        <h4>K3 전용 발명은 <b>아닙니다</b></h4>
+        <p>같은 팀이 <b>Kimi Linear</b>에서 먼저 검증했습니다.<br><br>
+          그래도 카드가 <b class="cy">자체 기여</b>로 적은 이유는 <b>자체 논문과 공식 구현을 함께
+          냈고</b>, 남들이 인용해 확장하는 중이기 때문입니다.</p>
+      </div>
+    </div>
+    <div class="lead" style="margin-top:24px">6장의 다른 기법이 <b>"덜 보기"</b>였다면 이것은
+      <b class="vi">"깊이 방향으로 더 잘 고르기"</b>입니다 &mdash;
+      두 청구서를 깎는 축이 아니라 <b>품질 쪽 장치</b>라서 뒤의 세 축에는 들어가지 않습니다.</div>
+  </div>
+  <div class="foot">그래서 K3의 자체 기여는 둘입니다 &mdash; <b class="cy">KDA</b>(KV캐시)와 <b class="vi">AttnRes</b>(품질).</div>
+  <aside class="notes">
+    <b>"잔차 연결"을 모르는 청자가 있으면 한 줄만</b> — 깊은 신경망은 층을 지날 때 앞의 값을
+    그대로 더해 주는 통로를 둡니다. 그게 없으면 깊어질수록 학습이 안 됩니다.
+    AttnRes는 그 통로의 <b>비율</b>을 고정하지 않는 것입니다.
+    K3의 특성 카드에서 <b>자체 기여는 KDA · AttnRes · Stable LatentMoE</b>이고
+    <b>Gated MLA와 MXFP4 QAT는 가져온 것</b>입니다.
+    KDA를 기준선으로 삼은 후속 논문이 둘 나왔다는 것이 "남이 인용해 확장한다"의 근거입니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="6.6 KDA">
+  <img src="../assets/k3_synthesis.webp?v=20260731e" alt="Kimi K3 종합 — 전문가 896개 중 16개 활성, 앞 장들과의 대응, H200 32장 대 B300 8장">
+  <aside class="notes">
+    <b>세 축이 각각 다른 청구서를 깎습니다.</b> 왼쪽 <b>KDA</b> — 93레이어를 69 대 24로 갈라
+    KV가 늘어나는 층을 24개로 묶습니다(6.3 Qwen3-Next의 3:1 배합을 규모만 키운 것이고,
+    1M 디코딩 최대 6.3배를 발표했습니다). 가운데 <b>Stable LatentMoE</b> — 896개 중 16개.
+    <b>분모가 다릅니다</b>: 전문가 개수로는 1.8%, 활성 파라미터로는 3.7%입니다.
+    오른쪽 <b>MXFP4 QAT</b> — 보통은 다 학습한 뒤 압축하지만 K3는 처음부터 4비트를 전제로
+    태웠습니다. 다음 장에서 그 결과를 하드웨어로 환산합니다.
+  </aside>
+</section>
+
+<section data-chapter="6.6 KDA">
+  <div class="eyebrow">6.6 · 세 축을 하드웨어로 환산하면</div>
+  <h2>같은 모델인데 <span class="am">H200 32장</span> 대 <span class="cy">B300 8장</span></h2>
+  <div class="body" style="margin-top:24px">
+    <div class="cols c3">
+      <div class="card cy-b">
+        <span class="k">KV캐시를 깎는 축</span>
+        <h4>KDA 69 + MLA 24</h4>
+        <p>93층 중 <b>24층만</b> 컨텍스트에 따라 KV가 자랍니다. 69층은 고정 크기 상태만 듭니다.</p>
+      </div>
+      <div class="card vi-b">
+        <span class="k">읽는 양을 깎는 축</span>
+        <h4>896 중 16 + 공유 2</h4>
+        <p>총 <b>2.8T</b>에 활성 <b>104B</b> &mdash; 활성 비율 <b class="vi">3.7%</b>.
+          전문가 개수로 세면 1.8%입니다(분모가 다릅니다).</p>
+      </div>
+      <div class="card am-b">
+        <span class="k">담는 값을 깎는 축</span>
+        <h4>MXFP4 QAT</h4>
+        <p>배포 원본이 4비트라 실측 <b class="num">1,560.9GB</b>.
+          FP8로 올리면 약 <b class="num">2,800GB</b>입니다.</p>
+      </div>
+    </div>
+    <div class="lead" style="margin-top:24px">H200에는 FP4 텐서코어가 없어 <b class="am">FP8로 올려야</b> 합니다 &mdash;
+      용량으로 20장이지만 노드가 8·16·32장 단위라 <b class="am">32장</b>.
+      B300은 4비트를 그대로 돌려 <b class="cy">한 노드(8장)</b>면 됩니다(용량만 보면 6장).
+      <b>이 4배는 "칩이 덜 필요해진다"가 아니라 어떤 칩이 필요한지가 바뀐다는 뜻입니다.</b></div>
+  </div>
+  <div class="foot cy-l">단, 8장은 <b>가중치가 들어간다</b>는 뜻이지 서빙할 수 있다는 뜻이 아닙니다 &mdash;
+    Moonshot 자신은 <b>64장 이상</b>의 슈퍼노드를 권장합니다.</div>
+  <aside class="notes">
+    <b>마무리는 4장으로 돌아갑니다.</b> 용량 청구서는 8장으로 끝나지만
+    <b>KV캐시 청구서는 거기서 시작</b>합니다 — 사용자마다 따로 드는 그 청구서요.
+    그래서 Moonshot의 권장이 64장 이상입니다.
+    당시 시장이 두려워한 것도 세대 교체가 아니라 <b>같은 성능에 드는 총 GPU와 CAPEX가 줄어들
+    가능성</b>이었고, 그것도 검증된 결과가 아니라 발표 직후의 해석이었습니다.
+    <b>수치 주의</b> — 스펙 카드는 MXFP4 실측 1,560.9GB를 <b>B300 6장</b>(용량)으로 적고,
+    README 본문은 <b>8장</b>(한 노드)으로 적습니다. 이 슬라이드는 둘을 함께 적었습니다.
+  </aside>
+</section>
+
+<!-- ══════════════════════════════════════ 7장 ══════════════════════════ -->
+<section class="chapter">
+  <div class="cnum">07</div>
+  <div class="ctag">Chapter 07</div>
+  <h2>Quantization</h2>
+  <blockquote>용량 청구서의 <b>유일한 손잡이</b></blockquote>
+  <div class="cwhat">3장에서 "바꿀 수 있는 건 파라미터당 비트 수뿐"이라고 했던 그 손잡이.</div>
+</section>
+
+<section class="fig" data-chapter="7. 양자화">
+  <img src="../assets/quant_two_bills.webp?v=20260731e" alt="양자화는 압축이고 두 청구서에 함께 듣는다는 그림 — 왼쪽은 GLM-5.2 753B을 BF16 1,506GB에서 FP8 753GB, FP4 377GB, 극한 226GB로 줄이며 H200 11장에서 2장까지 내려가는 막대, 오른쪽은 1M 대화 한 사람 몫 KV캐시가 93GiB에서 46.5GiB, 23GiB로 줄어드는 막대, 아래에는 가중치는 오프라인에서 자리마다 다른 비트를 줄 수 있고 KV캐시는 전체에 같은 비트를 쓴다는 갈림">
+  <aside class="notes">
+    <b>7장의 전부가 이 한 장에 있습니다.</b> 왼쪽이 <b>담는 값</b>(3장), 오른쪽이
+    <b>일 시키는 값</b>(4장)입니다 — 양자화는 이 문서에서 <b>두 청구서 양쪽에 다 듣는
+    유일한 손잡이</b>입니다. 구조를 바꾸지 않으니 6장의 기법들과 겹쳐 쓸 수도 있습니다.
+    <b>아래 갈림이 이 장의 목차입니다</b> — 가중치는 미리 재 보고 자리마다 비트를 다르게 줄 수
+    있지만(오프라인에서 한 번), KV캐시는 무엇이 들어올지 모르므로 전체에 같은 비트를 씁니다.
+    KV 쪽 ×2·×0.5는 46.5GiB(FP8 기준)에서 유도한 값이라 그림에 밝혀 뒀습니다.
+  </aside>
+</section>
+
+<section data-chapter="7. 양자화">
+  <div class="eyebrow">7장 · 낱말부터</div>
+  <h2>양자화는 <span class="cy">압축</span>입니다 &mdash; 그릇과 넣는 법은 다른 층입니다</h2>
+  <div class="body" style="margin-top:24px">
+    <div class="cols c3">
+      <div class="card am-b">
+        <span class="k">1 · 정밀도 포맷</span>
+        <h4>숫자를 담는 <b class="am">그릇</b></h4>
+        <p>BF16 · FP16 · FP8 · MXFP8 · MXFP4 · NVFP4.<br><br>
+          몇 비트에 어떤 눈금으로 담을지만 정합니다 &mdash;
+          <b>어느 값을 어떻게 줄일지는 아직 안 정해집니다.</b></p>
+      </div>
+      <div class="card cy-b">
+        <span class="k">2 · 넣는 법 · 보정</span>
+        <h4>같은 비트, <b class="cy">오차는 다르게</b></h4>
+        <p><b>AWQ</b> — 활성값이 큰 중요 채널만 스케일로 보호<br>
+          <b>AutoRound</b> — 블록별 라운딩 값 자체를 최적화<br><br>
+          결과물은 여전히 <b>균일한 비트</b>입니다.</p>
+      </div>
+      <div class="card vi-b">
+        <span class="k">3 · 예산 배분</span>
+        <h4>자리마다 <b class="vi">비트를 다르게</b></h4>
+        <p>민감한 곳에 더 주고 둔감한 곳에서 회수해 목표 평균을 맞춥니다.<br><br>
+          <b>Q4_K_M · EXL2 · Dynamic 2.0</b>이 여기입니다.</p>
+      </div>
+    </div>
+    <div class="lead" style="margin-top:24px">이름이 많아 보이는 이유는 <b>같은 문제를 서로 다른 높이에서</b>
+      풀기 때문입니다. 먼저 <b class="am">그릇</b>부터 봅니다 &mdash; 그릇이 세대를 가릅니다.</div>
+  </div>
+  <div class="foot">3층을 섞어 부르면 대화가 엉킵니다 &mdash; "FP4로 양자화했다"와 "Q4_K_M으로 양자화했다"는 <b>다른 층의 말</b>입니다.</div>
+</section>
+
+<section class="fig" data-chapter="7. 양자화">
+  <img src="../assets/precision_formats.webp?v=20260731e" alt="정밀도 포맷 여섯의 비트 구성과 네이티브 가속 세대 — BF16과 FP16은 암페어부터, FP8 E4M3는 호퍼부터, 블록 스케일을 쓰는 MXFP8·MXFP4·NVFP4는 블랙웰부터이고, 암페어와 호퍼에서 FP4는 상위 정밀도로 되돌려 계산하는 에뮬레이션이라는 표">
+  <aside class="notes">
+    <b>왼쪽 칸이 1비트입니다</b> — 앰버가 지수(다이나믹 레인지), 시안이 맨티사(정밀도)입니다.
+    BF16과 FP16이 같은 16비트인데 배분만 다르다는 것을 여기서 보여주세요.
+    <b>오른쪽이 이 장의 실무 요점입니다</b> — FP8은 호퍼부터, <b>블록 스케일을 쓰는 MX·NVFP4는
+    블랙웰부터</b> 텐서코어가 그대로 계산합니다. 눈금을 텐서 하나에 하나 두느냐(FP8),
+    수십 개마다 따로 두느냐(MX·NV)가 세대를 가르는 이유입니다.
+    <b>"에뮬"은 올라가긴 한다는 뜻</b>입니다 — 6.6에서 본 K3의 H200 사정이 그것입니다.
+  </aside>
+</section>
+
+<section data-chapter="7. 양자화">
+  <div class="eyebrow">7장 · 그림에 붙이는 셋</div>
+  <h2>같은 4비트도 <span class="cy">눈금을 어디에 두느냐</span>로 갈립니다</h2>
+  <div class="body" style="margin-top:24px">
+    <div class="cols c2">
+      <table class="mid">
+        <tr><th>FP4 두 포맷</th><th>블록 크기</th><th>스케일 factor</th></tr>
+        <tr><td><b>MXFP4</b> <span class="gr">OCP 표준</span></td><td class="n">32</td><td class="n">E8M0</td></tr>
+        <tr class="hi"><td><b>NVFP4</b> <span class="gr">NVIDIA 자체</span></td>
+          <td class="n cy">16 <span class="gr">더 촘촘</span></td><td class="n cy">FP8 E4M3 <span class="gr">더 정밀</span></td></tr>
+      </table>
+      <div class="card">
+        <span class="k">그래서</span>
+        <p>같은 4비트여도 <b class="cy">NVFP4의 오차가 작다</b>고 보고됩니다.
+          블록이 절반이고 눈금 자체도 더 정밀하니까요.<br>
+          대신 <b>블랙웰 전용</b>입니다.</p>
+      </div>
+    </div>
+    <div class="cols c2" style="margin-top:24px">
+      <div class="card cy-b">
+        <span class="k">사후 압축 · PTQ</span>
+        <h4>보통은 다 학습한 뒤 누릅니다</h4>
+        <p>GPT-OSS가 MXFP4로 배포되며 이 방식이 대중화됐습니다.</p>
+      </div>
+      <div class="card vi-b">
+        <span class="k">학습 단계 · QAT</span>
+        <h4>처음부터 4비트를 전제로</h4>
+        <p><b>Kimi K3</b>는 SFT 단계부터 MXFP4/MXFP8에 맞춰 학습했습니다(6.6).
+          그래서 <b>배포 원본이 4비트</b>입니다.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">블록 크기·스케일 수치는 NVIDIA 공식 기술 블로그의 비교표를 직접 열어 확인한 값입니다.</div>
+</section>
+
+<section class="fig" data-chapter="7. 양자화">
+  <img src="../assets/uniform_vs_mixed.webp?v=20260731e" alt="균일 정밀도와 혼합 정밀도를 같은 평균 4비트에서 비교한 막대그래프 — 왼쪽은 열두 텐서 모두 4비트로 평평하고, 오른쪽은 임베딩과 어텐션과 출력층을 5~6비트로 올리고 MoE 전문가 FFN을 3비트로 내려 들쭉날쭉하지만 평균선 높이는 둘이 같다">
+  <aside class="notes">
+    <b>점선 높이가 두 패널에서 같습니다 — 용량이 같다는 뜻입니다.</b> 왼쪽은 모든 자리에 같은 비트,
+    오른쪽은 <b>민감한 곳에 더 주고 둔감한 곳에서 회수</b>했습니다.
+    올린 쪽은 임베딩·어텐션·출력층(Q4_K_M의 규칙), 내린 쪽은 <b>MoE 전문가 FFN</b>(Dynamic 2.0의 규칙)입니다.
+    <b>배분의 모양을 보여주는 그림</b>이고 특정 텐서의 실측 비트가 아니라는 것을 그림 하단에 밝혀 뒀습니다.
+    다음 장에서 "왜 이게 가중치에서만 되는가"를 말합니다.
+  </aside>
+</section>
+
+<section data-chapter="7. 양자화">
+  <div class="eyebrow">7.1 · 가중치가 특별한 이유</div>
+  <h2>가중치는 <span class="cy">예측 가능</span>하니까 혼합이 됩니다</h2>
+  <div class="body" style="margin-top:24px">
+    <div class="cols c3">
+      <div class="card cy-b">
+        <span class="k">조건 1 · 값이 고정입니다</span>
+        <h4>미리 재 볼 수 있습니다</h4>
+        <p>학습이 끝나면 가중치는 <b>변하지 않습니다.</b>
+          그래서 어느 텐서가 오차에 민감한지 <b>실제로 흘려보내 재 보고</b> 비트를 배분할 수 있습니다.</p>
+      </div>
+      <div class="card cy-b">
+        <span class="k">조건 2 · 한 번만 하면 됩니다</span>
+        <h4>만들어 두면 <b class="cy">저장이 끝</b>입니다</h4>
+        <p>탐색은 <b>모델마다 한 번, 오프라인</b>입니다.
+          그 결과물을 파일로 배포하면 받는 쪽은 올리기만 합니다 &mdash; 런타임 비용이 0입니다.</p>
+      </div>
+      <div class="card am-b">
+        <span class="k">단서 · 모델 크기</span>
+        <h4>작은 모델이 <b class="am">더 잘 부서집니다</b></h4>
+        <p>같은 4비트를 먹여도 큰 모델이 손실이 적다는 것이 널리 관찰됩니다.
+          앞단에서 흐트러진 분포를 <b>뒷단 레이어가 잡아 주는 여지</b>가 크다는 설명이 유력합니다.</p>
+      </div>
+    </div>
+    <div class="lead" style="margin-top:24px">그래서 <b>작은 모델은 균일 4비트로 밀지 말고</b> 비트를 더 주거나
+      FP8에서 멈추는 편이 낫고, 큰 모델은 같은 평균 비트에서 <b class="cy">혼합으로 더 눌러도</b> 버팁니다.</div>
+  </div>
+  <div class="foot cy-l">앞 그림의 <b>들쭉날쭉한 막대</b>가 가능한 것은 이 두 조건 때문입니다 &mdash; KV캐시에는 둘 다 없습니다.</div>
+  <aside class="notes">
+    <b>모델 크기와 양자화 내성은 경험 규칙으로 말해 주세요.</b> "큰 모델이 더 잘 버틴다"는
+    널리 관찰되는 것이지만, <b>이 문서가 1차 출처로 확인해 둔 항목은 아닙니다</b> — 뒷단이
+    잡아 준다는 설명도 가설 쪽입니다. 반례가 나올 수 있는 자리라 단정하지 마세요.
+    반대로 <b>K3처럼 처음부터 4비트로 학습하면</b> 이 규칙과 무관하게 품질을 지킬 수 있습니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="7. 양자화">
+  <img src="../assets/quantization_map.webp?v=20260731e" alt="모델 양자화 지도 — 정밀도 포맷, 보정 방법, 혼합 정밀도의 층위와 GGUF의 Q·K·I 양자화 계열">
+  <aside class="notes">
+    <b>세 층을 한 장에 세운 지도입니다</b> — 그릇(포맷) · 오차 줄이기(보정) · 예산 배분(혼합).
+    아래가 <b>로컬에서 실제로 만나는 이름</b>들입니다. 세대라고 부르지만 GGUF 표준의 공식
+    세대명은 아니고 <b>Q → K → I 세 계열</b>입니다.
+    <b>imatrix는 어느 계열에도 얹을 수 있는 오차 가중 장치</b>이고, I-quants의 핵심은 LUT가 아니라
+    비선형 코드북이라는 것을 짚어 주세요.
+  </aside>
+</section>
+
+<section data-chapter="7. 양자화">
+  <div class="eyebrow">7.1 · 로컬에서 만나는 암호들</div>
+  <h2><span class="cy">Q4_K_M</span>과 <span class="vi">IQ4_XS</span>는 무엇이 다른가</h2>
+  <div class="body" style="margin-top:22px">
+    <table class="mid">
+      <tr><th>계열</th><th>이름</th><th>핵심 아이디어</th></tr>
+      <tr><td>레거시 Q-quants</td><td class="n">Q4_0 · Q8_0</td><td>블록 단위의 <b>균일한 정수 눈금</b></td></tr>
+      <tr class="hi"><td>K-quants</td><td class="n cy"><b>Q4_K_M</b></td><td><b>슈퍼블록 이중 스케일</b> + 텐서별 혼합 정밀도</td></tr>
+      <tr class="hi"><td>I-quants</td><td class="n vi"><b>IQ4_XS</b> · IQ3_XXS</td><td><b>비선형 코드북/격자</b>에서 패턴 번호를 저장 &mdash; 2~3비트까지</td></tr>
+    </table>
+    <div class="cols c2" style="margin-top:24px">
+      <div class="card">
+        <span class="k">여기에 얹히는 장치 하나</span>
+        <h4>중요도 행렬 · imatrix</h4>
+        <p>캘리브레이션 텍스트를 실제로 흘려보내 <b>어느 자리가 자주 세게 쓰이는지</b> 재둔 표입니다.
+          이름은 행렬이지만 저장되는 것은 1차원 배열이고, <b>I-quants 전용이 아닙니다.</b></p>
+      </div>
+      <div class="card">
+        <span class="k">개발자와 배포자가 다릅니다</span>
+        <h4>포맷은 llama.cpp, 파일은 Unsloth</h4>
+        <p>포맷과 커널은 <b>ikawrakow</b>가 만들고, 우리가 받아 쓰는 변환본은 대개
+          <b>Unsloth</b>가 올린 것입니다 &mdash; Dynamic 2.0이 그 결과물입니다.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">여기까지가 <b>가중치</b> 이야기였습니다. 이제 <b class="am">매 요청마다 새로 생기는 쪽</b>으로 갑니다.</div>
+</section>
+
+<section class="fig" data-chapter="7.2 KV캐시 양자화">
+  <img src="../assets/kv_quant_rotation.webp?v=20260731e" alt="하다마드 회전 — 회전 전에는 이상치 몇 개가 눈금을 다 잡아먹어 나머지가 가운데 뭉치고, 회전 뒤에는 값이 고르게 퍼져 같은 4비트로도 구분되며 최대-최소 폭이 좁아지고 좌표가 예측 가능한 베타 분포를 따른다. 가중치·활성값·KV캐시 모두에 적용되고 대가는 입력에 회전 행렬을 곱하는 연산이다">
+  <aside class="notes">
+    <b>왼쪽이 문제, 오른쪽이 해법입니다.</b> 4비트는 눈금이 16칸뿐인데 이상치 하나가 멀리 튀면
+    그 사이가 다 빈 칸으로 낭비되고, 나머지 값들은 가운데 뭉쳐 <b>서로 구분되지 않습니다.</b>
+    <b>하다마드 회전</b>은 그 뾰족한 값을 여러 차원에 나눠 <b>최대−최소 폭을 좁힙니다.</b>
+    그리고 회전 뒤 좌표는 <b>예측 가능한 분포(베타)</b>를 따르므로 <b>데이터를 보지 않고도</b>
+    최적 눈금을 미리 설계할 수 있습니다 — 다음 두 장의 기법이 여기서 나옵니다.
+    <b>가중치·활성값·KV캐시 모두에 적용됩니다.</b>
+  </aside>
+</section>
+
+<section data-chapter="7.2 KV캐시 양자화">
+  <div class="eyebrow">7장 · 회전의 값과 대가</div>
+  <h2>품질에는 <span class="cy">유리</span>, 연산에는 <span class="am">불리</span>합니다</h2>
+  <div class="body" style="margin-top:24px">
+    <div class="cols c2">
+      <div class="card cy-b">
+        <span class="k">얻는 것</span>
+        <h4>같은 비트에서 품질</h4>
+        <p><b>QuaRot</b>은 회전을 곱해 이상치를 분산시킨 뒤 양자화해,
+          <b>가중치·활성값·KV캐시를 통째로 4비트</b>(W4A4KV4)까지 내려도 정확도 99% 이상을 유지한다고 보고합니다.</p>
+      </div>
+      <div class="card am-b">
+        <span class="k">내는 것</span>
+        <h4>행렬 곱 한 번이 붙습니다</h4>
+        <p>회전은 공짜가 아닙니다 &mdash; <b>쓸 때마다 입력에 회전 행렬을 곱해야</b> 합니다.<br><br>
+          <b>가중치</b>는 미리 돌려 저장하면 품질만 얻지만,
+          <b class="am">읽을 때마다 되펼치는 KV캐시</b>에서는 그 곱이 런타임에 남습니다.</p>
+      </div>
+    </div>
+    <div class="lead" style="margin-top:24px">그래서 회전은 <b>가중치 압축에서는 거의 순이득</b>이고,
+      KV캐시에서는 <b class="am">"메모리를 아끼려고 연산을 낸다"</b>는 저울질이 됩니다.</div>
+  </div>
+  <div class="foot cy-l">이 저울질의 실제 눈금은 세 장 뒤 <b>엔진 실측</b>에서 봅니다.</div>
+</section>
+
+<section data-chapter="7.2 KV캐시 양자화">
+  <div class="eyebrow">7.2 KV캐시 양자화</div>
+  <h2>여기는 <span class="am">균일 양자화만</span> 씁니다</h2>
+  <div class="lead" style="margin-top:22px">가중치를 혼합으로 만들 수 있었던 두 조건이 <b>둘 다 없습니다.</b></div>
+  <div class="body" style="margin-top:22px">
+    <div class="cols c2">
+      <div class="card am-b">
+        <span class="k">조건 1이 없습니다</span>
+        <h4>무엇이 들어올지 <b class="am">모릅니다</b></h4>
+        <p>KV캐시는 <b>요청마다 새로 생기는 데이터</b>입니다.
+          어느 자리가 민감할지는 그 대화가 들어와 봐야 알 수 있으니, 미리 배분표를 만들 대상이 없습니다.</p>
+      </div>
+      <div class="card am-b">
+        <span class="k">조건 2가 없습니다</span>
+        <h4>탐색할 <b class="am">시간이 없습니다</b></h4>
+        <p>가중치의 비트 배분은 모델마다 <b>한 번, 오프라인</b>으로 찾습니다.
+          같은 탐색을 <b>매 요청·매 토큰</b>에 하면 아끼려던 것보다 비용이 큽니다 &mdash; 사실상 성립하지 않습니다.</p>
+      </div>
+    </div>
+    <div class="lead" style="margin-top:24px">그래서 이쪽에서 쓸 수 있는 것은 <b class="cy">전체에 같은 비트</b>를 주고
+      <b>눈금을 잘 잡는 일</b>뿐입니다 &mdash; 축·블록 단위 스케일, 그리고 방금 본 <b class="cy">회전</b>.
+      다음 두 장이 그 눈금을 설계하는 방법입니다.</div>
+  </div>
+  <div class="foot">단순 per-tensor INT4는 이상치 채널 때문에 <b class="am">4비트 이하에서 급격히 무너집니다</b> &mdash; 그래서 회전이 먼저 옵니다.</div>
+  <aside class="notes">
+    <b>"균일"의 범위를 정확히 말해 주세요.</b> 채널·토큰 축이나 블록 단위로 스케일을 따로 두는 것은
+    실시간에 할 수 있는 일이라 널리 씁니다. 못 하는 것은 <b>레이어마다 비트 수를 다르게 배분하는
+    탐색</b>입니다. "혼합 정밀도가 자리잡지 못했다"는 그 뜻입니다.
+  </aside>
+</section>
+
+<section data-chapter="7.2 KV캐시 양자화">
+  <div class="eyebrow">균일 눈금을 잘 잡는 방법 1</div>
+  <h2><span class="cy">TurboQuant</span> &mdash; 분포를 알면 눈금을 미리 설계할 수 있습니다</h2>
+  <div class="lead" style="margin-top:20px"><span class="gr">Google Research · arXiv:2504.19874 · ICLR 2026</span></div>
+  <div class="body" style="margin-top:20px">
+    <div class="cols c3">
+      <div class="card cy-b">
+        <span class="k">1 · 회전</span>
+        <h4>좌표가 <b class="cy">베타 분포</b>를 따릅니다</h4>
+        <p>회전 뒤에는 데이터가 무엇이든 좌표의 분포가 <b>미리 아는 모양</b>이 됩니다.</p>
+      </div>
+      <div class="card cy-b">
+        <span class="k">2 · 최적 눈금</span>
+        <h4>좌표별 <b class="cy">Lloyd-Max</b> 양자화기</h4>
+        <p>그 분포에 맞춰 눈금 위치를 최적으로 잡습니다 &mdash;
+          <b>데이터를 보지 않고</b> 설계할 수 있다는 것이 핵심입니다.</p>
+      </div>
+      <div class="card cy-b">
+        <span class="k">3 · 편향 제거</span>
+        <h4>1비트 <b class="cy">JL 보정</b></h4>
+        <p>어텐션 점수는 결국 <b>내적</b>입니다. 1비트 Johnson-Lindenstrauss 보정을 더해
+          그 내적의 <b>편향을 없앱니다.</b></p>
+      </div>
+    </div>
+    <div class="lead" style="margin-top:24px">논문 보고 &mdash; 채널당 <b class="cy">3.5비트에서 품질 손실 없음</b>,
+      <b>2.5비트</b>까지 내려도 손상이 미미.</div>
+  </div>
+  <div class="foot">"데이터를 안 봐도 된다"가 KV캐시에 특히 값진 이유는 &mdash; <b class="am">볼 데이터가 매번 새로 생기니까요.</b></div>
+</section>
+
+<section data-chapter="7.2 KV캐시 양자화">
+  <div class="eyebrow">균일 눈금을 잘 잡는 방법 2</div>
+  <h2><span class="vi">PolarQuant</span> &mdash; 눈금 정보 자체를 없앱니다</h2>
+  <div class="lead" style="margin-top:20px"><span class="gr">arXiv:2502.02617</span></div>
+  <div class="body" style="margin-top:20px">
+    <div class="cols c2">
+      <div class="card vi-b">
+        <span class="k">무엇을 바꾸나</span>
+        <h4>직교 좌표 &rarr; <b class="vi">극좌표</b></h4>
+        <p>벡터를 <b>크기 하나 + 각도 여러 개</b>로 바꾼 뒤 <b>각도를</b> 양자화합니다.<br><br>
+          무작위 전처리를 거치면 각도가 <b>좁은 범위에 몰립니다.</b></p>
+      </div>
+      <div class="card vi-b">
+        <span class="k">그래서 무엇이 공짜가 되나</span>
+        <h4>블록마다 저장했던 <b class="vi">정규화 상수가 불필요</b></h4>
+        <p>기존 방식은 블록마다 눈금 정보(스케일)를 따로 들고 있어야 했습니다.
+          각도가 이미 좁은 범위에 있으면 <b>그 상수를 저장할 필요가 없습니다.</b><br><br>
+          보고된 압축률 <b class="vi">4.2배 이상</b>.</p>
+      </div>
+    </div>
+    <div class="lead" style="margin-top:24px">두 방법의 공통점 &mdash; <b>먼저 분포를 예측 가능하게 만들고</b>,
+      그 예측을 눈금 설계에 씁니다. 6장이 "덜 보기"였다면 7장은 <b class="cy">"같은 자리에 더 정확히 담기"</b>입니다.</div>
+  </div>
+  <div class="foot cy-l">단서 &mdash; 각도 기반 양자화의 성패는 모델 크기가 아니라 <b class="am">어텐션 스케일 계수</b>가 가른다는 보고가 있습니다.</div>
+  <aside class="notes">
+    <b>이 단서는 발표에서 한 줄로 말해 주세요.</b> Open-TQ-Metal(arXiv:2604.16957)은 각도 기반
+    양자화(PolarQuant)의 성패를 <b>어텐션 스케일 계수</b>가 정한다고 보고하고,
+    <b>Gemma 4의 attn_scale이 1.0이라 방향 오차를 25~100배 증폭</b>한다고 적습니다.
+    <b>6.2의 Gemma 4와 7장이 여기서 만납니다</b> — 같은 기법이 모델에 따라 듣지 않을 수 있습니다.
+    (이 논문은 아직 본문 PDF를 열지 않았습니다 — RESEARCH.md §36.5의 미열람 목록입니다.)
+  </aside>
+</section>
+
+<section data-chapter="7.2 KV캐시 양자화">
+  <div class="eyebrow">그런데 논문 수치와 엔진 실측이 갈립니다</div>
+  <h2>vLLM이 얹어 재보니 <span class="cy">FP8이 여전히 기본값</span>이었습니다</h2>
+  <div class="body" style="margin-top:22px">
+    <table class="mid">
+      <tr><th></th><th>같은 메모리에 <b>담기는</b> KV캐시</th><th>처리량</th><th>품질</th></tr>
+      <tr><td>BF16 <span class="gr">압축 안 함 · 기준</span></td><td class="n">1배</td><td class="n">100%</td><td>원본</td></tr>
+      <tr class="hi"><td><b>FP8</b></td><td class="n cy"><b>2배</b></td><td class="n cy"><b>100% — 손실 없음</b></td><td>거의 무손실</td></tr>
+      <tr class="hi-am"><td>TurboQuant 4비트</td><td class="n am"><b>3.4배</b></td><td class="n am"><b>73%</b></td><td>과제에 따라 하락</td></tr>
+      <tr class="hi-am"><td>TurboQuant 3비트</td><td class="n am">3.4배보다 더</td><td class="n am"><b>66%</b></td><td>긴 컨텍스트에서 크게 하락</td></tr>
+    </table>
+    <div class="cols c2" style="margin-top:24px">
+      <div class="card am-b">
+        <span class="k">왜 오히려 느려지나</span>
+        <p>양자화해 넣은 KV는 <b>쓸 때마다 원래 값으로 되펼쳐야</b> 합니다.
+          읽을 바이트는 줄었는데 그 대신 <b class="am">계산이 붙습니다.</b></p>
+      </div>
+      <div class="card cy-b">
+        <span class="k">그래서 결론</span>
+        <p>KV 양자화는 <b>공짜로 빨라지는 기술이 아니라</b>
+          <b class="cy">메모리가 정말 모자랄 때 속도를 내주고 동시 사용자를 사는</b> 카드입니다.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">두 번째 열은 <b>클수록</b> 좋고 세 번째 열은 <b>100%가 기준</b>입니다 &mdash; 73%는 토큰이 그만큼 느리게 나온다는 뜻입니다.</div>
+  <aside class="notes">
+    <b>이 장이 이 문서의 원칙을 보여주는 자리입니다</b> — 논문 주장과 엔진 실측을 같은 지표처럼
+    섞지 않는다는 것. 앞의 3.5비트·4.2배는 논문 값이고 이 표는 vLLM이 직접 통합해 잰 값입니다.
+    vLLM의 결론 문장은 <b>"FP8이 여전히 기본값으로 최선"</b>입니다 — 2배를 공짜로 주니까요.
+    4장의 저울질이 여기서도 그대로 반복됩니다.
+  </aside>
+</section>
+
+<section data-chapter="7.3 이득">
+  <div class="eyebrow">7.3 그래서 뭐가 좋나요</div>
+  <h2>세 방향으로 <span class="cy">직접</span> 이득입니다</h2>
+  <div class="body">
+    <div class="cols c3">
+      <div class="card">
+        <span class="k">프리필 · 연산 병목</span>
+        <h4>연산 자체가 빨라집니다</h4>
+        <p>GPU가 네이티브 가속하는 포맷이라면 <b>같은 텐서코어로 더 많은 연산</b>을 동시에.
+        연산량이 지배적인 프리필에서 특히 체감됩니다.</p>
+      </div>
+      <div class="card cy-b">
+        <span class="k">디코딩 · 대역폭 병목</span>
+        <h4>디코딩이 빨라집니다</h4>
+        <p>16비트 → 4비트면 <b>읽어야 할 바이트가 1/4</b>.
+        같은 대역폭으로 더 짧은 시간에 다 읽으니, <b>초당 생성 토큰 수가 늘어납니다.</b></p>
+      </div>
+      <div class="card vi-b">
+        <span class="k">KV캐시 · 용량</span>
+        <h4>동시성이 늘어납니다</h4>
+        <p>캐시가 차지하는 메모리가 줄면 <b>같은 GPU로 더 많은 요청</b>의 KV캐시를 올릴 수 있습니다.
+        곧 배치 크기가 커지고 <b>서버 전체 처리량</b>이 늡니다.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">이 발표에서 계속 다룬 <b>프리필 / 디코딩 / KV캐시</b> 세 곳에 정확히 하나씩 대응합니다.</div>
+</section>
+
+<!-- ══════════════════════════════════════ 8장 ══════════════════════════ -->
+<section class="chapter">
+  <div class="cnum">08</div>
+  <div class="ctag">Chapter 08</div>
+  <h2>AI 소버린</h2>
+  <blockquote>"더 이상 AI는 모두의 것이 아니라,<br>각자 자신의 것을 만들어야 하는 국가 전략자산이 되었다"</blockquote>
+  <div class="cwhat">6장의 여섯 기법이 <b>왜 나왔는지</b>, 그 바깥의 이유.</div>
+</section>
+
+<section data-chapter="8.1 국가">
+  <div class="eyebrow">8.1 국가 단위</div>
+  <h2>통제의 범위가 <span class="am">3단계</span>로 넓어졌습니다</h2>
+  <div class="lead">지금까지의 아키텍처 이야기는 결국 <b>"GPU가 부족해도 어떻게 쓸 만한 모델을 만드느냐"</b>로 수렴합니다.
+    그리고 그 부족은 기술 문제가 아니라 <b>규제의 결과</b>입니다.</div>
+  <div class="body">
+    <table class="mid">
+      <tr><th>단계</th><th>통제 대상</th><th>실제로 벌어진 일</th></tr>
+      <tr><td><b>1. 하드웨어</b></td><td>GPU 수출</td><td>Blackwell 계열 중국 수출 차단. H20·성능을 깎은 H200조차 케이스별 라이선스와 관세를 거쳐야 통과</td></tr>
+      <tr class="hi"><td><b>2. 모델 설계</b></td><td class="cy">통제가 아니라 <b>결과</b></td><td>제약이 <b>MoE·선형 어텐션·KV캐시 압축·네이티브 저비트 양자화</b>를 낳음</td></tr>
+      <tr><td><b>3. 모델 자체</b></td><td>가중치 배포</td><td>중국은 최신 모델의 해외 접근 제한을 논의, 미국은 국가안보 사유로 배포를 중단한 사례</td></tr>
+    </table>
+  </div>
+  <div class="foot cy-l">
+    <b>2단계가 방금 본 6장 전체입니다.</b> "싸게, 그러나 뛰어나게"는 선택이 아니라 <b>제재가 강제한 방향</b>이었습니다.
+  </div>
+  <aside class="notes">
+    여기가 6장을 회수하는 지점입니다 — "방금 본 여섯 기법이 이 표의 2단계입니다"라고 짚어주세요.
+    수입이 막힌 중국은 Huawei Ascend(910C, 950 시리즈)로 인프라를 자체 조달하는 한편,
+    연산량과 메모리를 극단적으로 아끼는 아키텍처를 발전시켰습니다.
+    3단계가 특히 최근 변화입니다 — <b>가장 앞선 모델은 국내 전용으로 묶고 한 세대 뒤처진 것만 공개</b>.
+    오픈웨이트조차 계층화 대상이 되고 있습니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="8.1 국가">
+  <img src="../assets/ai_sovereignty.webp?v=20260731e" alt="하드웨어 → 모델 설계 → 모델 자체로 넓어지는 통제의 범위">
+  <aside class="notes">
+    자국 GPU도 자국 모델도 없는 국가는 <b>세 단계 모두에서 남의 결정에 종속</b>됩니다.
+    "모든 나라가 자기 자신의 AI를 만들어야 하는 시대"라는 말은 그런 뜻입니다.
+  </aside>
+</section>
+
+<section data-chapter="8.2 한국">
+  <div class="eyebrow">8.2 그럼 한국은 어디쯤 있나</div>
+  <h2>우리도 <span class="am">1단계</span>와 <span class="vi">3단계</span>를 동시에 밀고 있습니다</h2>
+  <div class="body">
+    <div class="cols c2">
+      <div class="card am-b">
+        <span class="k">1단계 · GPU를 사 모으는 쪽</span>
+        <table class="mid" style="margin-top:14px">
+          <tr><td>정부 1차 확보분</td><td><b class="am">약 1만 3천 장</b><br><span class="gr">B200 10,080 + H200 3,056</span></td></tr>
+          <tr><td>'AI 고속도로' 2차</td><td><b class="am"><span class="num">9,704</span>장</b><br><span class="gr">B300 7,688 + Vera Rubin 2,016</span></td></tr>
+          <tr><td>국가 AI 컴퓨팅 센터</td><td><b>1만 5천 장</b> 이상<br><span class="gr">2028년 가동 목표</span></td></tr>
+        </table>
+      </div>
+      <div class="card vi-b">
+        <span class="k">3단계 · 모델을 직접 만드는 쪽</span>
+        <h4>'독파모' — 독자 AI 파운데이션 모델</h4>
+        <p>정부가 GPU와 데이터를 대주고 여러 팀이
+        <b>6개월마다 평가받아 떨어지는 서바이벌</b>입니다.<br><br>
+        2026년 1월 1차 평가에서 두 팀이 탈락했는데, 그중 한 사유가 오늘 주제와 정확히 겹칩니다 —<br>
+        <b class="vi">"해외 모델을 파인튜닝한 파생형은 독자 모델로 인정하지 않는다"</b><br><br>
+        3장 모델 표의 <b>Motif 3(314B, 한국)</b>가 이 경쟁에 있는 팀의 모델입니다.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    Colossus 1 <b>한 곳</b>이 <b class="am">22만 장</b>, 한국 정부 확보분 <b>전부</b>가 <b class="cy">약 2.3만 장</b> —
+    <b>약 10배</b>입니다. 그래서 6·7장이 우리에겐 교양이 아니라 <b>생존 조건</b>입니다.
+  </div>
+  <aside class="notes">
+    여기가 "그래서 우리는?"에 답하는 자리입니다. 앞 슬라이드가 미·중 이야기라 남의 집 사정처럼 들렸을 텐데,
+    같은 3단계 틀에 우리를 얹으면 바로 우리 이야기가 됩니다.
+    왼쪽 단서 두 개를 꼭 붙여주세요 — 이 표는 <b>정부 확보 물량만</b> 센 것이라 민간 보유분은 빠져 있고,
+    Colossus와의 10배 비교는 H100 세대가 섞인 22만 장과 B200·B300 세대 2만여 장을 <b>장수로만</b> 견준 것이라
+    규모감이지 성능 비교가 아닙니다(세대가 오르면 장당 성능·메모리가 크게 늘어납니다).
+    오른쪽 독파모 탈락 사유가 이 발표의 6장과 이어집니다 — 남의 모델을 다듬는 것과 직접 만드는 것을
+    국가가 구분하기 시작했다는 뜻이니까요. 2차 확보분은 B300이 연내, Vera Rubin이 2027년 상반기부터 가동입니다.
+  </aside>
+</section>
+
+<section data-chapter="8.3 개인">
+  <div class="eyebrow">8.3 개인이 소유한 AI</div>
+  <h2>같은 논리를 <span class="cy">개인 단위</span>로 좁혀도</h2>
+  <div class="lead">개인도 애플 실리콘·DGX Spark 같은 로컬 AI 하드웨어를 찾고 있습니다.
+    <b>API 비용을 아끼려는 게 아닙니다.</b></div>
+  <div class="body">
+    <div class="card cy-b" style="max-width:1080px">
+      <p style="font-size:23px">내 대화 기록, 내 파일, 내 업무 맥락을 담아 두고 나만을 위해 돌아가는 비서를
+      <b>내가 소유한 하드웨어에서</b> 돌리려는 것입니다.</p>
+    </div>
+    <div class="lead" style="margin-top:32px">문제는 <b>개인은 칩을 설계할 수 없다</b>는 점입니다. 그래서 개인의 소버린은 두 가지에 그대로 종속됩니다.</div>
+    <ul style="margin-top:22px">
+      <li><b>국가 간 GPU 배분</b> — 우리나라가 GPU를 얼마나 확보하느냐(방금 본 그 숫자)</li>
+      <li><b>모델 경량화</b> — 6·7장에서 본 MoE·선형 어텐션·양자화가 얼마나 더 나아가느냐</li>
+    </ul>
+  </div>
+  <div class="foot">
+    그리고 이 흐름은 토큰 소모를 다시 가속합니다 — <b>2장의 토큰 폭증은 끝이 아니라 시작이었습니다.</b>
+  </div>
+</section>
+
+<section data-chapter="8.4 추론 엔진">
+  <div class="eyebrow">8.4 그 하드웨어에서 무엇으로 돌리나</div>
+  <h2>프레임워크와 <span class="cy">추론 엔진</span>은 다릅니다</h2>
+  <div class="lead">칩과 모델 사이에서 두 청구서를 실제로 관리하는 소프트웨어가 추론 엔진입니다.</div>
+  <div class="body">
+    <div class="cols c2">
+      <div class="card am-b">
+        <span class="k">프레임워크</span>
+        <h4>모델을 만들고 학습</h4>
+        <p>미분·역전파와 텐서 연산이 핵심<br><br><b>PyTorch · JAX · MLX</b></p>
+      </div>
+      <div class="card cy-b">
+        <span class="k">추론 엔진</span>
+        <h4>완성된 가중치를 서빙</h4>
+        <p>KV 페이지·연속 배치·프리픽스 재사용<br><br><b>vLLM · SGLang · llama.cpp · oMLX</b></p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">6·7장이 <b>모델 쪽</b>에서 청구서를 깎았다면, 엔진은 <b class="cy">서버 쪽</b>에서 깎습니다.</div>
+</section>
+
+<section class="fig" data-chapter="8.4 추론 엔진">
+  <img src="../assets/inference_engine_stack.webp?v=20260731e" alt="애플 실리콘 위에서 MLX, mlx-lm, oMLX와 앱이 쌓이고 추론 엔진이 KV 페이지와 연속 배치를 담당하는 스택">
+</section>
+
+<!-- ══════════════════════════════════════ 9장 ══════════════════════════ -->
+<section class="chapter">
+  <div class="cnum">09</div>
+  <div class="ctag">Chapter 09 · 부록</div>
+  <h2>NVIDIA 데이터센터<br>GPU 로드맵</h2>
+  <blockquote>Hopper → Blackwell → Rubin → Feynman</blockquote>
+  <div class="cwhat">하드웨어 쪽에서는 <b>대역폭이 용량보다 빠르게</b> 자라고 있습니다.</div>
+</section>
+
+<section data-chapter="9. GPU 로드맵">
+  <div class="eyebrow">세대별 스펙</div>
+  <h2>세대를 과학자 이름으로 명명합니다</h2>
+  <div class="body">
+    <table class="tight">
+      <tr><th>세대</th><th>시기</th><th>공정</th><th>메모리</th><th>대역폭</th><th>비고</th></tr>
+      <tr><td>H100</td><td class="n">2022</td><td class="n">TSMC 4N</td><td class="n">HBM3 80GB</td><td class="n">3.35TB/s</td><td></td></tr>
+      <tr class="hi"><td>H200</td><td class="n">2024</td><td class="n">TSMC 4N</td><td class="n">HBM3e 141GB</td><td class="n">4.8TB/s</td><td>이 발표의 메모리 계산 기준</td></tr>
+      <tr><td>B200 <span class="gr">Blackwell</span></td><td class="n">2024</td><td class="n">TSMC 4NP</td><td class="n">HBM3e 192GB</td><td class="n">8TB/s</td><td>일부 소스는 180GB로도 표기</td></tr>
+      <tr class="hi"><td>B300 <span class="gr">Blackwell Ultra</span></td><td class="n">2025</td><td class="n">TSMC 4NP</td><td class="n">HBM3e 288GB</td><td class="n">8TB/s</td><td>이 발표의 메모리 계산 기준</td></tr>
+      <tr><td>Rubin R100</td><td class="n">2026</td><td class="n">TSMC N3</td><td class="n">HBM4 288GB</td><td class="n cy">22TB/s</td><td>Vera CPU와 페어링</td></tr>
+      <tr><td>Rubin Ultra</td><td class="n">2027</td><td class="n">N3 refine</td><td class="n">HBM4 확장</td><td class="n gr">-</td><td>밀도 향상, 테이프아웃 단계</td></tr>
+      <tr><td>Feynman</td><td class="n">2028</td><td class="n">TSMC A16</td><td class="n">커스텀 HBM <span class="gr">1TB+ 보고</span></td><td class="n gr">-</td><td>3D 다이 스태킹, 광 NVLink</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="fig" data-chapter="9. GPU 로드맵">
+  <img src="../assets/gpu_roadmap.webp?v=20260731e" alt="H100 대비 배수로 본 GPU 세대별 메모리 용량과 대역폭 — 대역폭이 더 가파르다">
+  <aside class="notes">
+    단위가 다른 두 지표(GB와 TB/s)를 같은 축에 그리면 안 되니, <b>H100 대비 배수</b>로 인덱싱했습니다.
+    보시면 <b>대역폭 곡선이 훨씬 가파릅니다</b> — 하드웨어도 디코딩 병목을 알고 있다는 뜻입니다.
+  </aside>
+</section>
+
+<section data-chapter="9.1 Vera Rubin">
+  <div class="eyebrow">9.1 Vera Rubin 플랫폼</div>
+  <h2>핵심은 용량이 아니라 <span class="cy">대역폭</span>입니다</h2>
+  <div class="body">
+    <table class="mid">
+      <tr><th>구성 단위</th><th>GPU 메모리 · 대역폭</th><th>NVFP4 추론</th><th>NVLink</th></tr>
+      <tr><td>Rubin GPU 1개</td><td class="n">HBM4 288GB / 22TB/s</td><td class="n">50 PFLOPS</td><td class="n">3.6TB/s</td></tr>
+      <tr><td>Vera Rubin Superchip <span class="gr">CPU 1 + GPU 2</span></td><td class="n">576GB / 44TB/s</td><td class="n">100 PFLOPS</td><td class="n">7.2TB/s</td></tr>
+      <tr class="hi"><td>Vera Rubin NVL72 <span class="gr">CPU 36 + GPU 72</span></td><td class="n cy">20.7TB / 1,580TB/s</td><td class="n">3,600 PFLOPS</td><td class="n">260TB/s</td></tr>
+    </table>
+    <div class="lead" style="margin-top:34px">
+      HBM4에서 용량은 B300과 <b>같은 288GB</b>인데, 대역폭이 <b class="cy">8TB/s → 22TB/s로 거의 3배</b> 뜁니다.
+    </div>
+  </div>
+  <div class="foot">
+    이 발표가 반복한 <b>"디코딩 = 메모리 대역폭 병목"</b> 논리대로면, 같은 모델의 디코딩 처리량이 그만큼 좋아질 여지가 있습니다.
+  </div>
+  <aside class="notes">
+    미국 천문학자 베라 루빈(암흑물질 증거 발견)의 이름을 땄습니다.
+    NVL72는 2026-06-01 GTC 타이베이에서 양산 개시가 발표됐고,
+    이 표는 <b>NVIDIA 공식 스펙 페이지를 직접 fetch해서</b> 확인한 수치입니다.
+  </aside>
+</section>
+
+<section data-chapter="9.2 Groq 3 LPU">
+  <div class="eyebrow">9.2 Groq 3 LPU</div>
+  <h2>디코딩 병목을 <span class="vi">하드웨어로</span> 겨냥하다</h2>
+  <div class="lead">Rubin 플랫폼에는 GPU 외에 <b>추론 전용 가속기 Groq 3 LPU</b>가 함께 들어갑니다 —
+    원래 경쟁 관계였던 두 회사의 <b>이례적인 결합</b>입니다.</div>
+  <div class="body">
+    <div class="cols c2u">
+      <table class="mid">
+        <tr><th>Groq 3 LPX 랙</th><th></th></tr>
+        <tr><td>LPU</td><td class="n">256개</td></tr>
+        <tr class="hi"><td>SRAM</td><td class="n vi"><b>128GB</b> <span class="gr">칩당이 아니라 랙 합산</span></td></tr>
+        <tr class="hi"><td>메모리 대역폭</td><td class="n vi"><b>40PB/s</b></td></tr>
+        <tr><td>스케일업 대역폭</td><td class="n">640TB/s <span class="gr">랙 내부</span></td></tr>
+        <tr><td>NVL72 병행 배치 시</td><td class="n">와트당 성능 <b>35배</b>, 토큰당 비용 최대 <b>10배</b> 절감</td></tr>
+      </table>
+      <div class="card vi-b">
+        <p><b>SRAM 128GB에 40PB/s</b> — HBM을 버리고 온칩 SRAM에 올려 대역폭을 <b>두 자릿수 배</b>로 끌어올린 설계입니다.<br><br>
+        이 발표가 반복해온 <b>"디코딩 = 메모리 대역폭 병목"을 하드웨어 레벨에서 직접 겨냥</b>한 것입니다.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    대신 용량이 <b>랙 전체로 128GB</b>라, <b class="am">3장의 용량 청구서</b> 앞에서는 여전히 좁습니다.
+  </div>
+  <aside class="notes">
+    이 슬라이드가 두 축을 마지막으로 한 번 더 대비시킵니다 —
+    대역폭 청구서는 하드웨어로 때려잡을 수 있는데, <b>용량 청구서는 여전히 남습니다.</b>
+    Feynman 세대의 LP40 LPU는 그 다음 버전으로 보입니다.
+  </aside>
+</section>
+
+<!-- ══════════════════════════════════════ 마무리 ══════════════════════ -->
+<section class="chapter">
+  <div class="ctag">정리</div>
+  <h2>결국 두 장의 청구서였습니다</h2>
+  <div class="cols c2" style="margin-top:42px">
+    <div class="card am-b">
+      <span class="k">청구서 1 · 용량</span>
+      <p><b>모델 사이즈에 정확히 비례.</b><br>
+      손잡이는 양자화뿐 — 그래서 <b>2.8T 모델이 존재해도 내 PC에선 안 돕니다.</b></p>
+    </div>
+    <div class="card cy-b">
+      <span class="k">청구서 2 · KV캐시</span>
+      <p><b>모델 × 사용자 × 길이 × 정밀도.</b><br>
+      넷이 곱으로 붙고 <b>사람마다 따로</b> 듭니다 — 그래서 아키텍처 경쟁이 여기서 벌어집니다.</p>
+    </div>
+  </div>
+  <div class="foot cy-l">
+    <b>아키텍처가 가격표를 만들고, 가격표가 우리가 할 수 있는 일을 바꿉니다.</b>
+  </div>
+  <aside class="notes">
+    마무리 문장 — 6.4에서 했던 이야기를 다시 꺼냅니다.
+    아까워서 못 돌리던 것들이 계산이 맞기 시작하면, 그건 "좀 싸다"가 아니라 하던 일이 달라진다는 뜻입니다.
+    질문 받겠습니다.
+  </aside>
+</section>
+
+</div>
+</div>
+
+<div class="touchhint">탭하면 가로 전체화면 · 밀어서 넘기기</div>
+
+<script src="vendor/reveal/reveal.js"></script>
+<script src="vendor/reveal/plugin/notes.js"></script>
+<script>
+  Reveal.initialize({
+    width: 1376,
+    height: 774,      // 1376:774 = 정확히 16:9. 16:9가 아닌 화면에선 레터박스가 생깁니다.
+    margin: 0,
+    minScale: 0.2,
+    maxScale: 1.6,
+    center: false,
+    // reveal은 슬라이드에 display를 인라인으로 박습니다 — CSS로는 못 이기므로
+    // 여기서 flex로 지정해야 .body의 세로 배분이 삽니다.
+    display: 'flex',
+    hash: true,
+    // 화면에 뜨는 번호는 슬라이드 안에 직접 그리므로(deck.css의 [data-num]) reveal의
+    // 기본 배지는 CSS로 감춥니다. 그래도 'c/t'로 켜 두는 이유는 jump-to-slide가
+    // 이 설정일 때만 "32"를 32번째 슬라이드로 정확히 해석하기 때문입니다.
+    slideNumber: 'c/t',
+    progress: true,
+    transition: 'fade',
+    transitionSpeed: 'fast',
+    backgroundTransition: 'none',
+    controls: false,
+    overview: true,
+    pdfSeparateFragments: false,
+    plugins: [RevealNotes]
+  });
+
+  /* 레이저 포인터 · 마우스 필기 · 라이트 테마 (present.js).
+     Reveal.initialize 뒤에 불러야 addKeyBinding과 이벤트 구독이 붙습니다. */
+  (function () {
+    var s = document.createElement('script');
+    s.src = 'present.js?v=20260731e';
+    document.body.appendChild(s);
+  })();
+
+  /* 슬라이드 번호를 슬라이드 안쪽에 주입 — 레터박스 밖으로 밀려나지 않게 */
+  (function () {
+    var secs = document.querySelectorAll('.reveal .slides > section');
+    for (var i = 0; i < secs.length; i++) {
+      secs[i].setAttribute('data-num', (i + 1) + ' / ' + secs.length);
+    }
+  })();
+
+  /* ── 모바일: 탭으로 가로 전체화면, 좌우 스와이프로 넘기기 ──────────────
+     iPhone Safari에는 Fullscreen API가 없습니다. 그래서 API에 의존하지 않고
+     CSS로 화면을 채우는 것을 기본 경로로 삼습니다 — 세로로 든 상태면 콘텐츠를
+     90도 돌립니다(deck.css의 html.rot). Fullscreen API와 화면 회전 잠금이 되는
+     기기에서는 그쪽도 함께 시도해, 되면 브라우저 UI까지 사라집니다.
+
+     스와이프는 reveal 기본 핸들러를 끄고 직접 처리합니다. 90도 회전 상태에서는
+     사용자가 느끼는 "좌우"가 화면 좌표의 "상하"라, 축을 바꿔줘야 하기 때문입니다. */
+  (function () {
+    var root = document.documentElement;
+    if (!window.matchMedia('(pointer: coarse)').matches) return;
+    root.classList.add('is-touch');
+
+    Reveal.configure({ touch: false });   // 축 매핑을 직접 하므로 기본 터치는 끕니다
+
+    var deck = document.querySelector('.reveal');
+    var x0 = 0, y0 = 0, t0 = 0, multi = false;
+    var TAP_MS = 400, TAP_SLOP = 12, SWIPE = 45;
+
+    deck.addEventListener('touchstart', function (e) {
+      multi = e.touches.length !== 1;
+      if (multi) return;
+      x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+    }, { passive: true });
+
+    deck.addEventListener('touchend', function (e) {
+      if (multi || !e.changedTouches.length) return;
+      var t = e.changedTouches[0];
+      var dx = t.clientX - x0, dy = t.clientY - y0;
+      var adx = Math.abs(dx), ady = Math.abs(dy);
+
+      // 거의 움직이지 않았고 짧게 눌렀으면 탭 → 몰입 모드 토글
+      if (adx < TAP_SLOP && ady < TAP_SLOP && Date.now() - t0 < TAP_MS) {
+        root.classList.add('hint-done');
+        toggle();
+        return;
+      }
+      // 스와이프 — 회전 중이면 사용자의 좌우가 화면의 상하입니다
+      if (root.classList.contains('rot')) {
+        if (ady > SWIPE && ady > adx) { dy < 0 ? Reveal.next() : Reveal.prev(); }
+      } else {
+        if (adx > SWIPE && adx > ady) { dx < 0 ? Reveal.next() : Reveal.prev(); }
+      }
+    }, { passive: true });
+
+    function portrait() { return window.matchMedia('(orientation: portrait)').matches; }
+    function fsEl() { return document.fullscreenElement || document.webkitFullscreenElement; }
+
+    /* 몰입 모드가 켜져 있고 기기가 아직 세로면 콘텐츠를 돌립니다.
+       회전 잠금이 먹혀 기기가 실제로 가로가 되면 이 회전은 자동으로 풀립니다. */
+    function syncRotation() {
+      root.classList.toggle('rot', root.classList.contains('immersive') && portrait());
+      Reveal.layout();
+    }
+
+    function toggle() {
+      if (root.classList.contains('immersive')) {
+        root.classList.remove('immersive');
+        if (fsEl()) {
+          try { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (e) {}
+        }
+        if (screen.orientation && screen.orientation.unlock) {
+          try { screen.orientation.unlock(); } catch (e) {}
+        }
+      } else {
+        root.classList.add('immersive');
+        var req = root.requestFullscreen || root.webkitRequestFullscreen;
+        if (req) {
+          try {
+            Promise.resolve(req.call(root)).then(function () {
+              if (screen.orientation && screen.orientation.lock) {
+                return screen.orientation.lock('landscape');
+              }
+            }).catch(function () {}).then(syncRotation, syncRotation);
+          } catch (e) { /* 미지원 */ }
+        }
+      }
+      syncRotation();
+    }
+
+    window.addEventListener('orientationchange', function () { setTimeout(syncRotation, 120); });
+    window.addEventListener('resize', syncRotation);
+    ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (ev) {
+      document.addEventListener(ev, function () {
+        // 사용자가 시스템 제스처로 전체화면을 빠져나간 경우도 반영
+        if (!fsEl() && root.classList.contains('immersive') && (root.requestFullscreen || root.webkitRequestFullscreen)) {
+          root.classList.remove('immersive');
+        }
+        syncRotation();
+      });
+    });
+  })();
+</script>
+</body>
+</html>

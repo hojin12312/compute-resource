@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:44px; }
+
+  /* ── 공식에 값을 그대로 대입한 줄 ────────────────────────────────────── */
+  .calc { margin-top:22px; border:1px solid var(--c-21262d); border-radius:8px;
+          padding:18px 22px; display:flex; align-items:center; gap:16px; }
+  .ctag { font-size:12px; color:var(--c-7d8896); flex-shrink:0; }
+  .cline { font-size:17px; color:var(--c-c3ccd6); letter-spacing:-.01em; }
+  .cline b { color:var(--c-e6edf3); font-weight:700; }
+  .cline u { text-decoration:none; color:var(--c-22a7bd); font-weight:700; }
+  .cline i { font-style:normal; color:var(--c-5d6773); }
+  .cres { margin-left:auto; font-size:21px; font-weight:700; color:var(--c-e0912a); white-space:nowrap; }
+
+  /* ── 막대 ────────────────────────────────────────────────────────────── */
+  /* 가로 좌표를 손으로 잡습니다 — flex의 blanket gap을 쓰면 0선과 막대 사이에도
+     간격이 끼어 **막대가 0선에서 떨어집니다.** 그래서 gap을 없애고 필요한 곳에만
+     margin을 줍니다. 결과 좌표: 라벨 4~88 · 0선 99~101 · 막대 101부터.
+     라벨은 좌측 정렬입니다. 오른쪽 정렬로 170px을 잡았던 동안은 글자가 최대 67.8px인데
+     102px이 비었고, 그만큼 막대가 밀려 2.50GB가 패널을 0.6px 넘었습니다. */
+  .bar { display:flex; align-items:center; margin-top:13px; }
+  .bar > * { flex-shrink:0; }   /* 없으면 긴 막대 행만 눌려 0선과 막대 비율이 함께 틀어집니다 */
+  .blab { flex:0 0 84px; margin-left:4px; text-align:left;
+          font-size:13px; color:var(--c-c3ccd6); line-height:1.25; }
+  .blab span { display:block; font-size:10px; line-height:1.2; color:var(--c-7d8896); }
+  .zero { flex:0 0 2px; margin-left:11px; background:var(--c-3d4650); height:30px; }
+  .track { flex:0 0 auto; height:30px; border-radius:0 3px 3px 0; }   /* 0선에 붙습니다 */
+  .bval { flex:0 0 auto; margin-left:11px; font-size:15px; font-weight:700; white-space:nowrap; }
+
+  /* ── 모델별 결론 카드 ────────────────────────────────────────────────── */
+  .card { border:1px solid var(--c-21262d); border-radius:8px; padding:16px 18px; margin-top:13px; }
+  .chead { display:flex; align-items:baseline; justify-content:space-between; }
+  .cname { font-size:14px; font-weight:700; color:var(--c-e6edf3); }
+  .cw { font-size:11.5px; color:var(--c-7d8896); }
+  .crow { display:flex; align-items:baseline; gap:9px; margin-top:10px; font-size:13px; color:var(--c-8b96a3); }
+  .crow b { font-size:16px; font-weight:700; color:var(--c-22a7bd); }
+  .crow.warn b { color:var(--c-e0912a); }
+
+  .note { margin-top:16px; font-size:12.5px; color:var(--c-7d8896); line-height:1.7; }
+  .note b { color:var(--c-c3ccd6); font-weight:700; }
+
+  /* 128K 시나리오 — 이 그림에서 가장 큰 숫자라 무게를 줍니다 */
+  .big128 { margin-top:24px; border:1px solid var(--c-4a3a1c); background:var(--c-221a0d);
+            border-radius:8px; padding:18px 20px; }
+  .b128top { font-size:12.5px; color:var(--c-8b96a3); }
+  .b128top b { color:var(--c-c3ccd6); font-weight:700; }
+  .b128row { display:flex; gap:26px; margin-top:11px; font-size:13px; color:var(--c-8b96a3); }
+  .b128row b { font-size:22px; font-weight:700; color:var(--c-e0912a); letter-spacing:-.02em; }
+  .b128sub { margin-top:11px; font-size:12.5px; color:var(--c-9aa7b4); }
+  .b128sub b { color:var(--c-e0912a); font-weight:700; }
+</style>
+</head>
+<body>
+  <h1>구형 덴스 모델로 <span class="am">직접 계산해 보면</span></h1>
+  <div class="sub">사용자 1명(batch 1) 기준 &middot; <b style="color:var(--c-c3ccd6)">가중치 FP8 &middot; KV캐시 FP16</b> &mdash; 설정을 손대지 않으면 이 조합이 됩니다. 설정값은 Hugging Face <span style="color:var(--c-c3ccd6)">config.json</span> 실측입니다.</div>
+
+  <div class="calc">
+    <div class="ctag">Llama 2 7B에<br>값을 그대로 대입</div>
+    <div class="cline">
+      2 <i>&times;</i> <u>1</u><i>(batch)</i> <i>&times;</i> <u>1,024</u><i>(토큰)</i> <i>&times;</i>
+      <u>32</u><i>(층)</i> <i>&times;</i> <u>4,096</u><i>(KV헤드&times;dim)</i> <i>&times;</i> <u>2</u><i>(byte)</i>
+    </div>
+    <div class="cres">= 512MB</div>
+  </div>
+
+  <div class="panels" style="margin-top:26px; gap:44px">
+
+    <div class="panel" style="width:560px">
+      <div class="ptitle">토큰 1K마다 붙는 KV캐시</div>
+      <div class="pdesc">왼쪽 끝이 0. Llama는 셋 다 MHA라 KV 헤드 수 &times; head dim이 곧 hidden size입니다</div>
+
+      <div class="bar">
+        <div class="blab">Llama 2 7B<span>32층 &times; 4,096</span></div>
+        <div class="zero"></div><div class="track cyan" style="width:75px"></div>
+        <div class="bval cy">0.50GB</div>
+      </div>
+      <div class="bar">
+        <div class="blab">Llama 2 13B<span>40층 &times; 5,120</span></div>
+        <div class="zero"></div><div class="track cyan" style="width:117px"></div>
+        <div class="bval cy">0.78GB</div>
+      </div>
+      <div class="bar">
+        <div class="blab">Llama 65B<span>80층 &times; 8,192</span></div>
+        <div class="zero"></div><div class="track cyan" style="width:375px"></div>
+        <div class="bval cy">2.50GB</div>
+      </div>
+
+      <div class="note" style="margin-top:18px">
+        층 수와 hidden size를 곱한 값에 그대로 비례합니다.
+        <b>모델이 5배 커지면 토큰 하나를 기억하는 값도 5배</b>가 됩니다.
+      </div>
+
+      <div class="big128">
+        <div class="b128top">같은 설계로 <b>128K 컨텍스트</b>를 돌린다면</div>
+        <div class="b128row">
+          <span>7B <b>64GB</b></span>
+          <span>13B <b>100GB</b></span>
+          <span>65B <b>320GB</b></span>
+        </div>
+        <div class="b128sub">가중치의 <b>5~10배</b>입니다.</div>
+      </div>
+
+      <div class="note" style="margin-top:18px; padding-top:16px; border-top:1px solid var(--c-21262d)">
+        그리고 이건 <b>사용자 한 명</b> 기준입니다.
+        동시 접속이 10명이면 여기에 다시 <b>10배</b>가 곱해집니다.
+      </div>
+    </div>
+
+    <div class="panel" style="width:616px">
+      <div class="ptitle">언제 가중치를 따라잡나</div>
+      <div class="pdesc">KV캐시가 모델 가중치와 같아지는 컨텍스트 길이</div>
+
+      <div class="card">
+        <div class="chead"><span class="cname">Llama 2 7B</span><span class="cw">가중치 FP8 &mdash; 6.3GB</span></div>
+        <div class="crow">약 <b>13K 토큰</b>에서 가중치와 같아집니다<span style="margin-left:auto">출시 당시 컨텍스트 4K</span></div>
+      </div>
+      <div class="card">
+        <div class="chead"><span class="cname">Llama 2 13B</span><span class="cw">가중치 FP8 &mdash; 12.1GB</span></div>
+        <div class="crow">약 <b>15K 토큰</b>에서 가중치와 같아집니다<span style="margin-left:auto">출시 당시 컨텍스트 4K</span></div>
+      </div>
+      <div class="card">
+        <div class="chead"><span class="cname">Llama 65B</span><span class="cw">가중치 FP8 &mdash; 60.7GB</span></div>
+        <div class="crow">약 <b>24K 토큰</b>에서 가중치와 같아집니다<span style="margin-left:auto">출시 당시 컨텍스트 2K</span></div>
+      </div>
+
+      <div class="note" style="margin-top:18px; padding-top:16px; border-top:1px solid var(--c-21262d)">
+        가중치를 FP8로 눌러도 <b>KV캐시는 따라오지 않습니다.</b>
+        엔진 기본값이 모델 dtype을 따라가서, 명시적으로 켜지 않는 한 16비트로 남습니다.
+        <b>가중치를 절반으로 줄이면 따라잡히는 지점도 절반으로 당겨집니다.</b>
+      </div>
+
+      <div class="note">
+        셋 다 <b>1만~2만 토큰</b>이면 역전됩니다. 요즘 에이전트가 한 번에 쓰는 양이고,
+        1M 컨텍스트에서는 가중치가 오히려 작은 쪽입니다.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="foot">
+    같은 공식에 실제 값을 넣으면 이렇습니다 &mdash; <b>대화가 길어질수록, KV캐시가 가중치를 넘어섭니다.</b>
+  </div>
+</body>
+</html>

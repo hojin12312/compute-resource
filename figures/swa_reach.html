@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  /* "창문 1024개 앞의 이야기는 까먹나요?"에 답하는 그림입니다 (2026-07-31 신설).
+     덱 6.2가 창문을 설명하기 전에 두 장치를 산문으로 먼저 말하고 있어서, 그림을
+     먼저 보여주고 넘어가도록 도입 순서를 바꾸면서 만들었습니다.
+
+     근거는 README `[^swa-receptive]`와 `[^gemma4-config]`입니다 — 새 사실은 없습니다.
+     각주의 예시(1층 100번 토큰은 76~99번, 2층의 100번은 99번을 통해 75번까지)를
+     그대로 그림으로 옮겼고, 층수 × 창문이 유효 시야가 되는 것도 각주 문장입니다.
+     5,120 = 1,024 × 5는 **슬라이딩이 연속하는 다섯 층 안에서의 유도값**이고,
+     여섯째 층이 Full이라 거기서 전체가 다시 연결됩니다. */
+  body { padding-top:44px; }
+
+  .row { display:flex; align-items:center; gap:11px; margin-top:15px; }
+  .lab { flex:0 0 58px; text-align:right; font-size:12.5px; color:var(--c-8b96a3); }
+  .lab b { display:block; font-size:13.5px; color:var(--c-c3ccd6); font-weight:700; }
+
+  /* 과거는 왼쪽, 현재 토큰은 오른쪽입니다. 그래서 막대를 오른쪽에 붙입니다 —
+     시야가 넓어진다는 것은 왼쪽으로 더 뻗는다는 뜻입니다. */
+  .track { flex:0 0 auto; display:flex; justify-content:flex-end;
+           height:36px; background:var(--c-2b333d); border-radius:3px; overflow:hidden; }
+  .track i { display:block; height:36px; font-style:normal; }
+  .track i.far  { background:var(--c-17505c); }
+  .track i.near { background:var(--c-0e8fa3); }
+  .track i.full { background:var(--c-c47d15); }
+  .val { flex:0 0 auto; font-size:13px; color:var(--c-8b96a3); white-space:nowrap; }
+  .val b { color:var(--c-c3ccd6); font-weight:700; }
+  .val.am b { color:var(--c-e0912a); }
+
+  .now { display:flex; margin-top:6px; font-size:10.5px; color:var(--c-5d6773); }
+  .ex { margin-top:20px; border-left:2px solid var(--c-0e8fa3); padding-left:14px;
+        font-size:12.5px; color:var(--c-8b96a3); line-height:1.8; }
+  .ex b { color:var(--c-c3ccd6); font-weight:700; }
+  .note { margin-top:20px; font-size:12.5px; color:var(--c-8b96a3); line-height:1.7; }
+  .note b { color:var(--c-c3ccd6); font-weight:700; }
+
+  .tag { display:inline-block; font-size:11px; font-weight:700; padding:3px 9px;
+         border-radius:4px; margin-bottom:9px; }
+  .tag.cy { background:var(--a-36); color:var(--c-22a7bd); }
+  .tag.am { background:var(--a-37); color:var(--c-e0912a); }
+</style>
+</head>
+<body>
+  <h1>창문 밖 이야기를 <span class="cy">막아주는 두 장치</span></h1>
+  <div class="sub">Gemma 4 31B &middot; 창문 1,024토큰 &middot; 슬라이딩 5 : Full 1 &mdash; 직접 보지 않는데도 먼 맥락이 남는 이유입니다.</div>
+
+  <div class="legend">
+    <div><span class="sw cyan"></span><span>직접 보는 창문</span></div>
+    <div><span class="sw" style="background:var(--c-17505c)"></span><span>아랫층을 거쳐 <b style="color:var(--c-c3ccd6)">간접</b>으로 닿는 범위</span></div>
+    <div><span class="sw gray"></span><span>이 레이어에서 보지 않음</span></div>
+    <div><span class="sw amber"></span><span>Full Attention</span></div>
+  </div>
+
+  <div class="panels" style="margin-top:26px; gap:54px">
+
+    <div class="panel" style="width:684px">
+      <div class="tag cy">장치 1 &middot; 릴레이</div>
+      <div class="ptitle">층을 지날 때마다 시야가 한 창문씩 넓어집니다</div>
+      <div class="pdesc">창문 밖을 직접 보지는 않지만, 아랫층이 이미 흡수한 것을 전달받습니다.</div>
+
+      <div class="row"><div class="lab">5층</div>
+        <div class="track" style="width:400px"><i class="far" style="width:320px"></i><i class="near" style="width:80px"></i></div>
+        <div class="val">닿는 범위 <b>5,120</b></div></div>
+      <div class="row"><div class="lab">4층</div>
+        <div class="track" style="width:400px"><i class="far" style="width:240px"></i><i class="near" style="width:80px"></i></div>
+        <div class="val">4,096</div></div>
+      <div class="row"><div class="lab">3층</div>
+        <div class="track" style="width:400px"><i class="far" style="width:160px"></i><i class="near" style="width:80px"></i></div>
+        <div class="val">3,072</div></div>
+      <div class="row"><div class="lab">2층</div>
+        <div class="track" style="width:400px"><i class="far" style="width:80px"></i><i class="near" style="width:80px"></i></div>
+        <div class="val">2,048</div></div>
+      <div class="row"><div class="lab">1층</div>
+        <div class="track" style="width:400px"><i class="near" style="width:80px"></i></div>
+        <div class="val">1,024 &mdash; 창문 그대로</div></div>
+      <div class="now" style="padding-left:69px; width:400px; justify-content:space-between">
+        <span>&larr; 먼 과거</span><span>현재 토큰 &rarr;</span></div>
+
+      <div class="ex">
+        1층의 <b>100번</b> 토큰은 창문 안 <b>76&sim;99번</b>만 봅니다.<br>
+        2층에서 그 <b>99번</b>을 볼 때 99번은 이미 자기 창문(75&sim;98번)을 흡수한 상태라,
+        2층의 100번은 <b>75번까지 간접으로</b> 닿습니다.
+      </div>
+    </div>
+
+    <div class="panel" style="width:526px">
+      <div class="tag am">장치 2 &middot; 멀리 보는 눈</div>
+      <div class="ptitle">여섯 층에 한 번은 전부 직접 봅니다</div>
+      <div class="pdesc">간접 정보는 압축된 요약입니다. 먼 과거의 특정 토큰을 정확히 짚는 일은 이 층이 합니다.</div>
+
+      <div class="row"><div class="lab"><b>6층</b>Full</div>
+        <div class="track" style="width:330px"><i class="full" style="width:330px"></i></div>
+        <div class="val am"><b>전체 문맥</b></div></div>
+      <div class="row"><div class="lab">5층</div>
+        <div class="track" style="width:330px"><i class="near" style="width:66px"></i></div>
+        <div class="val">최근 1,024</div></div>
+      <div class="row"><div class="lab">4층</div>
+        <div class="track" style="width:330px"><i class="near" style="width:66px"></i></div>
+        <div class="val">최근 1,024</div></div>
+      <div class="row"><div class="lab">3층</div>
+        <div class="track" style="width:330px"><i class="near" style="width:66px"></i></div>
+        <div class="val">최근 1,024</div></div>
+      <div class="row"><div class="lab">2층</div>
+        <div class="track" style="width:330px"><i class="near" style="width:66px"></i></div>
+        <div class="val">최근 1,024</div></div>
+      <div class="row"><div class="lab">1층</div>
+        <div class="track" style="width:330px"><i class="near" style="width:66px"></i></div>
+        <div class="val">최근 1,024</div></div>
+
+      <div class="note">
+        이 여섯 층 묶음이 60층에 <b>열 번</b> 들어갑니다 &mdash; 슬라이딩 50 + Full 10.
+        컨텍스트와 함께 커지는 KV캐시는 <b>이 Full 10개분뿐</b>입니다.<br>
+        이 패널의 가로 길이는 비례가 아닙니다 &mdash; 실제로는 창문 <b>1,024</b> 대 전체 <b>262,144</b>입니다.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="foot">
+    창문 밖은 <b>압축된 채 전달</b>되고(릴레이), <b>정확히 짚어야 할 때는 Full 레이어</b>가 봅니다 &mdash;
+    창문 1,024는 "1,024개 전을 까먹는다"는 뜻이 아닙니다.
+  </div>
+</body>
+</html>

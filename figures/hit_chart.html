@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:52px; }
+  .legend { margin-top:18px; }
+  .sw.cache { background:var(--c-2b333d); }
+  .sw.fresh { background:var(--c-0e8fa3); }
+  .sw.miss  { background:var(--c-c47d15); }
+
+  .layout { display:flex; gap:42px; margin-top:28px; align-items:flex-start; }
+  .trace { width:790px; }
+  .compare { width:430px; border-left:1px solid var(--c-21262d); padding-left:38px; }
+
+  .turn { margin-top:22px; }
+  .turn:first-of-type { margin-top:16px; }
+  .turnhead { display:flex; align-items:baseline; gap:10px; margin-bottom:8px; }
+  .turnname { width:48px; font-size:14px; font-weight:700; color:var(--c-c3ccd6); }
+  .turnnote { font-size:12px; color:var(--c-7d8896); }
+  .tape { display:flex; gap:3px; height:54px; position:relative; }
+  .block { flex-shrink:0; height:54px; border-radius:3px; display:flex; align-items:center;
+           justify-content:center; padding:0 9px; font-size:12px; font-weight:700; }
+  .old { background:var(--c-2b333d); color:var(--c-8b96a3); }
+  .new { background:var(--c-0e8fa3); color:var(--c-0d1117); }
+  .b1 { width:110px; } .b2 { width:96px; } .b3 { width:108px; }
+  .b4 { width:98px; } .b5 { width:106px; } .b6 { width:92px; }
+  .b7 { width:104px; }
+  .bookmark { position:absolute; top:-9px; bottom:-9px; width:2px; background:var(--c-22a7bd); }
+  .bookmark::before {
+    content:""; position:absolute; top:0; left:0; width:9px; height:9px; background:var(--c-22a7bd);
+  }
+  .bmlabel { position:absolute; top:-24px; left:12px; white-space:nowrap;
+             font-size:11px; font-weight:700; color:var(--c-22a7bd); }
+
+  .tally { margin-top:30px; background:var(--c-161b22); border-radius:4px; padding:15px 20px;
+           display:flex; align-items:center; gap:24px; }
+  .tallyhead { width:150px; font-size:12.5px; color:var(--c-8b96a3); line-height:1.5; }
+  .tallyhead b { color:var(--c-c3ccd6); }
+  .ti { width:118px; border-left:1px solid var(--c-21262d); padding-left:18px; }
+  .tturn { font-size:11.5px; color:var(--c-7d8896); }
+  .tfrac { display:flex; align-items:baseline; gap:5px; margin-top:2px; }
+  .tnum { font-size:27px; font-weight:700; color:var(--c-22a7bd); line-height:1.1; }
+  .tden { font-size:13px; color:var(--c-7d8896); }
+  .tnote { flex:1; font-size:12px; color:var(--c-8b96a3); line-height:1.55; padding-left:6px; }
+  .tnote b { color:var(--c-c3ccd6); }
+
+  .case { margin-top:26px; }
+  .case:first-of-type { margin-top:20px; }
+  .casetitle { font-size:15px; font-weight:700; margin-bottom:5px; }
+  .casedesc { font-size:12px; color:var(--c-8b96a3); margin-bottom:13px; }
+  .bar { height:56px; display:flex; gap:3px; }
+  .seg { height:56px; border-radius:3px; display:flex; align-items:center;
+         justify-content:center; font-size:12.5px; font-weight:700; }
+  .all { width:342px; background:var(--c-c47d15); color:var(--c-0d1117); }
+  .reuse { width:292px; background:var(--c-2b333d); color:var(--c-8b96a3); }
+  .tail { width:47px; background:var(--c-0e8fa3); color:var(--c-0d1117); font-size:11px; }
+  .result { margin-top:11px; font-size:13px; color:var(--c-7d8896); }
+  .result b { font-size:15px; }
+  .condition {
+    margin-top:28px; padding:15px 17px; background:var(--c-161b22); border-radius:4px;
+    font-size:12.5px; color:var(--c-8b96a3); line-height:1.6;
+  }
+  .condition b { color:var(--c-c3ccd6); }
+</style>
+</head>
+<body>
+  <h1>멀티턴 에이전트의 캐시 히트 &mdash; <span class="cy">작업 일지의 책갈피에서 이어 읽습니다</span></h1>
+  <div class="sub">매 턴 새 지시만 들어가는 게 아닙니다. 시스템 지침·파일·도구 결과가 쌓인 <b>작업 기록 전체</b>가 다시 입력됩니다.</div>
+
+  <div class="legend">
+    <div><span class="sw cache"></span>앞에서 계산해 둔 KV</div>
+    <div><span class="sw fresh"></span>이번 턴에 새로 프리필</div>
+    <div><span class="sw miss"></span>캐시 미스 &mdash; 전체 재계산</div>
+  </div>
+
+  <div class="layout">
+    <div class="trace">
+      <div class="ptitle">책갈피는 작업 기록과 함께 앞으로 이동합니다</div>
+      <div class="pdesc">같은 앞부분은 회색으로 남고, 뒤에 붙은 새 기록만 시안색으로 계산합니다</div>
+
+      <div class="turn">
+        <div class="turnhead"><span class="turnname">턴 1</span><span class="turnnote">저장소를 파악합니다</span></div>
+        <div class="tape">
+          <div class="block new b1">시스템 지침</div>
+          <div class="block new b2">사용자 목표</div>
+          <div class="block new b3">README 읽기</div>
+          <div class="block new b4">첫 답변</div>
+          <span class="bookmark" style="left:423px"><span class="bmlabel">KV 책갈피 &mdash; 여기까지 저장</span></span>
+        </div>
+      </div>
+
+      <div class="turn">
+        <div class="turnhead"><span class="turnname">턴 2</span><span class="turnnote">도구를 써서 원인을 찾습니다</span></div>
+        <div class="tape">
+          <div class="block old b1">시스템 지침</div>
+          <div class="block old b2">사용자 목표</div>
+          <div class="block old b3">README 읽기</div>
+          <div class="block old b4">첫 답변</div>
+          <div class="block new b5">추가 지시</div>
+          <div class="block new b6">도구 결과</div>
+          <span class="bookmark" style="left:627px"></span>
+        </div>
+      </div>
+
+      <div class="turn">
+        <div class="turnhead"><span class="turnname">턴 3</span><span class="turnnote">수정하고 검증합니다</span></div>
+        <div class="tape">
+          <div class="block old b1">시스템 지침</div>
+          <div class="block old b2">사용자 목표</div>
+          <div class="block old b3">README 읽기</div>
+          <div class="block old b4">첫 답변</div>
+          <div class="block old b5">추가 지시</div>
+          <div class="block old b6">도구 결과</div>
+          <div class="block new b7">테스트 로그</div>
+          <span class="bookmark" style="left:734px"></span>
+        </div>
+      </div>
+
+      <div class="tally">
+        <div class="tallyhead">이번 턴에<br><b>새로 프리필한 블록</b></div>
+        <div class="ti">
+          <div class="tturn">턴 1</div>
+          <div class="tfrac"><span class="tnum">4</span><span class="tden">/ 4블록</span></div>
+        </div>
+        <div class="ti">
+          <div class="tturn">턴 2</div>
+          <div class="tfrac"><span class="tnum">2</span><span class="tden">/ 6블록</span></div>
+        </div>
+        <div class="ti">
+          <div class="tturn">턴 3</div>
+          <div class="tfrac"><span class="tnum">1</span><span class="tden">/ 7블록</span></div>
+        </div>
+        <div class="tnote">기록은 길어지는데<br>새로 계산할 몫은 <b>꼬리 한 조각</b></div>
+      </div>
+    </div>
+
+    <div class="compare">
+      <div class="ptitle">같은 턴 3, 다른 청구서</div>
+      <div class="pdesc">전체 컨텍스트 길이는 같고 새로 계산하는 범위만 다릅니다</div>
+
+      <div class="case">
+        <div class="casetitle am">캐시 미스</div>
+        <div class="casedesc">작업 기록 전체를 처음부터 다시 프리필</div>
+        <div class="bar"><div class="seg all">전체 재계산</div></div>
+        <div class="result"><b class="am">7블록</b> 전부 &mdash; 처음부터 다시 읽기</div>
+      </div>
+
+      <div class="case">
+        <div class="casetitle cy">캐시 히트</div>
+        <div class="casedesc">책갈피 앞은 재사용하고 새 꼬리만 프리필</div>
+        <div class="bar">
+          <div class="seg reuse">저장된 KV 재사용</div>
+          <div class="seg tail">새 꼬리</div>
+        </div>
+        <div class="result"><b class="cy">1블록</b>만 &mdash; 책갈피부터 이어 읽기</div>
+      </div>
+
+      <div class="condition">
+        조건은 하나입니다. 앞부분이 <b>같은 순서·같은 내용</b>이어야 합니다.
+        중간이 바뀌면 그 지점 뒤부터 다시 계산합니다.
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    캐시 히트는 긴 작업 기록을 지우는 기술이 아니라, <b>이미 읽은 앞부분을 다시 계산하지 않는 기술</b>입니다.
+  </div>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  /* 두 패널의 **골격을 같게** 둡니다 — 입력 둘, 합치는 지점 하나.
+     달라지는 것은 계수뿐입니다(고정 1:1 → 입력마다 다시 정하는 비율).
+     예전 판은 왼쪽을 Δ 네 개 누적 체인으로, 오른쪽을 후보 풀로 그려서
+     모양이 서로 달랐고 무엇이 바뀐 것인지가 흐렸습니다. */
+  .panels { gap:42px; margin-top:30px; align-items:stretch; }
+  .panel { width:611px; padding:22px 24px 20px; border:1px solid var(--c-333d47);
+           border-radius:12px; background:var(--c-161b22); display:flex; flex-direction:column; }
+  .panel.on { background:var(--c-0f2930); border-color:var(--c-17505c); }
+
+  svg.wire { display:block; margin-top:10px; overflow:visible; }
+  .nbox { fill:var(--c-1b2027); stroke:var(--c-4d5661); stroke-width:1.4; rx:8; }
+  .panel.on .nbox { fill:var(--c-12333a); stroke:var(--c-3f6f7d); }
+  .nbox.blk { fill:var(--c-233039); }
+  .nlab { fill:var(--c-e6edf3); font:700 14px "Pretendard Variable", sans-serif; text-anchor:middle; }
+  .nsub { fill:var(--c-8b96a3); font:400 10.5px "Pretendard Variable", sans-serif; text-anchor:middle; }
+  .path { fill:none; stroke:var(--c-5d6773); stroke-width:2; }
+  .path.hot { stroke:var(--c-22a7bd); stroke-width:3; }
+  .head { fill:var(--c-5d6773); }
+  .head.hot { fill:var(--c-22a7bd); }
+
+  .mrg { fill:var(--c-c47d15); }
+  .panel.on .mrg { fill:var(--c-0e8fa3); }
+  .msign { fill:var(--c-0d1117); font:700 25px "Pretendard Variable", sans-serif;
+           text-anchor:middle; }
+  .obox { fill:var(--c-8b6ff0); stroke:none; rx:8; }
+  .olab { fill:var(--c-0d1117); font:700 12.5px "Pretendard Variable", sans-serif; text-anchor:middle; }
+
+  /* 계수 칩 — 이 그림의 주인공입니다 */
+  .chip { rx:5; }
+  .chip.fix { fill:var(--c-c47d15); }
+  .chip.var { fill:var(--c-2b333d); stroke:var(--c-3f6f7d); stroke-width:1.2; }
+  .chip.var.hot { fill:var(--c-0e8fa3); stroke:none; }
+  .cval { font:700 13px "IBM Plex Mono", "Pretendard Variable", monospace; text-anchor:middle; }
+  .cval.on-fix { fill:var(--c-0d1117); }
+  .cval.on-var { fill:var(--c-c3ccd6); }
+  .cval.on-hot { fill:var(--c-0d1117); }
+
+  .rule { margin-top:auto; padding-top:16px; border-top:1px solid var(--c-333d47);
+          font-size:13.5px; color:var(--c-c3ccd6); line-height:1.65; }
+  .rule b { font-weight:700; }
+  .rule .mono { font-family:"IBM Plex Mono", "Pretendard Variable", monospace; font-size:.95em; color:var(--c-e6edf3); }
+
+  /* 오른쪽 패널 아래 띠 — 후보가 둘이 아니라는 것 */
+  .pool { margin-top:14px; padding:11px 13px; border-radius:8px;
+          background:var(--c-0d1117); border:1px solid var(--c-17505c); }
+  .ptop { font-size:11px; color:var(--c-8b96a3); }
+  .prow { display:flex; gap:6px; margin-top:8px; }
+  .pcell { flex:1; text-align:center; padding:6px 0; border-radius:5px;
+           background:var(--c-12333a); }
+  .pcell.hot { background:var(--c-0e8fa3); }
+  .pcell b { display:block; font:700 12.5px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-c3ccd6); }
+  .pcell.hot b { color:var(--c-0d1117); }
+  .pcell span { display:block; margin-top:2px; font-size:9.5px; color:var(--c-7d8896); }
+  .pcell.hot span { color:var(--ink-on-cy-fill); }
+</style>
+</head>
+<body>
+  <h1>잔차 연결과 AttnRes &mdash; <span class="cy">더하는 비율이 달라집니다</span></h1>
+  <div class="sub">골격은 같습니다 &mdash; 지나온 길과 방금 계산한 길을 <b>한 번</b> 합칩니다.
+    바뀐 것은 <b>그때 쓰는 계수</b>뿐입니다.</div>
+
+  <div class="legend">
+    <div><span class="sw amber"></span>언제나 같은 계수</div>
+    <div><span class="sw cyan"></span>입력마다 다시 정하는 비율</div>
+    <div><span class="sw violet"></span>다음 레이어로</div>
+  </div>
+
+  <div class="panels">
+    <div class="panel">
+      <div class="ptitle">일반 잔차 연결</div>
+      <div class="pdesc">둘을 계수 1로 그대로 더합니다 &mdash; 입력이 무엇이든 같습니다</div>
+
+      <svg class="wire" width="563" height="232" viewBox="0 0 563 232" aria-hidden="true">
+        <rect class="nbox" x="4" y="150" width="98" height="62"/>
+        <text class="nlab" x="53" y="176">지나온 길</text>
+        <text class="nsub" x="53" y="195">입력 그대로</text>
+
+        <path class="path" d="M102 181 H176"/>
+        <path class="path" d="M136 181 V82 Q136 58 160 58 H381 Q405 58 405 82 V148"/>
+        <circle class="head" cx="136" cy="181" r="4.5"/>
+
+        <rect class="nbox blk" x="176" y="150" width="124" height="62"/>
+        <text class="nlab" x="238" y="176">이 레이어</text>
+        <text class="nsub" x="238" y="195">방금 계산한 것</text>
+        <path class="path" d="M300 181 H380"/>
+
+        <rect class="chip fix" x="248" y="42" width="60" height="32"/>
+        <text class="cval on-fix" x="278" y="63">1</text>
+        <rect class="chip fix" x="306" y="165" width="60" height="32"/>
+        <text class="cval on-fix" x="336" y="186">1</text>
+
+        <rect class="mrg" x="380" y="148" width="58" height="58" rx="14"/>
+        <text class="msign" x="409" y="187">+</text>
+
+        <path class="path" d="M438 177 H454"/>
+        <polygon class="head" points="454,170 468,177 454,184"/>
+        <rect class="obox" x="470" y="150" width="90" height="54"/>
+        <text class="olab" x="515" y="182">다음 레이어</text>
+      </svg>
+
+      <div class="rule"><b>계수가 늘 <span class="mono">1 : 1</span>입니다.</b>
+        그래서 지나온 길은 절대 지워지지 않지만, 어느 쪽을 더 볼지 고를 수도 없습니다.</div>
+    </div>
+
+    <div class="panel on">
+      <div class="ptitle"><span class="cy">Attention Residuals</span></div>
+      <div class="pdesc">같은 자리에서 합치는데, 계수를 <b>토큰마다 다시</b> 정합니다 &mdash; 합은 100%</div>
+
+      <svg class="wire" width="563" height="232" viewBox="0 0 563 232" aria-hidden="true">
+        <rect class="nbox" x="4" y="150" width="98" height="62"/>
+        <text class="nlab" x="53" y="176">지나온 길</text>
+        <text class="nsub" x="53" y="195">입력 그대로</text>
+
+        <path class="path" d="M102 181 H176"/>
+        <path class="path hot" d="M136 181 V82 Q136 58 160 58 H381 Q405 58 405 82 V148"/>
+        <circle class="head" cx="136" cy="181" r="4.5"/>
+
+        <rect class="nbox blk" x="176" y="150" width="124" height="62"/>
+        <text class="nlab" x="238" y="176">이 레이어</text>
+        <text class="nsub" x="238" y="195">방금 계산한 것</text>
+        <path class="path" d="M300 181 H380"/>
+
+        <rect class="chip var" x="248" y="42" width="60" height="32"/>
+        <text class="cval on-var" x="278" y="63">39%</text>
+        <rect class="chip var hot" x="306" y="165" width="60" height="32"/>
+        <text class="cval on-hot" x="336" y="186">61%</text>
+
+        <rect class="mrg" x="380" y="148" width="58" height="58" rx="14"/>
+        <text class="msign" x="409" y="187">+</text>
+
+        <path class="path" d="M438 177 H454"/>
+        <polygon class="head" points="454,170 468,177 454,184"/>
+        <rect class="obox" x="470" y="150" width="90" height="54"/>
+        <text class="olab" x="515" y="182">다음 레이어</text>
+      </svg>
+
+      <div class="pool">
+        <div class="ptop">그리고 후보가 둘이 아닙니다 &mdash; <b style="color:var(--c-c3ccd6)">지금까지 지나온 모든 블록</b>이
+          후보이고, softmax가 그 위에 비율을 놓습니다</div>
+        <div class="prow">
+          <div class="pcell"><b>8%</b><span>블록 0</span></div>
+          <div class="pcell"><b>12%</b><span>블록 1</span></div>
+          <div class="pcell"><b>19%</b><span>블록 2</span></div>
+          <div class="pcell hot"><b>61%</b><span>이 레이어</span></div>
+        </div>
+      </div>
+
+      <div class="rule"><b class="cy">비율을 정하는 것이 어텐션입니다</b> &mdash;
+        단, <b>토큰 사이가 아니라 깊이 방향</b>입니다. 어느 단계의 표현을 다시 볼지 고릅니다.</div>
+    </div>
+  </div>
+
+  <div class="foot">
+    잔차 연결 자체는 새롭지 않습니다. 새로운 것은 <b>깊이 방향의 고정 합을 학습 가능한 어텐션으로 바꾼 것</b>이고,
+    K3 전용도 아닙니다 &mdash; 같은 팀이 Kimi Linear에서 먼저 검증했습니다.
+  </div>
+</body>
+</html>

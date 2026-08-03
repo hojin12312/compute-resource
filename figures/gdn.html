@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:45px; }
+  h1 { font-size:31px; }
+  .story {
+    display:grid;
+    grid-template-columns:2fr 1fr;
+    gap:18px;
+    margin-top:26px;
+  }
+  .card {
+    height:310px;
+    padding:20px 22px;
+    border:1px solid var(--c-333d47);
+    border-radius:11px;
+    background:var(--c-161b22);
+  }
+  .context-card {
+    position:relative;
+    border-color:var(--c-17505c);
+    background:var(--c-0f2930);
+  }
+  .equation-card {
+    border-color:var(--c-3f4c58);
+  }
+  .eyebrow {
+    font:700 10.5px "IBM Plex Mono", "Pretendard Variable", monospace;
+    color:var(--c-8b96a3);
+    letter-spacing:.08em;
+  }
+  .card h2 { margin-top:6px; font-size:20px; letter-spacing:-.02em; }
+  .same-label {
+    position:absolute;
+    top:25px;
+    right:22px;
+    width:150px;
+    color:var(--c-22a7bd);
+    font-size:11px;
+    font-weight:750;
+    text-align:center;
+  }
+  .contexts {
+    display:grid;
+    gap:17px;
+    margin-top:26px;
+  }
+  .context-row {
+    display:grid;
+    grid-template-columns:72px 430px 24px 164px;
+    align-items:center;
+    gap:8px;
+  }
+  .context-label {
+    color:var(--c-8b96a3);
+    font-size:11px;
+    font-weight:700;
+  }
+  /* 칸은 SVG로 그립니다(2026-08-03). 14px 칸·7px 점이 캡처 배율(zoom 1.395 × DPR 2
+     = 2.79)에서 39.06·19.53 디바이스픽셀이 되는데, 크로미움이 박스마다 페인트 좌표를
+     정수로 스냅해 칸마다 1px씩 갈립니다. SVG는 viewBox를 통째로 변환하므로 균일합니다.
+     **div로 되돌리지 마세요.** */
+  .context-track {
+    display:block;
+    width:430px;
+    height:40px;
+  }
+  .token { fill:var(--c-2b333d); }
+  .compress-arrow {
+    color:var(--c-8b96a3);
+    font-size:20px;
+    text-align:center;
+  }
+  .state {
+    width:164px;
+    height:52px;
+    display:flex;
+    align-items:center;
+    gap:11px;
+    padding:0 12px 0 18px;
+    border:2px solid var(--c-22a7bd);
+    border-radius:8px;
+    background:var(--c-12333a);
+  }
+  /* 점 27×27을 34px 상자 한가운데에 둡니다 — 여백 3.5px씩. */
+  .state-icon {
+    display:block;
+    width:34px;
+    height:34px;
+    flex:0 0 34px;
+  }
+  .state-icon rect { fill:var(--c-0e8fa3); }
+  .state-text {
+    color:var(--c-e6edf3);
+    font-size:11px;
+    font-weight:750;
+    line-height:1.25;
+    white-space:nowrap;
+  }
+  .formula {
+    margin-top:20px;
+    padding:14px 15px;
+    border:1px solid var(--c-17505c);
+    border-radius:8px;
+    background:var(--c-0f2930);
+    color:var(--c-e6edf3);
+    font:700 15px/1.55 "IBM Plex Mono", "Pretendard Variable", monospace;
+    text-align:center;
+  }
+  .formula .accent { color:var(--c-22a7bd); }
+  .meanings {
+    display:grid;
+    gap:6px;
+    margin-top:12px;
+  }
+  .meaning {
+    display:grid;
+    grid-template-columns:84px 1fr;
+    align-items:center;
+    padding:6px 10px;
+    border-radius:6px;
+    background:var(--c-2b333d);
+    color:var(--c-9aa7b4);
+    font-size:11px;
+  }
+  .meaning code {
+    color:var(--c-e6edf3);
+    font:700 11px "IBM Plex Mono", "Pretendard Variable", monospace;
+  }
+  .gate {
+    margin-top:8px;
+    color:var(--c-8b96a3);
+    font-size:11.5px;
+    text-align:center;
+  }
+  .gate strong { color:var(--c-a48cf5); }
+  .mix {
+    height:145px;
+    display:grid;
+    grid-template-columns:118px 480px 28px 350px 150px;
+    align-items:center;
+    gap:13px;
+    margin-top:18px;
+    padding:17px 21px;
+    border:1px solid var(--c-333d47);
+    border-radius:11px;
+    background:var(--c-161b22);
+  }
+  .mix-title {
+    font-size:15px;
+    font-weight:750;
+    line-height:1.45;
+  }
+  .mix-title span {
+    display:block;
+    color:var(--c-8b96a3);
+    font-size:11px;
+    font-weight:400;
+  }
+  .pattern {
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+  }
+  .layer {
+    height:54px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:6px;
+    color:var(--c-0d1117);
+    font-size:11px;
+    font-weight:800;
+    text-align:center;
+  }
+  .mix-arrow {
+    color:var(--c-8b96a3);
+    font-size:23px;
+    text-align:center;
+  }
+  .stats {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+  .stat {
+    padding:10px 9px;
+    border:1px solid var(--c-333d47);
+    border-radius:7px;
+    color:var(--c-9aa7b4);
+    font-size:10.5px;
+  }
+  .stat strong {
+    display:block;
+    margin-top:3px;
+    color:var(--c-e6edf3);
+    font-size:15px;
+  }
+  .stat.fixed { border-color:var(--c-17505c); }
+  .stat.fixed strong { color:var(--c-22a7bd); }
+  .stat.growing { border-color:var(--c-4a3a1c); }
+  .stat.growing strong { color:var(--c-e0912a); }
+  .ratio {
+    height:78px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    border-left:1px solid var(--c-333d47);
+    color:var(--c-8b96a3);
+    font-size:10.5px;
+    text-align:center;
+  }
+  .ratio strong { color:var(--c-22a7bd); font-size:26px; letter-spacing:-.04em; }
+  .ratio span { margin-top:4px; }
+  .foot { bottom:22px; }
+</style>
+</head>
+<body>
+  <h1>Gated DeltaNet &mdash; <span class="cy">길이가 달라도 상태는 같은 크기</span></h1>
+  <div class="sub">Qwen3-Next-80B-A3B · 과거 원본 대신 고정 크기 상태를 계속 갱신합니다.</div>
+
+  <div class="story">
+    <div class="card context-card">
+      <div class="eyebrow">1 · FIXED STATE</div>
+      <h2>모든 길이를 같은 크기로 압축합니다</h2>
+      <div class="same-label">출력 크기 고정</div>
+
+      <div class="contexts">
+        <div class="context-row">
+          <div class="context-label">짧은 문맥</div>
+          <svg class="context-track" width="430" height="40" viewBox="0 0 430 40" data-count="8"></svg>
+          <div class="compress-arrow">→</div>
+          <div class="state">
+            <svg class="state-icon" width="34" height="34" viewBox="0 0 34 34"></svg>
+            <div class="state-text">고정 크기 상태 S</div>
+          </div>
+        </div>
+        <div class="context-row">
+          <div class="context-label">중간 문맥</div>
+          <svg class="context-track" width="430" height="40" viewBox="0 0 430 40" data-count="16"></svg>
+          <div class="compress-arrow">→</div>
+          <div class="state">
+            <svg class="state-icon" width="34" height="34" viewBox="0 0 34 34"></svg>
+            <div class="state-text">고정 크기 상태 S</div>
+          </div>
+        </div>
+        <div class="context-row">
+          <div class="context-label">긴 문맥</div>
+          <svg class="context-track" width="430" height="40" viewBox="0 0 430 40" data-count="24"></svg>
+          <div class="compress-arrow">→</div>
+          <div class="state">
+            <svg class="state-icon" width="34" height="34" viewBox="0 0 34 34"></svg>
+            <div class="state-text">고정 크기 상태 S</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card equation-card">
+      <div class="eyebrow">2 · DELTA UPDATE</div>
+      <h2>차이만 고쳐 씁니다</h2>
+      <div class="formula">
+        S<sub>t</sub> = S<sub>t−1</sub> +<br>
+        <span class="accent">β<sub>t</sub>(v<sub>t</sub> − S<sub>t−1</sub>k<sub>t</sub>)k<sub>t</sub><sup>T</sup></span>
+      </div>
+      <div class="meanings">
+        <div class="meaning"><code>v − Sk</code><span>새 값 − 기존 기억</span></div>
+        <div class="meaning"><code>β</code><span>얼마나 고쳐 쓸지</span></div>
+        <div class="meaning"><code>S</code><span>계속 같은 크기의 상태</span></div>
+      </div>
+      <div class="gate"><strong>Gate</strong> · 오래된 상태의 영향 조절</div>
+    </div>
+  </div>
+
+  <div class="mix">
+    <div class="mix-title">3 · 48개 레이어<span>4개 묶음 ×12</span></div>
+    <div class="pattern">
+      <div class="layer cyan">Gated<br>DeltaNet</div>
+      <div class="layer cyan">Gated<br>DeltaNet</div>
+      <div class="layer cyan">Gated<br>DeltaNet</div>
+      <div class="layer amber">Gated<br>Attention</div>
+    </div>
+    <div class="mix-arrow">→</div>
+    <div class="stats">
+      <div class="stat fixed">상태 크기 고정<strong>36개</strong></div>
+      <div class="stat growing">원본 KV 증가<strong>12개</strong></div>
+    </div>
+    <div class="ratio">
+      <strong>12 / 48</strong>
+      <span>길이에 따라 커지는 KV<br>전부 Attention일 때의 1/4</span>
+    </div>
+  </div>
+
+  <div class="foot">36개 레이어는 길이와 무관한 상태만 유지하고, <b>12개 Attention 레이어만 원본 KV를 쌓습니다.</b></div>
+
+<script>
+/* 칸은 SVG rect입니다 — 좌표는 예전 flex/grid가 내던 값 그대로입니다.
+   토큰: 폭 14 · 간격 3(피치 17) · y=6에서 높이 28
+   상태 점: 7×7 · 간격 3(피치 10) · 34px 상자 가운데라 시작이 3.5 */
+const SVGNS = 'http://www.w3.org/2000/svg';
+const rect = (host, attrs) => {
+  const r = document.createElementNS(SVGNS, 'rect');
+  for (const [k, v] of Object.entries(attrs)) r.setAttribute(k, v);
+  host.appendChild(r);
+};
+
+for (const track of document.querySelectorAll('.context-track')) {
+  const count = Number(track.dataset.count);
+  for (let i = 0; i < count; i++) {
+    rect(track, { class: 'token', x: i * 17, y: 6, width: 14, height: 28, rx: 3 });
+  }
+}
+for (const icon of document.querySelectorAll('.state-icon')) {
+  for (let i = 0; i < 9; i++) {
+    rect(icon, { x: 3.5 + (i % 3) * 10, y: 3.5 + Math.floor(i / 3) * 10,
+                 width: 7, height: 7, rx: 2 });
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  .chart { display:flex; align-items:flex-end; gap:0; height:432px; margin-top:34px; }
+  .col { display:flex; flex-direction:column; align-items:center; width:186px; }
+  .val { font-size:22px; font-weight:700; margin-bottom:9px; letter-spacing:-.01em; }
+  .bar { width:112px; border-radius:3px 3px 0 0; }
+  .base { border-top:1px solid var(--c-21262d); display:flex; }
+  .meta { width:186px; text-align:center; padding-top:11px; }
+  .era { font-size:13.5px; color:var(--c-c3ccd6); font-weight:600; }
+  .who { font-size:12px; color:var(--c-7d8896); margin-top:5px; line-height:1.5; }
+
+  .right { position:absolute; right:56px; top:236px; width:300px;
+           border-left:1px solid var(--c-21262d); padding-left:34px; }
+  .big { font-size:60px; font-weight:700; letter-spacing:-.03em; line-height:1; }
+  .bigsub { margin-top:10px; font-size:13.5px; color:var(--c-9aa7b4); line-height:1.65; }
+  .bigsub b { color:var(--c-e6edf3); font-weight:700; }
+  .note { margin-top:44px; font-size:13px; color:var(--c-8b96a3); line-height:1.7; }
+  .note b { color:var(--c-c3ccd6); font-weight:600; }
+</style>
+</head>
+<body>
+  <h1>3년 만에 <span class="cy">256배</span> &mdash; 그리고 그만큼이 KV캐시입니다</h1>
+  <div class="sub">각 시기의 대표적인 컨텍스트 길이. 세로축은 <b>로그 눈금</b>입니다 &mdash; 실제 격차는 보이는 것보다 훨씬 큽니다.</div>
+
+  <div style="width:930px">
+    <div class="chart" id="chart"></div>
+    <div class="base" id="base"></div>
+  </div>
+
+  <div class="right">
+    <div class="big cy">256배</div>
+    <div class="bigsub">4K에서 1M으로.<br>같은 모델, 같은 사용자 수라면<br><b>KV캐시도 256배</b>입니다.</div>
+    <div class="note">
+      게다가 <b>에이전트</b>가 이걸 기본값으로 만들었습니다.<br>
+      코드베이스를 통째로 읽고, 도구 설명을 붙이고,<br>
+      수십 턴을 이어가면 &mdash; 긴 컨텍스트는<br>
+      특별한 사용법이 아니라 <b>평소 상태</b>가 됩니다.
+    </div>
+  </div>
+
+  <div class="foot">
+    사용자가 정하는 값이라 서비스는 손댈 수 없습니다. 그래서 <b>아키텍처</b>가 이 자리를 감당해야 합니다.
+  </div>
+
+<script>
+const DATA = [
+  { v: 4096,    label: '4K',   era: '2023 상반기', who: 'GPT-3.5 · Llama 2' },
+  { v: 32768,   label: '32K',  era: '2023–24',    who: 'Mistral 7B · Qwen2.5' },
+  { v: 131072,  label: '128K', era: '2024',       who: 'GPT-4 Turbo · Llama 3.1' },
+  { v: 262144,  label: '256K', era: '2025–26 초',  who: 'Gemma 4 · Qwen3-Next' },
+  { v: 1048576, label: '1M',   era: '2026',       who: 'DeepSeek V4 · GLM-5.2' },
+];
+const H = 396, LO = Math.log10(2600), HI = Math.log10(1048576);
+const chart = document.getElementById('chart'), base = document.getElementById('base');
+DATA.forEach((d, i) => {
+  const last = i === DATA.length - 1;
+  const col = document.createElement('div'); col.className = 'col';
+  const v = document.createElement('div');
+  v.className = 'val ' + (last ? 'cy' : '');
+  if (!last) v.style.color = 'var(--c-8b96a3)';
+  v.textContent = d.label;
+  const b = document.createElement('div');
+  b.className = 'bar ' + (last ? 'cyan' : 'gray');
+  if (!last) b.style.background = i === 3 ? 'var(--c-3b4652)' : 'var(--c-2b333d)';
+  b.style.height = ((Math.log10(d.v) - LO) / (HI - LO) * H) + 'px';
+  col.appendChild(v); col.appendChild(b); chart.appendChild(col);
+
+  const m = document.createElement('div'); m.className = 'meta';
+  m.innerHTML = '<div class="era">' + d.era + '</div><div class="who">' + d.who + '</div>';
+  base.appendChild(m);
+});
+</script>
+</body>
+</html>

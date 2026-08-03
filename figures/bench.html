@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:52px; }
+  /* flex-shrink:0 필수 — 없으면 긴 막대 행만 눌려 0점 선과 막대 길이가 함께 틀어집니다 */
+  .bar { display:flex; align-items:center; gap:11px; margin-top:5px; }
+  .bar > * { flex-shrink:0; }
+  .blab { flex:0 0 186px; text-align:right; font-size:12px; color:var(--c-c3ccd6); line-height:1.2; }
+  .blab span { display:block; font-size:9.5px; line-height:1.15; color:var(--c-7d8896); }
+  .blab.on { color:var(--c-22a7bd); font-weight:700; }
+  .zero { flex:0 0 2px; background:var(--c-3d4650); height:21px; }
+  .track { flex:0 0 auto; height:21px; border-radius:0 3px 3px 0; }
+  .bval { flex:0 0 auto; font-size:13px; font-weight:700; white-space:nowrap; }
+
+  .big { font-size:52px; font-weight:700; letter-spacing:-.03em; line-height:1; }
+  .kv { font-size:13.5px; color:var(--c-9aa7b4); line-height:1.7; margin-top:12px; }
+  .kv b { color:var(--c-e6edf3); font-weight:700; }
+  .why { border-left:2px solid var(--c-2b333d); padding-left:18px; margin-top:24px;
+         font-size:13.5px; color:var(--c-8b96a3); line-height:1.8; }
+  .why b { color:var(--c-c3ccd6); font-weight:600; }
+
+  /* 순위표 아래로 밀려난 중국 모델 — 잘린 곳에서 끝나지 않았다는 표시 */
+  .rest { margin-top:26px; padding-top:16px; border-top:1px solid var(--c-21262d); }
+  .resttop { font-size:12.5px; color:var(--c-8b96a3); line-height:1.6; }
+  .restrow { display:flex; justify-content:space-between; font-size:12.5px;
+             color:var(--c-9aa7b4); margin-top:9px; }
+  .restrow b { color:var(--c-22a7bd); font-weight:700; }
+</style>
+</head>
+<body>
+  <h1><span class="cy">Kimi K3</span>는 프론티어의 <span class="cy">한복판</span>에 있습니다</h1>
+  <div class="sub">Artificial Analysis Intelligence Index v4.1 &mdash; 2026년 7월 28일 스냅샷. 값이 클수록 좋습니다. 모델 계열마다 최고 점수를 대표값으로 삼아 <b style="color:var(--c-c3ccd6)">상위 15개</b>를 그렸고, 15개 전부 실제 값입니다.</div>
+
+  <div class="legend">
+    <div><span class="sw amber"></span>미국</div>
+    <div><span class="sw cyan"></span>중국 &middot; 오픈웨이트</div>
+  </div>
+
+  <div class="panels" style="margin-top:20px; gap:50px">
+    <div class="panel" style="width:840px">
+      <div class="ptitle">종합 지능 지수</div>
+      <div class="pdesc">왼쪽 끝이 0점 &mdash; 같은 하네스로 측정한 단일 기준입니다</div>
+      <div style="margin-top:8px" id="bars"></div>
+    </div>
+
+    <div class="panel" style="width:340px">
+      <div class="ptitle">1위와의 차이</div>
+      <div class="pdesc">Claude Opus 5 60.7 &minus; Kimi K3 57.1</div>
+      <div class="big cy" style="margin-top:16px">3.6점</div>
+      <div class="kv">15개 중 <b>4위</b>.<br>미국 최상위 셋 바로 아래입니다.</div>
+
+      <div class="why">
+        투입한 돈은 <b>8배</b> 차이인데<br>
+        결과는 <b>6%</b> 차이입니다.<br>
+        <b>이 비대칭이 증시를 흔들었습니다.</b>
+      </div>
+
+      <div class="rest">
+        <div class="resttop">그리고 15위 아래로도 중국 모델이 이어집니다.</div>
+        <div class="restrow"><span>MiniMax M3 &middot; 중국</span><b>44.4</b></div>
+        <div class="restrow"><span>DeepSeek V4 Pro &middot; 중국</span><b>44.3</b></div>
+        <div class="restrow"><span>Hy3 &middot; 중국</span><b>41.2</b></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    "최첨단 GPU 없이도 프론티어급이 나온다" &mdash; <b>이 문장이 숫자로 확인된 것</b>이 시장에는 위협이었습니다.
+  </div>
+
+<script>
+const D = [
+  { n: 'Claude Opus 5',    s: 'Anthropic · 미국',   v: 60.7 },
+  { n: 'Claude Fable 5',   s: 'Anthropic · 미국',   v: 59.9 },
+  { n: 'GPT-5.6 Sol',      s: 'OpenAI · 미국',      v: 58.9 },
+  { n: 'Kimi K3',          s: 'Moonshot AI · 중국', v: 57.1, cn: true, on: true },
+  { n: 'Claude Opus 4.8',  s: 'Anthropic · 미국',   v: 55.7 },
+  { n: 'GPT-5.6 Terra',    s: 'OpenAI · 미국',      v: 55.0 },
+  { n: 'GPT-5.5',          s: 'OpenAI · 미국',      v: 54.8 },
+  { n: 'Grok 4.5',         s: 'xAI · 미국',         v: 53.8 },
+  { n: 'Claude Sonnet 5',  s: 'Anthropic · 미국',   v: 53.4 },
+  { n: 'GPT-5.6 Luna',     s: 'OpenAI · 미국',      v: 51.2 },
+  { n: 'GLM-5.2',          s: 'Zhipu AI · 중국',    v: 51.1, cn: true },
+  { n: 'Muse Spark 1.1',   s: 'Meta · 미국',        v: 50.6 },
+  { n: 'Gemini 3.6 Flash', s: 'Google · 미국',      v: 50.1 },
+  { n: 'Gemini 3.1 Pro',   s: 'Google · 미국',      v: 46.5 },
+  { n: 'Qwen3.7 Max',      s: 'Alibaba · 중국',     v: 46.0, cn: true },
+];
+const SCALE = 8.4;   // 1점당 px — 최장 막대(60.7)가 패널 안에 들어가는 최댓값
+const host = document.getElementById('bars');
+D.forEach(d => {
+  const row = document.createElement('div'); row.className = 'bar';
+  row.innerHTML =
+    '<div class="blab' + (d.on ? ' on' : '') + '">' + d.n + '<span>' + d.s + '</span></div>' +
+    '<div class="zero"></div>' +
+    '<div class="track ' + (d.cn ? 'cyan' : 'amber') + '" style="width:' + (d.v * SCALE) + 'px' +
+      (d.on ? '' : '; opacity:' + (0.5 + d.v / 130)) + '"></div>' +
+    '<div class="bval ' + (d.cn ? 'cy' : 'am') + '">' + d.v.toFixed(1) + '</div>';
+  host.appendChild(row);
+});
+</script>
+</body>
+</html>

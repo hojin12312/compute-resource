@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:45px; }
+  h1 { font-size:31px; }
+  .duo {
+    display:grid;
+    grid-template-columns:1fr 54px 1fr;
+    gap:14px;
+    align-items:center;
+    margin-top:27px;
+  }
+  .panel {
+    height:545px;
+    display:flex;
+    flex-direction:column;
+    padding:24px;
+    border-radius:12px;
+    border:1px solid var(--c-333d47);
+    background:var(--c-161b22);
+  }
+  .cot-panel { background:var(--c-221a0d); border-color:var(--c-4a3a1c); }
+  .moe-panel { background:var(--c-0f2930); border-color:var(--c-17505c); }
+  .kicker {
+    font:700 10.5px "IBM Plex Mono", "Pretendard Variable", monospace;
+    color:var(--c-8b96a3);
+    letter-spacing:.08em;
+  }
+  .panel h2 { margin-top:8px; font-size:22px; letter-spacing:-.02em; }
+  .operator {
+    color:var(--c-8b96a3);
+    font-size:36px;
+    text-align:center;
+  }
+  .flow-arrow { color:var(--c-8b96a3); font-size:20px; text-align:center; }
+
+  /* CoT 패널 — 위는 큰 모델을 한 번 통과, 아래는 작은 모델을 여러 번 통과.
+     "체급 대신 시간"이라는 논지가 두 줄의 대비로 읽히게 SVG 하나로 그립니다. */
+  .cot-svg { display:block; width:100%; margin-top:18px; }
+  .rowlab { font:700 11px "IBM Plex Mono", "Pretendard Variable", monospace; fill:var(--c-8b96a3); letter-spacing:.04em; }
+  .rowlab.hot { fill:var(--c-e0912a); }
+  .chip { fill:var(--c-161b22); stroke:var(--c-3f4c58); stroke-width:1; }
+  .chip.hot { stroke:var(--c-c47d15); }
+  .chiptx { font:700 12px "Pretendard Variable", sans-serif; fill:var(--c-c3ccd6); text-anchor:middle; }
+  .mbig { fill:var(--c-1b2027); stroke:var(--c-3f4c58); stroke-width:1.4; }
+  .msml { fill:var(--c-221a0d); stroke:var(--c-c47d15); stroke-width:2; }
+  .mtx { font:800 15px "Pretendard Variable", sans-serif; fill:var(--c-e6edf3); text-anchor:middle; }
+  .msub { font:400 10.5px "Pretendard Variable", sans-serif; fill:var(--c-8b96a3); text-anchor:middle; }
+  .wire { stroke:var(--c-5d6773); stroke-width:1.6; fill:none; }
+  .wire.hot { stroke:var(--c-c47d15); stroke-width:1.8; }
+  .bead { fill:var(--c-e0912a); }
+  .dot { fill:var(--c-7d8896); }
+  .note { font:400 11px "Pretendard Variable", sans-serif; fill:var(--c-8b96a3); }
+  .note.hot { fill:var(--c-e0912a); font-weight:700; }
+  .note.em { fill:var(--c-c3ccd6); font-weight:700; }
+  .note.mid { text-anchor:middle; }
+  .mk-g { fill:var(--c-5d6773); }
+  .mk-a { fill:var(--c-c47d15); }
+  .dv { stroke:var(--c-21262d); stroke-width:1; }
+  .caveat { margin-top:10px; font-size:11px; color:var(--c-8b96a3); text-align:center; }
+  .moe-flow {
+    display:grid;
+    grid-template-columns:50px 18px 173px 116px 18px 58px;
+    align-items:center;
+    justify-content:space-between;
+    gap:5px;
+    margin-top:42px;
+  }
+  .input-token {
+    width:50px;
+    height:50px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    border:2px solid var(--c-0e8fa3);
+    color:var(--c-22a7bd);
+    font-size:11px;
+    font-weight:700;
+    line-height:1.25;
+    text-align:center;
+  }
+  .output-token {
+    width:58px;
+    height:58px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    background:var(--c-0e8fa3);
+    color:var(--c-e6edf3);
+    font-size:11px;
+    font-weight:800;
+    line-height:1.25;
+    text-align:center;
+  }
+  /* 전문가 격자 — 256개(16×16). **SVG로 그립니다** (2026-07-31 변경).
+     예전에는 div 256개를 CSS grid(8px 칸 + 3px 틈)로 깔았습니다. 캡처는
+     `html { zoom: 1.395 }` + DPR 2로 찍히므로 8px 칸이 22.33 디바이스 픽셀이 되는데,
+     크로미움이 박스마다 페인트 좌표를 정수로 스냅해 **칸이 22px과 24px로 갈렸습니다**
+     (실측: 한 행 16칸 중 11칸 22px · 5칸 24px, 틈도 8px과 10px). 3840px 캡처에서
+     9% 차이라 눈에 "크기가 제각각"으로 보였습니다 — 호진님 지적.
+     SVG는 viewBox 하나를 통째로 변환하므로 칸마다 스냅되지 않습니다.
+     **여기서 칸을 늘리거나 div로 되돌리지 마세요.** 같은 증상이 돌아옵니다.
+
+     **테두리는 두지 않습니다**(2026-08-03에 걷어냈습니다). 예전에는 밝은 판을 7px 깔았고,
+     그 다음에는 패널색 6px + 얇은 시안선 1px(--c-2f6b78)을 box-shadow 두 겹으로 둘렀는데,
+     그 시안선이 맨 윗줄 위와 맨 오른쪽줄 옆에 희미한 선으로 보였습니다(호진님 지적 —
+     캡처 실측으로 네 변 모두 격자에서 19.5디바이스픽셀 바깥에 있었습니다).
+     격자는 점만으로 이미 경계가 읽히므로 선을 두르지 않습니다. */
+  .experts {
+    width:173px;
+    height:173px;
+    border-radius:3px;
+  }
+  /* 꺼진 점. 판을 걷어냈으므로 연한 시안 패널 위에서 직접 대비를 잡습니다 —
+     --c-dot-off(#2b333d)는 이 면에서 1.19로 사실상 보이지 않습니다.
+     --c-4d5661은 다크에서 패널 대비 2.04 · 활성 시안 대비 1.94,
+     라이트(#909aa7)에서 패널 1.97 · 활성 1.57로 양쪽이 함께 섭니다. */
+  .expert { fill:var(--c-4d5661); }
+  .expert.on { fill:var(--c-0e8fa3); }
+  .readout { display:grid; gap:7px; }
+  .metric {
+    padding:9px 10px;
+    border-radius:7px;
+    border:1px solid var(--c-333d47);
+    color:var(--c-9aa7b4);
+    font-size:9.5px;
+    white-space:nowrap;
+  }
+  .metric strong {
+    display:block;
+    margin-top:3px;
+    color:var(--c-e6edf3);
+    font-size:16px;
+  }
+  .metric.active { border-color:var(--c-17505c); }
+  .metric.active strong { color:var(--c-22a7bd); }
+  .shared {
+    width:173px;
+    margin:10px 0 0 97px;
+    color:var(--c-a48cf5);
+    font-size:10.5px;
+    text-align:center;
+  }
+  .bars { margin-top:38px; }
+  .bar-row {
+    display:grid;
+    grid-template-columns:106px 1fr 54px;
+    align-items:center;
+    gap:9px;
+    margin-top:13px;
+    color:var(--c-9aa7b4);
+    font-size:11.5px;
+  }
+  .bar { height:23px; border-radius:4px; }
+  .bar.full { width:100%; background:var(--c-c47d15); }
+  .bar.active { width:5.5%; min-width:10px; background:var(--c-0e8fa3); }
+  .bar-value { color:var(--c-e6edf3); font-weight:700; }
+  .equation {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    margin-top:auto;
+    padding-top:24px;
+    font-size:14.5px;
+    font-weight:700;
+  }
+  .equation .up { color:var(--c-e0912a); }
+  .equation .down { color:var(--c-22a7bd); }
+  .equation .equals { color:var(--c-8b96a3); }
+  .foot { bottom:22px; }
+</style>
+</head>
+<body>
+  <h1><span class="am">“딥시크 모먼트”</span> &mdash; R1의 두 엔진</h1>
+  <div class="sub">행동은 오래 생각하고, 구조는 필요한 전문가만 켭니다.</div>
+
+  <div class="duo">
+    <div class="panel cot-panel">
+      <div class="kicker">행동 · CHAIN OF THOUGHT (CoT)</div>
+      <h2>체급이 모자라면 루프를 더 돈다</h2>
+
+      <svg class="cot-svg" viewBox="0 0 545 300"
+           aria-label="두 줄 모두 같은 자가 루프입니다. 위는 좌우로 긴 큰 모델이 답 토큰만큼만
+                       루프를 돌고, 아래는 좌우로 짧은 작은 모델이 같은 루프를 생각 토큰만큼
+                       더 길게 돌아 답에 도달합니다">
+        <defs>
+          <marker id="ag" viewBox="0 0 10 10" refX="9.5" refY="5"
+                  markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+            <path class="mk-g" d="M0 0 L10 5 L0 10 Z"/>
+          </marker>
+          <marker id="aa" viewBox="0 0 10 10" refX="9.5" refY="5"
+                  markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path class="mk-a" d="M0 0 L10 5 L0 10 Z"/>
+          </marker>
+        </defs>
+
+        <!-- 1 · 큰 모델 : 같은 루프를 짧게 -->
+        <text class="rowlab" x="0" y="10">1 · 큰 모델 — 루프를 짧게</text>
+
+        <rect class="chip" x="0" y="36" width="46" height="32" rx="7"/>
+        <text class="chiptx" x="23" y="57">질문</text>
+        <line class="wire" x1="50" y1="52" x2="63" y2="52" marker-end="url(#ag)"/>
+
+        <rect class="mbig" x="68" y="22" width="352" height="60" rx="11"/>
+        <text class="mtx" x="244" y="50">더 큰 모델</text>
+        <text class="msub" x="244" y="68">체급으로 감당합니다</text>
+
+        <line class="wire" x1="420" y1="52" x2="440" y2="52"/>
+        <circle class="dot" cx="444" cy="52" r="4"/>
+        <line class="wire" x1="448" y1="52" x2="488" y2="52" marker-end="url(#ag)"/>
+        <rect class="chip" x="493" y="36" width="50" height="32" rx="7"/>
+        <text class="chiptx" x="518" y="57">정답</text>
+
+        <path class="wire"
+              d="M444 56 L444 100 Q444 112 432 112 L112 112 Q100 112 100 100 L100 88"
+              marker-end="url(#ag)"/>
+        <g class="dot">
+          <rect x="356" y="107" width="10" height="10" rx="2"/>
+          <rect x="372" y="107" width="10" height="10" rx="2"/>
+          <rect x="388" y="107" width="10" height="10" rx="2"/>
+          <rect x="404" y="107" width="10" height="10" rx="2"/>
+        </g>
+        <text class="note" x="0" y="134">디코딩은 원래 자가 루프입니다 · 스텝 수 ≈ <tspan class="note em">답 길이</tspan></text>
+
+        <line class="dv" x1="0" y1="148" x2="543" y2="148"/>
+
+        <!-- 2 · 작은 모델 : 같은 루프를 길게 -->
+        <text class="rowlab hot" x="0" y="168">2 · 작은 모델 — 같은 루프를 길게</text>
+
+        <rect class="chip hot" x="0" y="188" width="46" height="32" rx="7"/>
+        <text class="chiptx" x="23" y="209">질문</text>
+        <line class="wire hot" x1="50" y1="204" x2="63" y2="204" marker-end="url(#aa)"/>
+
+        <rect class="msml" x="68" y="174" width="126" height="60" rx="11"/>
+        <text class="mtx" x="131" y="202">작은 모델</text>
+        <text class="msub" x="131" y="220">체급이 모자랍니다</text>
+
+        <line class="wire hot" x1="194" y1="204" x2="440" y2="204"/>
+        <circle class="bead" cx="444" cy="204" r="4"/>
+        <line class="wire hot" x1="448" y1="204" x2="488" y2="204" marker-end="url(#aa)"/>
+        <rect class="chip hot" x="493" y="188" width="50" height="32" rx="7"/>
+        <text class="chiptx" x="518" y="209">정답</text>
+
+        <path class="wire hot"
+              d="M444 208 L444 252 Q444 264 432 264 L112 264 Q100 264 100 252 L100 240"
+              marker-end="url(#aa)"/>
+        <g class="bead">
+          <rect x="126" y="259" width="10" height="10" rx="2"/>
+          <rect x="142" y="259" width="10" height="10" rx="2"/>
+          <rect x="158" y="259" width="10" height="10" rx="2"/>
+          <rect x="174" y="259" width="10" height="10" rx="2"/>
+          <rect x="190" y="259" width="10" height="10" rx="2"/>
+          <rect x="206" y="259" width="10" height="10" rx="2"/>
+          <rect x="222" y="259" width="10" height="10" rx="2"/>
+          <rect x="238" y="259" width="10" height="10" rx="2"/>
+          <rect x="254" y="259" width="10" height="10" rx="2"/>
+          <rect x="270" y="259" width="10" height="10" rx="2"/>
+          <rect x="286" y="259" width="10" height="10" rx="2"/>
+          <rect x="302" y="259" width="10" height="10" rx="2"/>
+          <rect x="318" y="259" width="10" height="10" rx="2"/>
+          <rect x="334" y="259" width="10" height="10" rx="2"/>
+          <rect x="350" y="259" width="10" height="10" rx="2"/>
+          <rect x="366" y="259" width="10" height="10" rx="2"/>
+          <rect x="382" y="259" width="10" height="10" rx="2"/>
+          <rect x="398" y="259" width="10" height="10" rx="2"/>
+        </g>
+        <text class="note" x="0" y="286"><tspan class="note hot">&lt;think&gt;</tspan> 로 감싼 생각 토큰이 앞에 붙습니다
+          · 스텝 수 ≈ <tspan class="note hot">생각 + 답</tspan></text>
+      </svg>
+
+      <div class="equation">
+        <span class="up">같은 가중치를 N번 읽음</span><span class="equals">→</span><span>테스트 타임 연산 ↑</span>
+      </div>
+      <div class="caveat">체급 차이를 좁히는 것은 <b>일부 문제에서</b>입니다 — 난도와 전략에 따라 갈립니다.</div>
+    </div>
+
+    <div class="operator">×</div>
+
+    <div class="panel moe-panel">
+      <div class="kicker">구조 · MIXTURE OF EXPERTS (MoE)</div>
+      <h2>토큰마다 일부 전문가만 켠다</h2>
+
+      <div class="moe-flow">
+        <div class="input-token">입력<br>토큰</div>
+        <div class="flow-arrow">→</div>
+        <svg class="experts" id="experts" viewBox="0 0 173 173" width="173" height="173"
+             role="img" aria-label="256개 전문가 중 8개 활성"></svg>
+        <div class="readout">
+          <div class="metric active">이번 토큰이 읽음<strong>37B · 5.5%</strong></div>
+          <div class="metric">모델 전체<strong>671B</strong></div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="output-token">다음<br>토큰</div>
+      </div>
+      <div class="shared">256개 중 8개 + 공유 전문가 1개</div>
+
+      <div class="bars">
+        <div class="bar-row">
+          <span>메모리에 대기</span><span class="bar full"></span><span class="bar-value">671B</span>
+        </div>
+        <div class="bar-row">
+          <span>토큰마다 읽기</span><span class="bar active"></span><span class="bar-value cy">37B</span>
+        </div>
+      </div>
+      <div class="equation"><span class="down">활성량 억제</span><span class="equals">→</span><span>더 큰 전체 모델</span></div>
+    </div>
+  </div>
+
+  <div class="foot"><b>CoT는 고정된 체급을 연산 시간으로 보완하고, MoE는 큰 체급을 일부만 켜서 감당합니다.</b></div>
+
+<script>
+/* 256개(16×16) 전문가. 칸 8 · 간격 3 → 격자 173×173.
+   SVG 좌표로 그립니다 — div 격자는 캡처 배율에서 칸이 22/24px로 갈립니다(CSS 주석 참고). */
+const host = document.getElementById('experts');
+const active = new Set([13, 37, 68, 94, 129, 166, 207, 238]);
+const NS = 'http://www.w3.org/2000/svg';
+for (let i = 0; i < 256; i++) {
+  const expert = document.createElementNS(NS, 'rect');
+  expert.setAttribute('x', (i % 16) * 11);
+  expert.setAttribute('y', Math.floor(i / 16) * 11);
+  expert.setAttribute('width', 8);
+  expert.setAttribute('height', 8);
+  expert.setAttribute('rx', 2);
+  expert.setAttribute('class', 'expert' + (active.has(i) ? ' on' : ''));
+  host.appendChild(expert);
+}
+</script>
+</body>
+</html>

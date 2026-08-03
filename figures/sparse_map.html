@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  body { padding-top:39px; }
+  .rows { display:grid; gap:10px; margin-top:23px; }
+  .row {
+    height:130px;
+    display:grid;
+    grid-template-columns:190px 1fr 225px;
+    align-items:center;
+    gap:20px;
+    padding:13px 18px;
+    border:1px solid var(--c-333d47);
+    border-radius:10px;
+    background:var(--c-161b22);
+  }
+  /* 네 카드는 전부 같은 무게로 둡니다 (2026-07-31).
+     예전에는 넷째 줄(상태형)에만 시안 틴트 배경·시안 테두리·시안 제목을 줘서
+     하이라이트했습니다. 하이라이트할 이유가 없다는 지적을 받아 걷어냈습니다 —
+     이 그림은 네 갈래를 나란히 비교하는 개념도이고, 어느 하나가 결론이 아닙니다.
+     되살리지 마세요. (다이어그램 안의 시안 요약 노트는 그림의 내용이라 그대로입니다.) */
+  .label .basis {
+    font:700 10.5px "IBM Plex Mono", "Pretendard Variable", monospace;
+    color:var(--c-8b96a3);
+    letter-spacing:.08em;
+  }
+  .label h2 { margin-top:5px; font-size:18px; }
+  .label .model { margin-top:7px; color:var(--c-8b96a3); font-size:11.5px; }
+  .diagram { position:relative; height:98px; display:flex; align-items:center; }
+  .track {
+    display:flex;
+    gap:4px;
+    height:28px;
+    width:604px;
+    flex-shrink:0;
+  }
+  .seg {
+    width:34px;
+    height:28px;
+    flex:0 0 34px;
+    border-radius:3px;
+    background:var(--c-2b333d);
+  }
+  .seg.on { background:var(--c-0e8fa3); }
+  .seg.vi { background:var(--c-8b6ff0); }
+  .swa-diagram { width:616px; }
+  .compress-diagram, .search-diagram { width:604px; }
+  .swa-diagram .track { position:absolute; left:6px; top:35px; }
+  .old-window, .new-window {
+    position:absolute;
+    top:26px;
+    height:46px;
+    border-radius:6px;
+    pointer-events:none;
+  }
+  .old-window {
+    left:228px;
+    width:160px;
+    border:2px dashed var(--c-3f6f7d);
+  }
+  .new-window {
+    right:0;
+    width:160px;
+    border:2px solid var(--c-22a7bd);
+  }
+  .slide-arrow {
+    position:absolute;
+    top:3px;
+    left:39%;
+    color:var(--c-8b96a3);
+    font-size:12px;
+    letter-spacing:.02em;
+  }
+  .compress-diagram { display:block; padding-top:7px; }
+  .compress-arrow {
+    height:20px;
+    padding-left:47%;
+    color:var(--c-8b96a3);
+    font-size:17px;
+    line-height:20px;
+  }
+  .compact {
+    display:flex;
+    gap:6px;
+    width:43%;
+    height:31px;
+    margin:0 auto;
+  }
+  .bundle {
+    flex:1 0 0;
+    border-radius:4px;
+    background:var(--c-8b6ff0);
+  }
+  .search-diagram .seg.pick {
+    background:var(--c-0e8fa3);
+    outline:3px solid var(--c-2f6b78);
+    outline-offset:3px;
+    /* outline은 레이아웃을 차지하지 않으므로 DOM 뒤의 형제 .seg가 위에 그려집니다.
+       칸 사이 간격이 4px인데 외곽선은 6px(offset 3 + 두께 3) 나가므로 오른쪽이 잘렸습니다.
+       쌓임 순서를 올려 외곽선이 이웃 위에 오게 합니다. */
+    position:relative;
+    z-index:1;
+  }
+  .search-label {
+    position:absolute;
+    top:0;
+    left:0;
+    color:var(--c-8b96a3);
+    font-size:11px;
+  }
+  .state-diagram {
+    display:grid;
+    grid-template-columns:604px 30px 85px;
+    gap:6px;
+    align-items:center;
+  }
+  .histories { display:grid; gap:5px; }
+  .history-line {
+    height:43px;
+  }
+  .history-line .when {
+    display:block;
+    height:13px;
+    margin-bottom:2px;
+    color:var(--c-8b96a3);
+    font-size:10.5px;
+  }
+  .project {
+    color:var(--c-8b96a3);
+    font-size:22px;
+    text-align:center;
+  }
+  .note {
+    height:76px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:8px;
+    background:var(--c-0e8fa3);
+    color:var(--c-0d1117);
+    font-weight:750;
+    font-size:13px;
+    text-align:center;
+  }
+  .effect {
+    padding-left:16px;
+    border-left:1px solid var(--c-333d47);
+  }
+  .effect .action { color:var(--c-e6edf3); font-size:14px; font-weight:700; }
+  .effect .growth { margin-top:8px; color:var(--c-9aa7b4); font-size:12px; line-height:1.45; }
+  .effect .growth strong { color:var(--c-22a7bd); }
+  .foot { bottom:22px; }
+</style>
+</head>
+<body>
+  <h1>긴 컨텍스트를 <span class="cy">덜 보는 네 가지 방법</span></h1>
+  <div class="sub">같은 과거 막대를 어디까지 남기고 어떻게 읽는지 비교한 개념도입니다.</div>
+
+  <div class="rows">
+    <div class="row">
+      <div class="label">
+        <div class="basis">위치</div>
+        <h2>SWA · 창문형</h2>
+        <div class="model">6.2 · Gemma 4</div>
+      </div>
+      <div class="diagram swa-diagram">
+        <div class="slide-arrow">창문이 현재 위치로 이동 →</div>
+        <div class="track">
+          <span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
+          <span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
+          <span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
+          <span class="seg on"></span><span class="seg on"></span><span class="seg on"></span><span class="seg on"></span>
+        </div>
+        <div class="old-window"></div>
+        <div class="new-window"></div>
+      </div>
+      <div class="effect">
+        <div class="action">최근 N개만 본다</div>
+        <div class="growth">적용된 레이어의 KV는 <strong>고정</strong></div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="label">
+        <div class="basis">해상도</div>
+        <h2>CSA·HCA · 압축형</h2>
+        <div class="model">6.4 · DeepSeek V4</div>
+      </div>
+      <div class="diagram compress-diagram">
+        <div class="track">
+          <span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
+          <span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
+          <span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
+          <span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
+        </div>
+        <div class="compress-arrow">↓</div>
+        <div class="compact">
+          <span class="bundle"></span><span class="bundle"></span><span class="bundle"></span><span class="bundle"></span>
+        </div>
+      </div>
+      <div class="effect">
+        <div class="action">여러 토큰을 요약한다</div>
+        <div class="growth">KV는 <strong>완만하게 증가</strong></div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="label">
+        <div class="basis">내용</div>
+        <h2>DSA · 검색형</h2>
+        <div class="model">6.5 · GLM-5.2</div>
+      </div>
+      <div class="diagram search-diagram">
+        <div class="search-label">검색 점수가 높은 과거만 조명</div>
+        <div class="track">
+          <span class="seg"></span><span class="seg"></span><span class="seg pick"></span><span class="seg"></span>
+          <span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg pick"></span>
+          <span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
+          <span class="seg pick"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
+        </div>
+      </div>
+      <div class="effect">
+        <div class="action">필요한 일부만 계산한다</div>
+        <div class="growth">KV는 남고 <strong>연산만 감소</strong></div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="label">
+        <div class="basis">고정 상태</div>
+        <h2>GDN·KDA · 상태형</h2>
+        <div class="model">6.3 · Qwen3-Next / 6.6 · Kimi K3</div>
+      </div>
+      <div class="diagram state-diagram">
+        <div class="histories">
+          <div class="history-line short">
+            <span class="when">초반 구간</span>
+            <div class="track">
+              <span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
+              <span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
+            </div>
+          </div>
+          <div class="history-line">
+            <span class="when">길어진 뒤</span>
+            <div class="track">
+              <span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
+              <span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
+              <span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
+              <span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
+            </div>
+          </div>
+        </div>
+        <div class="project">→</div>
+        <div class="note">같은 크기<br>요약 노트</div>
+      </div>
+      <div class="effect">
+        <div class="action">한 장을 계속 갱신한다</div>
+        <div class="growth">상태 크기는 길이와 <strong>무관</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot"><b>같은 “덜 보기”라도 남기는 것이 다릅니다.</b> 위치 · 해상도 · 내용 · 고정 상태.</div>
+</body>
+</html>

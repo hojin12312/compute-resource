@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  /* 정밀도 포맷 여섯을 한 장에 놓습니다 (2026-07-31 신설).
+     세로축은 "몇 비트인가"가 아니라 **어느 세대부터 텐서코어가 그대로 계산하나**입니다 —
+     비트 수는 왼쪽 레이아웃이 이미 말하므로, 오른쪽은 세대를 답니다.
+
+     근거는 README 7.1 본문입니다 — FP8은 호퍼부터, FP4 계열은 블랙웰부터 네이티브
+     가속이고, MXFP4는 블록 32 · 스케일 E8M0, NVFP4는 블록 16 · 스케일 FP8(E4M3)입니다
+     (NVIDIA 공식 블로그 비교표). **MX 계열은 블록 스케일을 텐서코어가 직접 읽는
+     방식이라 블랙웰부터입니다** — 호퍼의 FP8은 텐서 단위 스케일입니다.
+     암페어·호퍼에 FP4 가중치를 올릴 수는 있지만 상위 정밀도로 되돌려 계산합니다
+     (`[^memory-calc]`의 K3 사례가 그것입니다). */
+  body { padding-top:40px; }
+
+  .head, .fr {
+    display:grid;
+    grid-template-columns:132px 300px 224px 1fr;
+    gap:14px; align-items:center;
+  }
+  .head { margin-top:20px; padding-bottom:7px; border-bottom:1px solid var(--c-333d47);
+          font:700 10.5px "IBM Plex Mono", "Pretendard Variable", monospace;
+          color:var(--c-8b96a3); letter-spacing:.07em; }
+  .fr { padding:17px 0; border-bottom:1px solid var(--c-1b2027); }
+  .fr:last-of-type { border-bottom:0; }
+
+  .nm { font-size:15px; font-weight:700; letter-spacing:-.01em; }
+  .nm span { display:block; margin-top:2px; font-size:10.5px; font-weight:400; color:var(--c-7d8896); }
+
+  /* 비트 레이아웃 — 칸 하나가 1비트입니다. 폭을 같은 자로 두어 8비트가 16비트의
+     절반으로 보이게 합니다(그래야 "압축"이 눈에 들어옵니다). */
+  .bits { display:flex; gap:2px; height:26px; }
+  .bits i { display:flex; align-items:center; justify-content:center; width:16px; height:26px;
+            border-radius:2px; font-style:normal; font-size:8.5px; font-weight:700; }
+  .s { background:var(--c-3d4650); color:var(--c-c3ccd6); }
+  .e { background:var(--c-c47d15); color:var(--c-0d1117); }
+  .m { background:var(--c-0e8fa3); color:var(--c-0d1117); }
+  .blk { margin-left:8px; display:flex; align-items:center; font-size:10.5px; color:var(--c-7d8896); }
+
+  .sc { font-size:12px; color:var(--c-9aa7b4); line-height:1.45; }
+  .sc b { color:var(--c-c3ccd6); font-weight:700; }
+
+  .gens { display:flex; gap:6px; }
+  .g { flex:0 0 auto; padding:5px 10px; border-radius:5px; font-size:11px; font-weight:700;
+       border:1px solid var(--c-333d47); color:var(--c-5d6773); }
+  .g.on { background:var(--a-36); border-color:var(--c-17505c); color:var(--c-22a7bd); }
+  .g.emul { border-color:var(--c-4a3a1c); color:var(--c-e0912a); }
+
+  .legend { margin-top:18px; }
+  .note { margin-top:16px; display:flex; gap:12px; }
+  .nb { flex:1 1 0; padding:14px 16px; border-radius:8px; font-size:11.5px; line-height:1.6;
+        color:var(--c-9aa7b4); background:var(--c-161b22); border:1px solid var(--c-333d47); }
+  .nb b { color:var(--c-c3ccd6); font-weight:700; }
+  .nb.warn { background:var(--a-37); border-color:var(--c-4a3a1c); }
+</style>
+</head>
+<body>
+  <h1>정밀도 포맷 여섯 &mdash; <span class="cy">어느 세대가 그대로 계산하나</span></h1>
+  <div class="sub">칸 하나가 1비트입니다 &middot;
+    <span class="am">지수</span>는 다이나믹 레인지, <span class="cy">맨티사</span>는 정밀도,
+    회색은 부호. 오른쪽은 <b style="color:var(--c-c3ccd6)">텐서코어가 되돌리지 않고 그대로 계산하는 세대</b>입니다.</div>
+
+  <div class="head">
+    <span>포맷</span><span>비트 구성</span><span>눈금(스케일)</span><span>네이티브 가속</span>
+  </div>
+
+  <div class="fr">
+    <div class="nm">BF16<span>원본 배포 정밀도</span></div>
+    <div style="display:flex"><div class="bits" id="bf16"></div><div class="blk">16비트</div></div>
+    <div class="sc">텐서/채널 단위<br><b>레인지가 넓습니다</b></div>
+    <div class="gens"><span class="g on">암페어</span><span class="g on">호퍼</span><span class="g on">블랙웰</span></div>
+  </div>
+
+  <div class="fr">
+    <div class="nm">FP16<span>같은 16비트, 다른 배분</span></div>
+    <div style="display:flex"><div class="bits" id="fp16"></div><div class="blk">16비트</div></div>
+    <div class="sc">텐서/채널 단위<br><b>정밀도가 높습니다</b></div>
+    <div class="gens"><span class="g on">암페어</span><span class="g on">호퍼</span><span class="g on">블랙웰</span></div>
+  </div>
+
+  <div class="fr">
+    <div class="nm">FP8 <span>E4M3 · 이 문서의 표준</span></div>
+    <div style="display:flex"><div class="bits" id="fp8"></div><div class="blk">8비트 &middot; 절반</div></div>
+    <div class="sc"><b>텐서 단위</b> 스케일<br>대부분 무손실급</div>
+    <div class="gens"><span class="g">암페어</span><span class="g on">호퍼</span><span class="g on">블랙웰</span></div>
+  </div>
+
+  <div class="fr">
+    <div class="nm">MXFP8<span>OCP 마이크로스케일링</span></div>
+    <div style="display:flex"><div class="bits" id="mxfp8"></div><div class="blk">8비트 + 블록 스케일</div></div>
+    <div class="sc"><b>32개 블록마다</b> E8M0<br>K3가 활성값에 씁니다</div>
+    <div class="gens"><span class="g">암페어</span><span class="g">호퍼</span><span class="g on">블랙웰</span></div>
+  </div>
+
+  <div class="fr">
+    <div class="nm">MXFP4<span>OCP 표준 · GPT-OSS로 대중화</span></div>
+    <div style="display:flex"><div class="bits" id="mxfp4"></div><div class="blk">4비트 + 블록 스케일</div></div>
+    <div class="sc"><b>32개 블록마다</b> E8M0<br>K3의 배포 원본</div>
+    <div class="gens"><span class="g emul">에뮬</span><span class="g emul">에뮬</span><span class="g on">블랙웰</span></div>
+  </div>
+
+  <div class="fr">
+    <div class="nm">NVFP4<span>NVIDIA 자체 포맷</span></div>
+    <div style="display:flex"><div class="bits" id="nvfp4"></div><div class="blk">4비트 + 더 촘촘한 스케일</div></div>
+    <div class="sc"><b>16개 블록마다</b> FP8(E4M3)<br>같은 4비트에서 오차가 작습니다</div>
+    <div class="gens"><span class="g">암페어</span><span class="g">호퍼</span><span class="g on">블랙웰</span></div>
+  </div>
+
+  <div class="note">
+    <div class="nb warn"><b>"에뮬"은 올라가긴 한다는 뜻입니다.</b> 암페어·호퍼에는 FP4 텐서코어가 없어
+      4비트 가중치를 <b>상위 정밀도로 되돌려</b> 계산합니다 &mdash; 용량은 아끼지만 연산 이득은 없습니다.
+      K3를 H200에서 돌리려면 FP8로 올려야 하는 이유가 이것입니다.</div>
+    <div class="nb"><b>블록 스케일이 세대를 가릅니다.</b> FP8의 눈금은 텐서 하나에 하나인데
+      MX·NVFP4는 <b>수십 개마다 눈금을 따로</b> 둡니다. 그 눈금을 텐서코어가 직접 읽어야 하므로
+      네이티브 가속이 블랙웰부터입니다.</div>
+  </div>
+
+  <div class="foot">
+    <b>포맷은 그릇일 뿐입니다.</b> 어느 값을 어떤 그릇에 넣을지 정하는 것은 다음 이야기 &mdash; 균일이냐 혼합이냐입니다.
+  </div>
+
+<script>
+/* [부호, 지수, 맨티사] 비트 수 */
+const L = {
+  bf16:  [1, 8, 7],
+  fp16:  [1, 5, 10],
+  fp8:   [1, 4, 3],
+  mxfp8: [1, 4, 3],
+  mxfp4: [1, 2, 1],
+  nvfp4: [1, 2, 1],
+};
+for (const [id, [s, e, m]] of Object.entries(L)) {
+  const host = document.getElementById(id);
+  let h = '<i class="s">S</i>';
+  for (let i = 0; i < e; i++) h += '<i class="e">E</i>';
+  for (let i = 0; i < m; i++) h += '<i class="m">M</i>';
+  host.innerHTML = h;
+}
+</script>
+</body>
+</html>

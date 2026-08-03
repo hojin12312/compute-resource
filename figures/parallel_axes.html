@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  .panels { gap:26px; margin-top:34px; }
+  .panel { width:288px; padding:18px 18px 16px; border:1px solid var(--c-333d47);
+           border-radius:11px; background:var(--c-161b22); }
+  .panel.on { background:var(--c-0f2930); border-color:var(--c-17505c); }
+  .axis { font-size:20px; font-weight:700; letter-spacing:-.01em; }
+  .axis span { font-size:13px; font-weight:600; color:var(--c-9aa7b4); margin-left:7px; }
+  .what { margin-top:9px; font-size:12.5px; color:var(--c-8b96a3); line-height:1.6; min-height:58px; }
+
+  .gpus { display:flex; gap:7px; margin-top:14px; }
+  .gpu { width:56px; height:158px; border-radius:6px; background:var(--c-0d1117);
+         border:1px solid var(--c-3f4c58); padding:5px 4px; display:flex;
+         flex-direction:column; gap:3px; }
+  .gpu .tag { font-size:9.5px; color:var(--c-7d8896); text-align:center; margin-bottom:1px; }
+  .slab { height:24px; border-radius:2px; background:var(--c-2b333d); }
+  .slab.cy { background:var(--c-0e8fa3); }
+  .slab.am { background:var(--c-c47d15); }
+  .slab.vi { background:var(--c-8b6ff0); }
+  
+  .exam { margin-top:14px; padding-top:11px; border-top:1px solid var(--c-21262d);
+          font-size:11.5px; color:var(--c-7d8896); }
+  .exam b { color:var(--c-c3ccd6); font-weight:600; }
+
+  .comm { margin-top:16px; padding-top:14px; border-top:1px solid var(--c-21262d);
+          font-size:12px; color:var(--c-9aa7b4); line-height:1.55; }
+  .chip { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px;
+          font-weight:700; margin-bottom:6px; }
+  .chip.hi { background:var(--c-4a3a1c); color:var(--c-e0912a); }
+  .chip.mid { background:var(--c-233039); color:var(--c-22a7bd); }
+  .chip.low { background:var(--c-12333a); color:var(--ink-on-cy-tint); }
+</style>
+</head>
+<body>
+  <h1>나누는 네 축 &mdash; <span class="cy">무엇을 쪼개고, 그 값을 어디서 치르나</span></h1>
+  <div class="sub">GPU 4장에 같은 모델을 올린다고 할 때, 네 방식이 각각 이렇게 다릅니다.</div>
+  <div class="legend">
+    <div><span class="sw cyan"></span>레이어 조각</div>
+    <div><span class="sw amber"></span>모델 한 벌 전체</div>
+    <div><span class="sw violet"></span>전문가 일부</div>
+    <div><span class="sw gray"></span>이 장에 없음</div>
+  </div>
+
+  <div class="panels">
+    <div class="panel on">
+      <div class="axis">TP<span>텐서 병렬</span></div>
+      <div class="what">한 레이어의 행렬을 네 장이 쪼개 계산합니다. 가중치를 나눠 읽으니 <b class="cy">대역폭이 곱해집니다.</b></div>
+      <div class="gpus"><div class="gpu"><div class="tag">1/4</div><div class="slab cy"></div><div class="slab cy"></div><div class="slab cy"></div><div class="slab cy"></div><div class="slab cy"></div></div><div class="gpu"><div class="tag">1/4</div><div class="slab cy"></div><div class="slab cy"></div><div class="slab cy"></div><div class="slab cy"></div><div class="slab cy"></div></div><div class="gpu"><div class="tag">1/4</div><div class="slab cy"></div><div class="slab cy"></div><div class="slab cy"></div><div class="slab cy"></div><div class="slab cy"></div></div><div class="gpu"><div class="tag">1/4</div><div class="slab cy"></div><div class="slab cy"></div><div class="slab cy"></div><div class="slab cy"></div><div class="slab cy"></div></div></div>
+      <div class="comm"><span class="chip hi">레이어마다 all-reduce</span><br>
+        노드 안 NVLink에서 씁니다. 느린 연결에서는 이득이 통신비에 먹힙니다.</div>
+      <div class="exam">쓰는 자리 &mdash; <b>노드 안 8장</b></div>
+    </div>
+
+    <div class="panel">
+      <div class="axis">DP<span>데이터 병렬</span></div>
+      <div class="what">안 나눕니다. 통째로 <b>복제</b>하고 요청을 장마다 흩뿌립니다. 한 장에 담길 때의 기본값입니다.</div>
+      <div class="gpus"><div class="gpu"><div class="tag">전체</div><div class="slab am"></div><div class="slab am"></div><div class="slab am"></div><div class="slab am"></div><div class="slab am"></div></div><div class="gpu"><div class="tag">전체</div><div class="slab am"></div><div class="slab am"></div><div class="slab am"></div><div class="slab am"></div><div class="slab am"></div></div><div class="gpu"><div class="tag">전체</div><div class="slab am"></div><div class="slab am"></div><div class="slab am"></div><div class="slab am"></div><div class="slab am"></div></div><div class="gpu"><div class="tag">전체</div><div class="slab am"></div><div class="slab am"></div><div class="slab am"></div><div class="slab am"></div><div class="slab am"></div></div></div>
+      <div class="comm"><span class="chip low">사실상 없음</span><br>
+        대신 가중치가 네 벌이라 KV캐시에 남는 자리가 그만큼 줍니다.</div>
+      <div class="exam">쓰는 자리 &mdash; <b>한 장에 담기는 모델</b></div>
+    </div>
+
+    <div class="panel">
+      <div class="axis">PP<span>파이프라인 병렬</span></div>
+      <div class="what">레이어를 구간으로 잘라 장마다 맡깁니다. 메모리 제약은 풀지만 <b>지연은 그대로</b>입니다.</div>
+      <div class="gpus"><div class="gpu"><div class="tag">1&ndash;15층</div><div class="slab cy"></div><div class="slab"></div><div class="slab"></div><div class="slab"></div><div class="slab"></div></div><div class="gpu"><div class="tag">16&ndash;30</div><div class="slab"></div><div class="slab cy"></div><div class="slab"></div><div class="slab"></div><div class="slab"></div></div><div class="gpu"><div class="tag">31&ndash;45</div><div class="slab"></div><div class="slab"></div><div class="slab cy"></div><div class="slab"></div><div class="slab"></div></div><div class="gpu"><div class="tag">46&ndash;61</div><div class="slab"></div><div class="slab"></div><div class="slab"></div><div class="slab cy"></div><div class="slab cy"></div></div></div>
+      <div class="comm"><span class="chip mid">구간 경계에서 한 번</span><br>
+        한 요청이 네 구간을 순서대로 지나므로 토큰당 시간은 줄지 않습니다.</div>
+      <div class="exam">쓰는 자리 &mdash; <b>노드를 넘어야 할 때 · 학습</b></div>
+    </div>
+
+    <div class="panel on">
+      <div class="axis">EP<span>전문가 병렬</span></div>
+      <div class="what">MoE 전문가를 장마다 나눠 보관합니다. 토큰이 자기 전문가를 <b class="vi">찾아갔다 돌아옵니다.</b></div>
+      <div class="gpus"><div class="gpu"><div class="tag">전문가 1&ndash;8</div><div class="slab vi"></div><div class="slab vi"></div><div class="slab vi"></div><div class="slab"></div><div class="slab"></div></div><div class="gpu"><div class="tag">9&ndash;16</div><div class="slab vi"></div><div class="slab vi"></div><div class="slab vi"></div><div class="slab"></div><div class="slab"></div></div><div class="gpu"><div class="tag">17&ndash;24</div><div class="slab vi"></div><div class="slab vi"></div><div class="slab vi"></div><div class="slab"></div><div class="slab"></div></div><div class="gpu"><div class="tag">25&ndash;32</div><div class="slab vi"></div><div class="slab vi"></div><div class="slab vi"></div><div class="slab"></div><div class="slab"></div></div></div>
+      <div class="comm"><span class="chip hi">레이어마다 all-to-all 두 번</span><br>
+        보내기·모으기 두 번. 작은 규모에서는 손해입니다.</div>
+      <div class="exam">쓰는 자리 &mdash; <b>큰 MoE · EP32에서 EP320까지</b></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>TP는 대역폭을 곱하고, DP는 통신이 없고, PP는 자리만 만들고, EP는 MoE 전용입니다.</b>
+    &mdash; 실무 규칙은 "노드 안은 TP, 노드를 넘으면 PP, 큰 MoE는 EP".
+  </div>
+</body>
+</html>

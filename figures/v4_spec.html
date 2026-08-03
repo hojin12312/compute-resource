@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  .panels { gap:28px; margin-top:16px; align-items:stretch; }
+  .panel { padding:18px 20px 16px; border:1px solid var(--c-333d47); border-radius:11px;
+           background:var(--c-161b22); }
+
+  /* ── 좌: 점수 막대 + 가격 막대를 상하로 붙인 짝 ── */
+  .grp { display:flex; align-items:center; gap:7px; padding:2px 4px; margin-bottom:2px;
+         border-radius:4px; }
+  /* 강조 행은 색이 아니라 면과 굵기로 가립니다 — 색은 지표의 뜻으로만 씁니다 */
+  .grp.hi, .grp.hif { background:var(--c-232a33); }
+  .gname { width:142px; color:var(--c-8b96a3); text-align:right; flex-shrink:0; font-size:11px;
+           overflow:hidden; white-space:nowrap; }
+  .grp.hi .gname, .grp.hif .gname { color:var(--c-e6edf3); font-weight:700; }
+  .pair { display:flex; flex-direction:column; gap:2px; flex:1; min-width:0; }
+  .brow { display:flex; align-items:center; gap:6px; height:13px; }
+  .bar { height:13px; border-radius:2px; flex-shrink:0; min-width:2px; }
+  .bar.sc { background:var(--c-4d5661); }   /* 점수 = 규모·맥락 */
+  .bar.co { background:var(--c-8b6ff0); }   /* 가격 = 돈 */
+  .val { font:700 11px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-9aa7b4); flex-shrink:0;
+         white-space:nowrap; }
+  .val.s { color:var(--c-8b96a3); }
+  .grp.hi .val, .grp.hif .val { color:var(--c-e6edf3); }
+
+  /* ── 우: 두 모델 비교 차트 ──
+     **지표마다 색이 다릅니다**(2026-07-31 개선). 예전에는 네 지표가 모두 보라 한 색이라
+     어느 줄이 용량이고 어느 줄이 돈인지 색으로는 알 수 없었습니다. 이제 그림 전체가
+     한 문법을 씁니다 — 회색=규모 · 앰버=용량 청구서 · 시안=KV캐시 청구서 · 보라=돈.
+     두 모델(Flash·Pro)은 색이 아니라 라벨·굵기·위아래 위치로 가립니다. */
+  .mgrp { margin-top:7px; }
+  .mcap { display:flex; justify-content:space-between; align-items:baseline; gap:10px;
+          font-size:11.5px; color:var(--c-c3ccd6); font-weight:700; }
+  .mcap em { font-style:normal; color:var(--c-7d8896); font-size:10.5px; font-weight:400; }
+  .mcap .dot { display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:6px; }
+  .dot.p { background:var(--c-4d5661); } .dot.w { background:var(--c-c47d15); }
+  .dot.k { background:var(--c-0e8fa3); } .dot.c { background:var(--c-8b6ff0); }
+  /* 두 청구서를 블록으로 갈라 줍니다 — 3장(담는 값)과 4장(시키는 값) */
+  .sect { margin-top:10px; font:700 10px "IBM Plex Mono", "Pretendard Variable", monospace;
+          letter-spacing:.09em; color:var(--c-8b96a3); padding-bottom:5px;
+          border-bottom:1px solid var(--c-333d47); }
+  .sect:first-of-type { margin-top:10px; }
+  .mrow { display:grid; grid-template-columns:44px 1fr 150px; gap:9px; align-items:center; margin-top:4px; }
+  .mname { font-size:11px; color:var(--c-8b96a3); text-align:right; }
+  .mrow.pro .mname { color:var(--c-c3ccd6); font-weight:700; }
+  .track { position:relative; height:20px; border-radius:3px; background:var(--c-1b2027);
+           border:1px solid var(--c-333d47); overflow:hidden; }
+  .track i { display:block; height:100%; }
+  .track i.p { background:var(--c-4d5661); }   /* 총 파라미터 = 규모 */
+  .track i.w { background:var(--c-c47d15); }   /* 가중치 = 용량 청구서 */
+  .track i.k { background:var(--c-0e8fa3); }   /* KV캐시 = 시키는 값 */
+  .track i.c { background:var(--c-8b6ff0); }   /* 단가 = 돈 */
+  /* B300 한 장(288GB) 칸. 채움 위에 얹어야 몇 칸을 먹는지 셀 수 있습니다.
+     트랙 전체가 4장(1,152GB)이므로 칸 경계는 25% 간격입니다. */
+  .slots { position:absolute; inset:0; background-image:repeating-linear-gradient(to right,
+    transparent 0, transparent calc(25% - 1px), var(--c-c3ccd6) calc(25% - 1px), var(--c-c3ccd6) 25%); }
+  .mval { font-size:12px; color:var(--c-e6edf3); text-align:right; white-space:nowrap; }
+  .mval span { color:var(--c-9aa7b4); font-weight:400; }
+  .mval b { font:700 12.5px "IBM Plex Mono", "Pretendard Variable", monospace; }
+  .mrow.pro .mval b { color:var(--c-e6edf3); }
+
+  .facts { margin-top:9px; border-top:1px solid var(--c-333d47); }
+  .fact { display:grid; grid-template-columns:104px 1fr; gap:12px; padding:5px 0;
+          border-bottom:1px solid var(--c-21262d); font-size:11px; color:var(--c-9aa7b4); line-height:1.45; }
+  .fact:last-child { border-bottom:0; }
+  .fact > span:first-child { color:var(--c-8b96a3); }
+  .fact b { color:var(--c-c3ccd6); font-weight:700; }
+
+</style>
+</head>
+<body>
+  <h1>DeepSeek V4 <span class="cy">&mdash; 스펙 한 장</span></h1>
+  <div class="sub">2026년 7월 공개된 오픈웨이트 하이브리드 어텐션 MoE.
+    왼쪽은 <b>다른 모델과 나란히 놓은 점수와 출력 단가</b>, 오른쪽은 <b>Flash와 Pro 두 크기</b>입니다.
+    <b style="color:var(--c-c3ccd6)">색이 뜻을 나릅니다</b> &mdash; 그림 전체에서 한 색은 한 뜻입니다.</div>
+
+  <div class="legend" style="margin-top:12px; gap:20px; font-size:12px">
+    <div><span class="sw" style="background:var(--c-4d5661)"></span>규모 &middot; 맥락 <span style="color:var(--c-7d8896)">(점수 · 파라미터)</span></div>
+    <div><span class="sw amber"></span>용량 청구서 <span style="color:var(--c-7d8896)">(가중치 GB)</span></div>
+    <div><span class="sw cyan"></span>KV캐시 청구서 <span style="color:var(--c-7d8896)">(1M · 사용자 1명)</span></div>
+    <div><span class="sw violet"></span>돈 <span style="color:var(--c-7d8896)">(출력 1M 단가)</span></div>
+  </div>
+
+  <div class="panels">
+    <div class="panel" style="width:524px">
+      <div class="ptitle">V4의 장점은 <span class="vi">값</span>입니다</div>
+      <div class="pdesc">위 칸이 점수, 아래 칸이 출력 단가 &middot; AAII v4.1 · 2026-07-30 ·
+        <b>모두 최고 노력(max) 설정</b> · 가격은 공식 API 출력 1M 토큰</div>
+      <div id="chart" style="margin-top:8px"></div>
+    </div>
+
+    <div class="panel" style="width:712px">
+      <div class="ptitle">같은 계열, 두 크기</div>
+      <div class="pdesc">가중치는 배포된 safetensors 실측, 나머지는 config &middot; 공식 가격표 기준 &middot;
+        <b>행마다 자가 다릅니다</b>(가장 큰 값이 끝)</div>
+
+      <div class="sect">담는 값 &mdash; 3장의 청구서</div>
+
+      <div class="mgrp">
+        <div class="mcap"><span><span class="dot p"></span>총 파라미터</span><em>Pro가 5.6배</em></div>
+        <div class="mrow"><span class="mname">Flash</span>
+          <span class="track"><i class="p" style="width:17.75%"></i></span>
+          <span class="mval"><b>284</b> <span>B</span></span></div>
+        <div class="mrow pro"><span class="mname">Pro</span>
+          <span class="track"><i class="p" style="width:100%"></i></span>
+          <span class="mval"><b>1.6</b> <span>T</span></span></div>
+      </div>
+
+      <div class="mgrp">
+        <div class="mcap"><span><span class="dot w"></span>가중치를 올리는 데</span><em>칸 하나 = B300 한 장 &middot; HBM3e 288GB</em></div>
+        <div class="mrow"><span class="mname">Flash</span>
+          <span class="track"><i class="w" style="width:13.85%"></i><span class="slots"></span></span>
+          <span class="mval"><b>159.6</b> <span>GB &middot; 1장</span></span></div>
+        <div class="mrow pro"><span class="mname">Pro</span>
+          <span class="track"><i class="w" style="width:75.06%"></i><span class="slots"></span></span>
+          <span class="mval"><b>864.7</b> <span>GB &middot; 4장</span></span></div>
+      </div>
+
+      <div class="sect">일 시키는 값 &mdash; 4장의 청구서와 돈</div>
+
+      <div class="mgrp">
+        <div class="mcap"><span><span class="dot k"></span>1M 컨텍스트의 KV캐시 &middot; 사용자 1명</span><em>파라미터는 5.6배인데 여기는 1.1배뿐</em></div>
+        <div class="mrow"><span class="mname">Flash</span>
+          <span class="track"><i class="k" style="width:91.38%"></i></span>
+          <span class="mval"><b>5.3</b> <span>GiB</span></span></div>
+        <div class="mrow pro"><span class="mname">Pro</span>
+          <span class="track"><i class="k" style="width:100%"></i></span>
+          <span class="mval"><b>5.8</b> <span>GiB</span></span></div>
+      </div>
+
+      <div class="mgrp">
+        <div class="mcap"><span><span class="dot c"></span>출력 1M 토큰</span><em>Pro가 3.1배</em></div>
+        <div class="mrow"><span class="mname">Flash</span>
+          <span class="track"><i class="c" style="width:32.18%"></i></span>
+          <span class="mval"><b>$0.28</b></span></div>
+        <div class="mrow pro"><span class="mname">Pro</span>
+          <span class="track"><i class="c" style="width:100%"></i></span>
+          <span class="mval"><b>$0.87</b></span></div>
+      </div>
+
+      <div class="facts">
+        <div class="fact"><span>레이어 구성</span>
+          <span>Flash <b>43층</b> = 무압축 2 + CSA 4:1 21 + HCA 128:1 20 &nbsp;&middot;&nbsp;
+                Pro <b>61층</b> = CSA 30 + HCA 31 &mdash; <b>무압축 층이 없습니다</b></span></div>
+        <div class="fact"><span>최대 컨텍스트</span>
+          <span>둘 다 <b>1,048,576</b> &mdash; 크기가 달라도 같습니다</span></div>
+        <div class="fact"><span>입력 &middot; 캐시 히트</span>
+          <span>Flash <b>$0.14 &middot; $0.0028</b>(입력가의 2.0%) &nbsp;&middot;&nbsp;
+                Pro <b>$0.435 &middot; $0.0036</b>(0.83%)</span></div>
+        <div class="fact"><span>3장이 아닌 이유</span>
+          <span>B300 3장은 864GB입니다. Pro가 <b>0.7GB 넘겨서</b> 4장이 됩니다
+                (H200 141GB 기준이면 Flash 2장 &middot; Pro 7장)</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>싼 값은 구조에서 나옵니다.</b> 1.6T가 B300 <b>4장(864GB)</b>에 들어가고,
+    1M 컨텍스트가 사용자당 <b>5.8GiB</b>뿐입니다 &mdash; 담는 값과 시키는 값을 둘 다 눌러 놓았으니
+    출력 1M을 <b>$0.87</b>에, 캐시 히트를 정가의 <b>0.83%</b>에 줄 수 있습니다.
+  </div>
+
+<script>
+/* 모델당 한 줄, 전부 최고 노력(max) 설정 · [모델, AAII 지수, 출력 1M 토큰당 USD, 하이라이트] */
+const rows = [
+  ['Claude Opus 5',           61, 25.00],
+  ['GPT-5.6 Sol',             59, 30.00],
+  ['Kimi K3',                 57, 15.00],
+  ['GPT-5.6 Terra',           55, 15.00],
+  ['Claude Sonnet 5',         53, 15.00],
+  ['GPT-5.6 Luna',            51,  6.00],
+  ['GLM-5.2',                 51,  4.40],
+  ['Qwen3.7 Max',             46,  4.95],
+  ['MiniMax-M3',              44,  1.20],
+  ['DeepSeek V4 Pro',         44,  0.87, 'hi'],
+  ['DeepSeek V4 Flash',       40,  0.28, 'hif'],
+  ['Claude 4.5 Haiku',        30,  5.00],
+];
+const host = document.getElementById('chart');
+const SMAX = 61, PMAX = 30, BW = 232;
+for (const [name, score, price, hi] of rows) {
+  const d = document.createElement('div');
+  d.className = 'grp' + (hi ? ' ' + hi : '');
+  d.innerHTML = '<span class="gname">' + name + '</span>'
+    + '<span class="pair">'
+    +   '<span class="brow"><span class="bar sc" style="width:'
+    +      (score / SMAX * BW).toFixed(1) + 'px"></span>'
+    +      '<span class="val s">' + score + '</span></span>'
+    +   '<span class="brow"><span class="bar co" style="width:'
+    +      (price / PMAX * BW).toFixed(1) + 'px"></span>'
+    +      '<span class="val">$' + price.toFixed(2) + '</span></span>'
+    + '</span>';
+  host.appendChild(d);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=f9db9358">
+<style>
+  .panels { gap:16px; margin-top:18px; align-items:stretch; }
+  .panel { padding:16px 18px 14px; border:1px solid var(--c-333d47); border-radius:11px;
+           background:var(--c-161b22); }
+
+  /* ── 좌: 벤치마크 짝 막대 (위 K3 / 아래 같은 표의 최고 다른 모델) ── */
+  .grp { display:flex; align-items:center; gap:7px; padding:5px 4px; margin-bottom:4px;
+         border-radius:4px; }
+  .grp.win { background:var(--c-12333a); }
+  .gname { width:126px; flex-shrink:0; font-size:11px; color:var(--c-8b96a3);
+           text-align:right; line-height:1.25; }
+  .gname b { display:block; color:var(--c-c3ccd6); font-weight:700; font-size:10.5px; }
+  .grp.win .gname b { color:var(--c-e6edf3); }
+  .pair { display:flex; flex-direction:column; gap:2px; flex:1; min-width:0; }
+  .brow { display:flex; align-items:center; gap:5px; height:19px; }
+  .bar { height:19px; border-radius:2px; flex-shrink:0; min-width:2px; }
+  .bar.us { background:var(--c-0e8fa3); }
+  .bar.th { background:var(--c-c47d15); }
+  .val { font:700 10.5px "IBM Plex Mono", "Pretendard Variable", monospace; flex-shrink:0; white-space:nowrap;
+         color:var(--c-9aa7b4); }
+  .val.s { color:var(--ink-score-cy); }
+  .who { font:400 10px "Pretendard Variable", sans-serif; color:var(--c-7d8896);
+         flex-shrink:0; white-space:nowrap; }
+
+  /* ── 중: 스펙 ── glm_spec.html과 같은 문법입니다(두 카드가 나란히 읽힙니다).
+     9행 표가 값마다 부제를 달아 글자 벽이었으므로 가중치는 막대로, 나머지는
+     타일과 한 줄 행으로 나눴습니다. */
+  .mono { font-family:"IBM Plex Mono", "Pretendard Variable", monospace; font-size:.94em; }
+
+  .wcap { display:flex; justify-content:space-between; gap:10px; margin-top:12px;
+          font-size:10.5px; color:var(--c-8b96a3); }
+  .wcap b { color:var(--c-c3ccd6); font-weight:700; }
+  .wrow { margin-top:8px; }
+  .whead { display:flex; justify-content:space-between; align-items:baseline; gap:8px;
+           font-size:11px; color:var(--c-9aa7b4); }
+  .whead b { font:700 12px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-e6edf3); }
+  .whead b.cyv { color:var(--c-22a7bd); }
+  .wtrack { position:relative; height:23px;margin-top:4px; border-radius:3px;
+            background:var(--c-1b2027); border:1px solid var(--c-333d47); overflow:hidden; }
+  .wtrack i { display:block; height:100%; }
+  .wtrack i.fp4 { background:var(--c-0e8fa3); }
+  .wtrack i.fp8 { background:var(--c-c47d15); }
+  /* 두 막대는 **같은 GB 자**(2,880GB)를 씁니다. 칸 크기만 카드마다 다릅니다 —
+     B300은 288GB라 10%마다, H200은 141GB라 4.89583%마다 끊습니다. */
+  .slot { position:absolute; inset:0; }
+  .slot.b300 { background-image:repeating-linear-gradient(to right,
+    transparent 0, transparent calc(10% - 1px), var(--c-c3ccd6) calc(10% - 1px), var(--c-c3ccd6) 10%); }
+  .slot.h200 { background-image:repeating-linear-gradient(to right,
+    transparent 0, transparent calc(4.89583% - 1px),
+    var(--c-c3ccd6) calc(4.89583% - 1px), var(--c-c3ccd6) 4.89583%); }
+
+  .tiles { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px; }
+  .tile { padding:9px 12px; border-radius:7px; background:var(--c-1b2027);
+          border:1px solid var(--c-21262d); }
+  .tile span { display:block; font-size:10px; color:var(--c-8b96a3); }
+  .tile strong { display:block; margin-top:3px; font:700 14px "IBM Plex Mono", "Pretendard Variable", monospace;
+                 color:var(--c-22a7bd); letter-spacing:-.01em; }
+  .tile em { display:block; margin-top:3px; font-style:normal; font-size:9.5px;
+             color:var(--c-7d8896); line-height:1.4; }
+
+  .lines { margin-top:12px; border-top:1px solid var(--c-333d47); }
+  .line { display:grid; grid-template-columns:86px 1fr; gap:10px; padding:8px 0;
+          border-bottom:1px solid var(--c-21262d); font-size:11px; color:var(--c-9aa7b4); }
+  .line:last-child { border-bottom:0; }
+  .line > span:first-child { color:var(--c-8b96a3); }
+  .line b { font:700 11.5px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-e6edf3); }
+
+  /* ── 우: 기법의 출처 ── */
+  .own { margin-top:14px; }
+  .oitem { padding:13px 0 14px; border-bottom:1px solid var(--c-1b2027); }
+  .oitem:last-child { border-bottom:0; }
+  .otop { display:flex; align-items:baseline; gap:6px; }
+  .oname { font:700 12.5px "Pretendard Variable", sans-serif; color:var(--c-e6edf3); }
+  .tag { font:700 8.5px "Pretendard Variable", sans-serif; padding:2px 5px; border-radius:3px;
+         letter-spacing:.02em; flex-shrink:0; }
+  .tag.mine { background:var(--c-12333a); color:var(--c-22a7bd); }
+  .tag.borrow { background:var(--c-221a0d); color:var(--c-e0912a); }
+  .odesc { font-size:11px; color:var(--c-8b96a3); line-height:1.6; margin-top:5px; }
+  .odesc b { color:var(--c-c3ccd6); font-weight:700; }
+</style>
+</head>
+<body>
+  <h1>Kimi K3 <span class="cy">&mdash; 스펙 한 장</span></h1>
+  <div class="sub">세계 첫 공개 3조급 모델. 왼쪽은 <b>폐쇄 모델과 같은 표에서의 성적</b>, 가운데는 <b>서빙에 필요한 것</b>, 오른쪽은 <b>그 기법이 누구 것인지</b>입니다.</div>
+
+  <div class="legend" style="margin-top:16px">
+    <div><span class="sw cyan"></span>Kimi K3 (max)</div>
+    <div><span class="sw amber"></span>같은 표에서 가장 높은 다른 모델</div>
+  </div>
+
+  <div class="panels">
+    <div class="panel" style="width:448px">
+      <div class="ptitle">오픈웨이트가 1위를 셋 가져갑니다</div>
+      <div class="pdesc">전부 <b>K3 자체 발표표</b>의 값 · 6개 모델 비교 · 전부 최고 노력(max)</div>
+      <div id="chart" style="margin-top:8px"></div>
+    </div>
+
+    <div class="panel" style="width:448px">
+      <div class="ptitle">주요 스펙</div>
+      <div class="pdesc">가중치는 배포된 safetensors 실측, 나머지는 공식 모델 카드&middot;가격표</div>
+
+      <div class="wcap"><span>가중치를 올리는 데</span>
+        <span>두 막대는 <b>같은 GB 자</b> &middot; 칸 크기만 카드마다 다릅니다</span></div>
+      <div class="wrow">
+        <div class="whead"><span>MXFP4 &mdash; 배포 원본 &middot; 칸 = B300 288GB</span>
+          <span><b class="cyv">1,560.9</b> GB &middot; 6장</span></div>
+        <div class="wtrack"><i class="fp4" style="width:54.20%"></i><span class="slot b300"></span></div>
+      </div>
+      <div class="wrow">
+        <div class="whead"><span>FP8로 바꾸면 &middot; 칸 = H200 141GB</span>
+          <span><b>약 2,800</b> GB &middot; 20장</span></div>
+        <div class="wtrack"><i class="fp8" style="width:97.22%"></i><span class="slot h200"></span></div>
+      </div>
+
+      <div class="tiles">
+        <div class="tile"><span>총 / 활성 파라미터</span><strong>2.8T / 104B</strong>
+          <em>전문가 896 중 16 + 공유 2 &middot; 활성 3.7%</em></div>
+        <div class="tile"><span>레이어 &middot; 어텐션</span><strong>93층 &middot; KDA 69 + MLA 24</strong>
+          <em>Qwen3-Next의 3:1 배합을 그대로 키운 비율</em></div>
+        <div class="tile"><span>최대 컨텍스트</span><strong>1,048,576</strong>
+          <em>MoonViT-V2(401M) 비전 인코더 포함</em></div>
+        <div class="tile"><span>KV가 늘어나는 층</span><strong>93층 중 24층</strong>
+          <em>KDA 69층은 고정 크기 상태만 듭니다</em></div>
+      </div>
+
+      <div class="lines">
+        <div class="line"><span>API 1M 토큰</span>
+          <span>입력 <b>$3.00</b> &middot; 캐시 히트 <b>$0.30</b> &middot; 출력 <b>$15.00</b>
+            &mdash; 히트가 입력가의 10.0%</span></div>
+        <div class="line"><span>H200의 사정</span>
+          <span>FP4 텐서코어가 없어 FP8로 올려야 합니다. 용량으로 20장이지만
+            노드가 8&middot;16&middot;32장 단위라 <b>32장</b></span></div>
+        <div class="line"><span>라이선스</span>
+          <span><b>Kimi K3 License</b> &mdash; MIT나 Apache가 아닌 자체 라이선스</span></div>
+      </div>
+    </div>
+
+    <div class="panel" style="width:336px">
+      <div class="ptitle">이 기법은 누구 것인가</div>
+      <div class="pdesc">모델의 특징인지, 남의 토대를 잘 쓴 것인지</div>
+      <div class="own">
+        <div class="oitem">
+          <div class="otop"><span class="oname">KDA</span><span class="tag mine">자체 기여</span></div>
+          <div class="odesc">6.3 Gated DeltaNet의 망각 게이트를 <b>채널 단위로</b></div>
+        </div>
+        <div class="oitem">
+          <div class="otop"><span class="oname">AttnRes</span><span class="tag mine">자체 기여</span></div>
+          <div class="odesc">자체 논문과 공식 구현을 함께 냈습니다</div>
+        </div>
+        <div class="oitem">
+          <div class="otop"><span class="oname">Stable LatentMoE</span><span class="tag mine">자체 기여</span></div>
+          <div class="odesc">896 중 16까지 밀면서 학습을 안정시킨 틀</div>
+        </div>
+        <div class="oitem">
+          <div class="otop"><span class="oname">Gated MLA</span><span class="tag borrow">가져온 것</span></div>
+          <div class="odesc">DeepSeek V2의 MLA에 게이트를 얹었습니다</div>
+        </div>
+        <div class="oitem">
+          <div class="otop"><span class="oname">MXFP4 QAT</span><span class="tag borrow">가져온 것</span></div>
+          <div class="odesc">양자화는 남의 것 &mdash; <b>3조급 첫 적용</b>이 몫입니다</div>
+        </div>
+        <div class="oitem">
+          <div class="otop"><span class="oname">남들이 딛는 발판이 됐습니다</span></div>
+          <div class="odesc"><b class="cy">KDA를 기준선으로 삼은 후속 논문이 둘</b> 나왔습니다.
+            남이 인용해 확장하는 쪽이 진짜 기여의 증거입니다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>K3는 종합이지만 빌려온 종합은 아닙니다</b> &mdash; KDA와 AttnRes는 자체 논문·구현으로 내놓고
+    남들이 인용해 확장하는 중이고, 그것을 <b>2.8조에 실어 실제로 돌린 것</b>이 이 모델의 몫입니다.
+  </div>
+
+<script>
+/* [벤치마크, 부제, K3, 최고 다른 모델 점수, 그 모델 이름, K3가 1위인가] */
+const rows = [
+  ['AA-LCR',            '긴 문맥 회상', 74.7, 74.3, 'GPT-5.5',      true],
+  ['ProgramBench',      '프로그램 작성', 77.8, 77.6, 'Opus 4.8',     true],
+  ['SWE-Marathon',      '장기 SWE',    42.0, 40.0, 'Opus 4.8',     true],
+  ['Terminal-Bench 2.1','터미널',      88.3, 88.8, 'GPT-5.6 Sol'],
+  ['GPQA Diamond',      '과학 추론',    93.5, 94.1, 'GPT-5.6 Sol'],
+  ['HLE-Full',          '전문 지식',    43.5, 53.3, 'Fable 5'],
+  ['FrontierSWE',       '우세도',      81.2, 86.6, 'Fable 5'],
+  ['DeepSWE',           '장기 코딩',    67.5, 73.0, 'GPT-5.6 Sol'],
+];
+const host = document.getElementById('chart');
+const MAX = 100, BW = 176;
+for (const [name, sub, us, them, who, win] of rows) {
+  const d = document.createElement('div');
+  d.className = 'grp' + (win ? ' win' : '');
+  d.innerHTML = '<span class="gname"><b>' + name + '</b>' + sub + '</span>'
+    + '<span class="pair">'
+    +   '<span class="brow"><span class="bar us" style="width:'
+    +      (us / MAX * BW).toFixed(1) + 'px"></span>'
+    +      '<span class="val s">' + us.toFixed(1) + '</span>'
+    +      (win ? '<span class="who">1위</span>' : '') + '</span>'
+    +   '<span class="brow"><span class="bar th" style="width:'
+    +      (them / MAX * BW).toFixed(1) + 'px"></span>'
+    +      '<span class="val">' + them.toFixed(1) + '</span>'
+    +      '<span class="who">' + who + '</span></span>'
+    + '</span>';
+  host.appendChild(d);
+}
+</script>
+</body>
+</html>
