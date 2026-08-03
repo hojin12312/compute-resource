@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<link rel="stylesheet" href="base.css?v=f9db9358">
+<link rel="stylesheet" href="base.css?v=6b2b16d2">
 <style>
   /* 7장 도입 그림입니다 (2026-07-31 신설). 덱 7장이 "포맷과 방법을 나눕니다"라는
      산문으로 시작해 청자가 양자화가 무엇을 하는지 보기 전에 분류부터 들었습니다.
@@ -11,7 +11,15 @@
      수치는 전부 README에 있는 것입니다 — GLM-5.2 753B의 가중치는 3장 그림(vram)의
      예시와 같고(원본 1,506 · 표준 753 · 품질 한계 377 · 극한 226GB), H200 장수는
      `[^glm-spec]`, 1M 대화 하나 46.5GiB는 `[^mla-calc]`입니다.
-     KV의 ×2·×0.5는 그 46.5GiB(FP8 기준)에 정밀도 배수를 곱한 유도값이라 캡션에 밝힙니다. */
+     KV의 ×2·×0.5는 그 46.5GiB(FP8 기준)에 정밀도 배수를 곱한 유도값이라 캡션에 밝힙니다.
+
+     2026-08-03 dataviz 스킬로 막대 재작업 — 4단계(BF16→FP8→FP4→극한)는 색이 다른
+     범주가 아니라 순서형(ordinal) 크기라서, 색을 4개 따로 쓰던 것(주황·시안·보라·회색)을
+     한 색상의 밝기 램프(--c-ord-1~4, base.css)로 바꿨습니다. 두 패널이 같은 4단계를
+     공유하므로 KV 패널도 같은 t1~t3을 씁니다(패널 사이 정밀도 색이 어긋나지 않게).
+     .foot의 "KV캐시 쪽은 되펼치는 계산이 붙어 공짜가 아닙니다"는 걷어냈습니다 — 이건
+     하다마다 회전 같은 특정 KV 양자화 기법에만 해당하고(hadamard.html 참고) 양자화
+     일반의 참인 서술이 아니었습니다. */
   body { padding-top:42px; }
 
   .grip { display:flex; align-items:center; gap:14px; margin-top:20px;
@@ -20,15 +28,18 @@
   .grip b { font-size:15.5px; color:var(--c-e6edf3); font-weight:700; white-space:nowrap; }
   .grip span { font-size:12.5px; color:var(--c-9aa7b4); line-height:1.5; }
 
-  .row { display:flex; align-items:center; gap:10px; margin-top:19px; }
+  .row { display:flex; align-items:center; gap:10px; margin-top:27px; }
   .rlab { flex:0 0 96px; text-align:right; font-size:12px; color:var(--c-8b96a3); }
   .rlab b { display:block; font-size:13px; color:var(--c-c3ccd6); font-weight:700; }
-  .bar { flex:0 0 auto; height:38px; border-radius:3px; display:flex; align-items:center;
-         justify-content:flex-end; padding-right:8px; font-size:11.5px; font-weight:700; }
-  .bar.big  { background:var(--c-c47d15); color:var(--c-0d1117); }
-  .bar.std  { background:var(--c-0e8fa3); color:var(--c-0d1117); }
-  .bar.low  { background:var(--c-8b6ff0); color:var(--c-0d1117); }
-  .bar.tiny { background:var(--c-3d4650); color:var(--c-c3ccd6); }
+  /* 순서형 램프(한 색상, 밝기만 단조 변화) — 값 자체는 막대 밖 .rval에 둡니다.
+     막대 안에 글자를 넣으면 4단계마다 대비를 따로 맞춰야 해서(dataviz 스킬:
+     "텍스트는 계열색이 아니라 텍스트 토큰을 입는다") 라벨을 아예 분리했습니다.
+     끝(자라나는 쪽)만 둥글고 시작(0 기준선)은 각집니다. */
+  .bar { flex:0 0 auto; height:24px; border-radius:0 4px 4px 0; }
+  .bar.t1 { background:var(--c-ord-1); }
+  .bar.t2 { background:var(--c-ord-2); }
+  .bar.t3 { background:var(--c-ord-3); }
+  .bar.t4 { background:var(--c-ord-4); }
   .rval { flex:0 0 auto; font-size:12px; color:var(--c-8b96a3); white-space:nowrap; }
   .rval b { color:var(--c-e6edf3); font-weight:700; font-size:13px; }
 
@@ -64,17 +75,17 @@
       <div class="pdesc">GLM-5.2 753B을 올리는 데 필요한 메모리 &middot; 막대 오른쪽은 H200 141GB 몇 장</div>
 
       <div class="row"><div class="rlab">원본<b>BF16</b></div>
-        <div class="bar big" style="width:396px">1,506GB</div>
-        <div class="rval"><b>11장</b></div></div>
+        <div class="bar t1" style="width:396px"></div>
+        <div class="rval"><b>1,506GB</b> &middot; 11장</div></div>
       <div class="row"><div class="rlab">표준<b>FP8</b></div>
-        <div class="bar std" style="width:198px">753GB</div>
-        <div class="rval"><b>6장</b></div></div>
+        <div class="bar t2" style="width:198px"></div>
+        <div class="rval"><b>753GB</b> &middot; 6장</div></div>
       <div class="row"><div class="rlab">품질 한계<b>FP4</b></div>
-        <div class="bar low" style="width:99px">377GB</div>
-        <div class="rval"><b>3장</b></div></div>
+        <div class="bar t3" style="width:99px"></div>
+        <div class="rval"><b>377GB</b> &middot; 3장</div></div>
       <div class="row"><div class="rlab">극한<b>2~3비트</b></div>
-        <div class="bar tiny" style="width:59px">226GB</div>
-        <div class="rval">2장 &middot; 손실 있음</div></div>
+        <div class="bar t4" style="width:59px"></div>
+        <div class="rval"><b>226GB</b> &middot; 2장 &middot; 손실 있음</div></div>
 
       <div class="cap">한 번 압축해 두면 <b>그 파일을 그대로 배포</b>합니다 &mdash;
         받는 쪽은 압축된 것을 올리기만 하면 됩니다.</div>
@@ -85,14 +96,14 @@
       <div class="pdesc">1M 대화 <b style="color:var(--c-c3ccd6)">한 사람 몫</b> &middot; 같은 배수가 그대로 곱해집니다</div>
 
       <div class="row"><div class="rlab">원본<b>BF16</b></div>
-        <div class="bar big" style="width:330px">93GiB</div>
-        <div class="rval">&times;2</div></div>
+        <div class="bar t1" style="width:330px"></div>
+        <div class="rval"><b>93GiB</b> &middot; &times;2</div></div>
       <div class="row"><div class="rlab">표준<b>FP8</b></div>
-        <div class="bar std" style="width:165px">46.5GiB</div>
-        <div class="rval">기준</div></div>
+        <div class="bar t2" style="width:165px"></div>
+        <div class="rval"><b>46.5GiB</b> &middot; 기준</div></div>
       <div class="row"><div class="rlab">4비트<b>INT4 등</b></div>
-        <div class="bar low" style="width:83px">23GiB</div>
-        <div class="rval">&times;0.5</div></div>
+        <div class="bar t3" style="width:83px"></div>
+        <div class="rval"><b>23GiB</b> &middot; &times;0.5</div></div>
       <div class="mark">46.5GiB = K&middot;V 43.9 + 인덱서 2.6 &middot; 배수는 여기서 유도한 값입니다</div>
 
       <div class="cap">이쪽은 <b>요청마다 새로 만들어집니다.</b> 압축해 둘 파일이 없고,
@@ -109,7 +120,7 @@
   </div>
 
   <div class="foot">
-    <b>양자화는 용량과 대역폭을 함께 깎습니다.</b> 다만 KV캐시 쪽은 되펼치는 계산이 붙어 공짜가 아닙니다 &mdash; 7.2에서 그 청구서를 봅니다.
+    <b>양자화는 용량과 대역폭을 함께 깎습니다.</b>
   </div>
 </body>
 </html>

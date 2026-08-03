@@ -165,9 +165,7 @@
       .catch(function () { /* 이미지로 갑니다 */ });
   }
 
-  if (TOUCH) return;   // 여기서부터는 마우스 전용입니다
-
-  /* ── 오버레이 만들기 ─────────────────────────────────────────────────── */
+  /* ── 오버레이 및 키 바인딩 (모바일 포함 활성화) ───────────────────────── */
   var layer = document.createElement('div');
   layer.className = 'ptools';
   layer.innerHTML =
@@ -379,6 +377,7 @@
   }, { passive: true });
 
   layer.addEventListener('pointerdown', function (e) {
+    if (TOUCH || e.pointerType === 'touch') return;
     if (mode !== 'pen' && mode !== 'eraser') return;
     e.preventDefault();
     layer.setPointerCapture(e.pointerId);

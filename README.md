@@ -2,12 +2,12 @@
 
 LLM 컴퓨트 리소스 관련 잡상식을 얻어가는 자료입니다.
 
-**▶ [발표용 슬라이드로 보기](https://hojin12312.github.io/compute-resource/slides/)** — 같은 내용을 87장의 덱으로 구성했습니다.
+**▶ [발표용 슬라이드로 보기](https://hojin12312.github.io/compute-resource/slides/)** — 같은 내용을 98장의 덱으로 구성했습니다.
 · **[사용법](./slides/README.md)** (넘기기 · 레이저 포인터 · 마우스 필기 · 라이트 테마 · 발표자 노트)
 
 **▶ [읽기용 문서로 보기](https://hojin12312.github.io/compute-resource/document/)** — 같은 글을 이어서 읽는 판입니다. 왼쪽에 목차가 늘 붙어 있고, **그림은 이미지가 아니라 그 자리에서 렌더한 것**이라 **클릭하면 전체화면**으로 커져도 글자가 선명합니다(다시 클릭 또는 `Esc`로 닫힘). 라이트/다크는 오른쪽 위 버튼이나 `T`로 바꾸며, 그림도 함께 바뀝니다.
 
-*마지막 업데이트: 2026-07-31 22:10 (KST)*
+*마지막 업데이트: 2026-08-03 22:06 (KST)*
 
 ## 목차
 
@@ -479,6 +479,17 @@ MoE와 MLA를 한자리에 놓으면 **6.2부터 왜 전부 어텐션 이야기�
 50개 레이어는 1024토큰어치로 고정되고, 컨텍스트와 함께 커지는 것은 Full 레이어
 10개뿐입니다[^swa-calc].
 
+그러면 창문 밖은 어떻게 되나요? **창문 1,024토큰은 "1,024개 전을 까먹는다"는 뜻이
+아닙니다.** 막아주는 장치가 둘 있습니다[^swa-receptive].
+
+![창문 밖 이야기를 막아주는 두 장치 — 왼쪽은 릴레이로, 1층은 창문 그대로 1,024토큰이지만 아랫층이 이미 흡수한 것을 전달받아 2층 2,048 · 3층 3,072 · 4층 4,096 · 5층 5,120으로 닿는 범위가 한 창문씩 넓어지고, 1층의 100번 토큰이 창문 안 76\~99번만 보는데 그 99번은 이미 자기 창문 75\~98번을 흡수한 상태라 2층의 100번이 75번까지 간접으로 닿는다는 예가 붙어 있습니다. 오른쪽은 여섯 층에 한 번 전체 문맥을 직접 보는 Full Attention 레이어이고, 이 여섯 층 묶음이 60층에 열 번 들어가 슬라이딩 50 + Full 10이 되며 컨텍스트와 함께 커지는 KV캐시는 그 Full 10개분뿐입니다](./assets/swa_reach.webp)
+
+**릴레이**는 층을 지날 때마다 유효 시야를 한 창문씩 넓힙니다. 아랫층이 이미 흡수한
+것을 전달받기 때문이고, 5층이면 5,120토큰까지 간접으로 닿습니다. 다만 간접으로 오는
+것은 압축된 요약이라, 먼 과거의 특정 토큰을 정확히 짚는 일은 **여섯 층마다 한 번 오는
+Full Attention 레이어**가 맡습니다. 그래서 5:1 배합은 비용을 깎는 장치이면서
+동시에 **정확히 짚는 능력을 남겨 두는 장치**입니다.
+
 ### 6.3 Qwen3-Next-80B-A3B - Gated DeltaNet
 
 > "왜 전부 다 적어? 요약해"
@@ -632,7 +643,7 @@ GLM-5.2는 **KV를 잠재 벡터로 압축하고 검색의 반복을 줄인 모�
 배포합니다)[^sft]. 마지막 축에서 [3장의 계산](#3-llm을-담기-위해서는-얼마만큼의-메모리가-필요할까요)이
 현실이 됩니다 — 같은 모델인데 **H200 32장 대 B300 8장**입니다[^memory-calc].
 
-![Kimi K3의 세 축 — 첫째로 KDA가 93레이어를 69 대 24로 갈라 KV캐시가 늘어나는 층을 24개로 묶고 1M 디코딩 6.3배를 얻는 것, 둘째로 전문가 896개 점 격자에서 16개만 켜지며 전문가 개수 1.8%와 활성 파라미터 3.7%의 분모가 다르다는 것과 라우터 점수 분포의 분위수로 합격선을 매번 다시 긋는 Quantile Balancing, 셋째로 다 학습한 뒤 압축하는 방식과 처음부터 4비트를 전제로 학습하는 방식을 나란히 놓고 그 결과 1.4TB가 H200 32장 대 B300 8장으로 갈리는 것](./assets/k3_synthesis.webp)
+![Kimi K3의 세 축 — 첫째로 KDA가 93레이어를 69 대 24로 갈라 KV캐시가 늘어나는 층을 24개로 묶고 1M 디코딩 6.3배를 얻는 것, 둘째로 전문가 896개 점 격자에서 16개만 켜지며 전문가 개수 1.8%와 활성 파라미터 3.7%의 분모가 다르다는 것과 라우터 점수 분포의 분위수로 합격선을 매번 다시 긋는 Quantile Balancing, 셋째로 다 학습한 뒤 압축하는 방식과 처음부터 4비트를 전제로 학습하는 방식을 나란히 놓고 그 결과 1.4TB(배포 원본 실측 1,560.9GB)가 노드 단위로 H200 32장 대 B300 8장으로 갈리는 것](./assets/k3_synthesis.webp)
 
 이 4배는 "칩이 덜 필요해진다"가 아니라 **어떤 칩이 필요한지가 바뀐다**는 뜻입니다.
 H200도 B300도 Nvidia 제품이니까요. 당시 시장이 두려워한 것은 세대 교체가 아니라
@@ -644,8 +655,48 @@ Moonshot 자신은 가속기 **64장 이상**의 슈퍼노드를 권장합니다
 게 [4장의 KV캐시](#4-llm에게-일을-시키려면-얼마만큼의-메모리가-필요할까요)입니다 — 사용자마다 따로 드는 그 청구서요.
 **용량 청구서는 8장으로 끝나지만 KV캐시 청구서는 거기서 시작합니다.**
 
+#### 그 성적표에 빠진 것 — 폐쇄 모델은 최상위 능력을 가둡니다
+
+**같은 표에 올랐다는 사실보다 중요한 것이 있습니다.** 2026년 6월 이후 미국 3사는
+최상위 사이버 능력을 **신원과 관할로 가두는 쪽**으로 갔습니다. Anthropic은 같은 모델을
+둘로 갈라, 세이프가드를 얹은 **Fable 5**만 일반 공개하고 세이프가드를 뗀 **Mythos 5**는
+미국 정부와 함께 운영하는 Project Glasswing 참여자에게만 줍니다. OpenAI는 GPT-5.6 세 모델
+전부를 Preparedness Framework의 **High capability**(사이버 + 생물·화학)로 지정하고 더 열린
+구성을 Trusted Access for Cyber 심사로 돌렸습니다. Google의 Gemini 3.5 Flash Cyber는
+**정부와 신뢰 파트너 전용**입니다[^frontier-gating].
+
+그 대가가 사용자 쪽에 나타납니다. Fable 5는 세 영역(사이버보안 · 생물·화학 · 증류)의
+분류기가 걸리면 응답을 **Opus 4.8이 대신** 내는데, Anthropic은 이 분류기를 **일부러 양성
+요청에도 걸리게** 설정했다고 밝혔습니다 — 사용자는 그 안전 여유를 "모델이 온당하고 무해한
+요청을 거부하는 것"으로 경험한다고 자기 글에 적었습니다. 위 표에서 K3와 벌어진 세 항목의
+상대가 대개 Fable 5인데, 정작 그 모델은 **일상적인 코딩·디버깅에서 양성 요청을 더 자주
+걸러 내는** 상태입니다[^fable-gating].
+
+**오픈웨이트에는 이 층이 없습니다.** K3가 더 관대해서가 아니라, 가중치를 받아 자기
+클러스터에서 돌리면 분류기·신원 게이트·관할 제한이 **개입할 자리가 없기** 때문입니다.
+영국 AISI는 같은 것을 반대편에서 적습니다 — 한 번 공개되면 세이프가드를 떼어낼 수 있고
+사본이 감시 밖의 사설 시스템에서 돌 수 있으므로, 그 선택지가 영구히 사라진다는
+것입니다[^open-weight-cyber]. **"가중치째 받는다"가 뜻하는 것이 이것이고**, 그 자유의
+대가는 [9장](#9-ai-소버린)에서 다시 나옵니다.
+
 
 ## 7. Quantization
+
+> "구조는 그대로 두고, 값 하나를 몇 비트에 담을지만 바꿉니다"
+
+6장의 기법들은 모델의 **구조**를 바꿔 청구서를 깎았습니다. 양자화는 구조를
+건드리지 않습니다. 파라미터 하나와 KV 값 하나를 몇 비트에 담을지만 바꾸므로
+**6장의 기법들과 겹쳐 쓸 수 있습니다** — Kimi K3가 KDA와 MXFP4를 함께 쓰는 것이
+그 예입니다. 그리고 [3장의 용량 청구서](#3-llm을-담기-위해서는-얼마만큼의-메모리가-필요할까요)와
+[4장의 KV캐시 청구서](#4-llm에게-일을-시키려면-얼마만큼의-메모리가-필요할까요) **양쪽을
+동시에 깎는 손잡이는 이 문서에서 이것뿐입니다.**
+
+![양자화는 압축이고 두 청구서에 함께 듣는다는 그림 — 왼쪽은 GLM-5.2 753B을 올리는 데 필요한 메모리가 BF16 1,506GB에서 FP8 753GB, FP4 377GB, 극한 2\~3비트 226GB로 줄며 H200이 11장에서 6장·3장·2장으로 내려가는 막대, 오른쪽은 1M 대화 한 사람 몫 KV캐시가 BF16 93GiB에서 FP8 46.5GiB, 4비트 23GiB로 같은 배수만큼 줄어드는 막대이고, 아래에는 가중치는 오프라인에서 한 번만 하면 되니 자리마다 비트를 다르게 줄 수 있지만 KV캐시는 무엇이 들어올지 모르므로 전체에 같은 비트를 쓴다는 갈림이 놓여 있습니다](./assets/quant_two_bills.webp)
+
+두 청구서의 **성질이 다릅니다.** 가중치는 한 번 압축해 두면 그 파일을 그대로
+배포하므로, 미리 재 보고 **자리마다 비트를 다르게** 줄 수 있습니다. KV캐시는
+요청마다 새로 만들어져 압축해 둘 파일이 없고, 대신 **줄인 만큼 동시 사용자를
+삽니다.** 그 갈림이 7.1과 7.2의 구성입니다.
 
 ### 7.1 Model 양자화
 
@@ -657,22 +708,23 @@ Moonshot 자신은 가속기 **64장 이상**의 슈퍼노드를 권장합니다
 
 - **BF16 / FP16**: 원본 배포 정밀도. 지수부 비트 수만 다릅니다
   (BF16이 더 넓은 다이나믹 레인지, FP16이 더 높은 정밀도).
-- **FP8** (E4M3/E5M2): 호퍼(H100/H200)부터 네이티브 가속. 대부분
-  무손실급 품질.
-- **FP4 계열**: 블랙웰부터 네이티브 가속.
-  - **MXFP4**: OCP(Open Compute Project) 표준. 블록 크기 32, 스케일
-    factor는 E8M0(8비트 지수). GPT-OSS가 이 포맷으로 배포되며
-    대중화됐고, 가중치만 양자화(weight-only)하면 암페어 GPU에서도
-    구동은 가능합니다(단, 암페어·호퍼는 FP4 텐서코어가 없어 네이티브
-    가속이 아니라 에뮬레이션 방식이며, 네이티브 가속은 앞서 설명한
-    대로 블랙웰부터 유효합니다).
-  - **NVFP4**: NVIDIA 자체 포맷. 블록 크기 16(더 촘촘), 스케일 factor는
-    FP8 E4M3(더 정밀). 같은 4비트여도 MXFP4보다 오차가 작다고 보고되지만,
-    네이티브 가속은 블랙웰 전용입니다.
+- **INT8 / INT4**: 전통적 정수 양자화. 암페어(A100)부터 텐서코어가 가속하며, INT4는 AWQ·GPTQ 사후 양자화에 주로 사용됩니다.
+- **FP8** (E4M3/E5M2): 호퍼(H100/H200)부터 네이티브 가속. 대부분 무손실급 품질.
+- **MXFP8 / MXFP4**: OCP(Open Compute Project) 표준 마이크로스케일링. 32개 블록마다 E8M0 스케일을 적용합니다.
+  - **MXFP4**: GPT-OSS가 이 포맷으로 배포되며 대중화됐고, Kimi K3의 배포 원본입니다.
+- **NVFP4**: NVIDIA 자체 포맷. 블록 크기 16(더 촘촘), 스케일 factor는 FP8 E4M3(더 정밀). 같은 4비트여도 MXFP4보다 오차가 작다고 보고되지만, 네이티브 가속은 블랙웰 전용입니다.
+- **INT2 / BitNet**: BitNet 1.58b 등 삼진법 및 2비트 정수 포맷. 극단적 경량화 연구 분야에서 활발히 연구되고 있습니다.
 
 위 블록 크기·스케일 포맷 수치는 NVIDIA 공식 기술 블로그("Introducing
 NVFP4 for Efficient and Accurate Low-Precision Inference",
 developer.nvidia.com, 직접 fetch 확인)의 비교표 기준입니다.
+
+![주요 정밀도 포맷 아홉의 비트 구성과 네이티브 가속 세대 — 칸 하나가 1비트이고 부호·지수·맨티사·정수로 갈라 BF16(1·8·7)과 FP16(1·5·10)이 같은 16비트를 다르게 배분하는 것, INT8·INT4·INT2 정수 포맷, FP8 E4M3는 텐서 단위 스케일 하나, MXFP8·MXFP4는 32개 블록마다 E8M0, NVFP4는 16개 블록마다 FP8(E4M3) 스케일을 두는 것을 보여줍니다. 오른쪽 열은 텐서코어가 되돌리지 않고 그대로 계산하는 세대로, BF16·FP16·INT8·INT4는 암페어부터, FP8은 호퍼부터, 블록 스케일을 쓰는 셋 및 INT2/BitNet은 블랙웰부터입니다](./assets/precision_formats.webp)
+
+**블록 스케일이 세대를 가릅니다.** FP8의 눈금은 텐서 하나에 하나인데 MX·NVFP4는
+수십 개마다 눈금을 따로 두고, 그 눈금을 텐서코어가 직접 읽어야 하므로 네이티브
+가속이 블랙웰부터입니다. K3를 H200에서 돌리려면 FP8로 올려야 하는 이유가
+이것입니다[^memory-calc].
 
 위 두 FP4 포맷은 보통 학습이 끝난 모델에 사후(post-training)로
 적용됩니다. 반면 Kimi K3는 Supervised Fine-Tuning (SFT) 단계부터
@@ -695,6 +747,12 @@ Quantized Aware Training (QAT)로 MXFP4/MXFP8 정밀도에 맞춰 학습해
 원리는 단순합니다. **오차에 민감한 곳에는 비트를 더 주고, 둔감한 곳에서
 회수해 목표 평균 용량을 맞춥니다.**
 
+![균일 정밀도와 혼합 정밀도를 같은 평균 4비트에서 비교한 막대그래프 — 세로축은 그 텐서에 준 비트 수이고 점선이 평균입니다. 왼쪽 균일 정밀도는 열두 텐서가 모두 4비트로 평평하고, 오른쪽 혼합 정밀도는 임베딩 6비트·어텐션 Q·K·V·O와 출력층 5비트로 올리고 MoE 전문가 FFN을 3비트로 내려 들쭉날쭉하지만 두 패널의 점선 높이는 같아 용량이 같다는 것을 보여줍니다. 아래에는 균일은 만들기 쉽고 어디가 민감한지 몰라도 되는 대신 민감한 자리도 함께 눌리고, 혼합은 같은 용량에서 품질이 오르는 대신 민감도를 미리 재 봐야 한다는 대비가 붙어 있습니다](./assets/uniform_vs_mixed.webp)
+
+**둘의 용량은 같습니다.** 다른 것은 배분의 모양이고, 대가는 "어디가 민감한지"를
+모델마다 한 번씩 오프라인으로 재 봐야 한다는 것입니다. 그 탐색을 누가 어떻게
+하느냐가 아래 세 이름의 차이입니다.
+
 - **GGUF `Q4_K_M`**: 로컬에서 가장 자주 만나는 실전 사례입니다. 대부분은
   Q4로 두되 어텐션·출력처럼 민감한 텐서를 Q5/Q6로 보호합니다.
 - **EXL2**: 각 행렬을 여러 비트로 시험한 뒤, 목표 평균 BPW 안에서 최대
@@ -705,7 +763,7 @@ Quantized Aware Training (QAT)로 MXFP4/MXFP8 정밀도에 맞춰 학습해
 즉 Dynamic 2.0은 혼합 정밀도의 출발점이 아니라, 이미 널리 쓰이던
 **비트 배분을 모델별로 자동화한 최신 사례**입니다[^mixed-precision].
 
-![모델 양자화 지도 — 정밀도 포맷, 보정 방법, 혼합 정밀도의 층위와 GGUF의 Q·K·I 양자화 계열](./assets/quantization_map.webp)
+![모델 양자화 지도 — 양자화가 서로 다른 세 층(포맷·보정·배분)임을 화살표로 잇는 그림. 1층 정밀도 포맷(BF16·FP8·FP4)은 몇 비트로 담을지만 정하고 어느 값을 줄일지는 다음 층의 일이며, 2층 보정 방법은 AWQ(활성값이 큰 채널을 스케일로 보호)·AutoRound(블록별 라운딩 최적화)로 같은 비트 안에서 오차만 줄이고, 3층 예산 배분(Q4_K_M·EXL2·Dynamic 2.0)에서 처음으로 자리마다 비트 자체가 달라진다는 것을 보여줍니다. 하단에는 3층을 섞어 부르면 대화가 엉킨다는 경고가 있습니다](./assets/quantization_map.webp)
 
 #### 실전에서 만나는 이름들: GGUF의 세 계열
 
@@ -966,7 +1024,7 @@ TTFT와 TPOT를 둘 다 지키려면 배치와 청크 예산을 줄이거나 GPU
 |---|---|---|
 | 1. 하드웨어 | GPU 수출 | Blackwell 계열 중국 수출 차단. H20·성능을 깎은 H200조차 케이스별 라이선스와 관세를 거쳐야 통과[^diffusion-rule] |
 | 2. 모델 설계 | (통제가 아니라 **결과**) | 제약이 MoE·선형 어텐션·KV캐시 압축·네이티브 저비트 양자화를 낳음 |
-| 3. 모델 자체 | 가중치 배포 | 중국은 최신 모델의 해외 접근 제한을 논의, 미국은 국가안보 사유로 배포를 중단한 사례[^ai-sovereign] |
+| 3. 모델 자체 | 가중치 배포 | 중국은 최신 모델의 해외 접근 제한을 논의[^ai-sovereign], 미국은 자국 모델에 **수출통제 지시**를 걸어 모든 외국인의 접근을 한때 차단[^us-export-directive] |
 
 2단계가 이 문서의 6장 전체입니다. 수입이 막힌 중국은 Huawei Ascend(910C, 950
 시리즈)로 인프라를 자체 조달하는 한편, 연산량과 메모리를 극단적으로 아끼는
@@ -978,6 +1036,22 @@ TTFT와 TPOT를 둘 다 지키려면 배치와 청크 예산을 줄이거나 GPU
 뒤처진 모델만 공개한다** — 오픈웨이트조차 계층화 대상이 되고 있습니다.
 
 ![하드웨어 → 모델 설계 → 모델 자체로 넓어지는 통제의 범위](./assets/ai_sovereignty.webp)
+
+**그 계층화가 중국만의 일이 아닙니다.** 2026년 6월 Anthropic은 같은 모델을 둘로 갈라,
+세이프가드를 얹은 Fable 5만 일반 공개하고 세이프가드를 뗀 Mythos 5는 미국 정부와 함께
+운영하는 심사 프로그램 참여자에게만 주었습니다. 열흘 뒤 미국 정부는 **그 두 모델에 대한
+모든 외국인의 접근**을 수출통제 지시로 중단시켰습니다 — 자국 기업의 자국 모델인데도
+국적으로 접근을 갈랐고, Anthropic 소속 외국인 직원까지 포함이었습니다[^us-export-directive].
+[6.6](#66-kimi-k3---kimi-delta-attention-kda)에서 본 신원·관할 게이트가 그 연장이며,
+같은 구조를 OpenAI와 Google도 씁니다[^frontier-gating].
+
+**그리고 통제 대상에 "그 칩을 위한 소프트웨어"가 들어왔습니다.** Fable 5가 막는 목록에는
+프론티어급 LLM 데이터 파이프라인과 함께 **특정 비표준 칩을 위한 커널 개발**이 있습니다.
+Anthropic이 밝힌 이유는 이 문서의 논지를 그대로 되풀이합니다 — 미국과 동맹은 프론티어
+칩과 **그것을 제 성능으로 돌리는 고도로 최적화된 소프트웨어** 양쪽에서 우위를 갖고 있고,
+그 우위가 깎이지 않게 한다는 것입니다[^fable-gating]. 1단계가 칩을 막고 3단계가 가중치를
+막는 사이, **칩과 가중치를 잇는 커널까지** 통제 지도에 올랐습니다 — [9.4에서 볼 엔진과
+커널](#94-그-하드웨어에서-무엇으로-돌리나)이 왜 소버린의 일부인지가 여기서 분명해집니다.
 
 자국 GPU도 자국 모델도 없는 국가는 세 단계 모두에서 남의 결정에 종속됩니다.
 "모든 나라가 자기 자신의 AI를 만들어야 하는 시대"라는 말은 그런 뜻입니다.
@@ -1267,6 +1341,15 @@ Feynman 세대의 LP40 LPU는 그 다음 버전으로 보입니다[^gpu-roadmap-
 - ['독파모' 1차서 네이버·NC AI 동반 탈락 (ZDNet Korea, 2026-01-15, 기사 전문 확인)](https://zdnet.co.kr/view/?no=20260115150326) — 네이버클라우드 독자성 미충족 탈락 사유 원문, LG AI연구원·SK텔레콤·업스테이지 2차 진출, 정예팀 추가 공모 방침 확인
 - [Anthropic rents Colossus 1 for $1.25 billion/month (ActuIA)](https://www.actuia.com/en/news/anthropic-rents-colossus-1-for-125-billionmonth-on-an-xai-park-capped-at-11-capacity/) — 초기 보도의 Colossus 1 약 22만 장 표기는 이후 공개된 SpaceX 공식 투자설명서의 **Colossus I·II 합계 약 32만 5천 장**으로 정정해 본문에 반영
 
+- [Claude Fable 5 and Claude Mythos 5 (Anthropic 공식, 2026-06-09, 직접 fetch 확인)](https://www.anthropic.com/news/claude-fable-5-mythos-5) — 같은 모델을 세이프가드 있는 Fable 5와 해제한 Mythos 5로 갈라 낸 발표. 분류기 세 영역(사이버보안·생물화학·증류), 폴백 대상은 Opus 4.8, 트리거는 **세션 5% 미만**, Mythos 5는 Project Glasswing 전용. 가격 $10 / $50 — [6.6장](#66-kimi-k3---kimi-delta-attention-kda)·[9.1장](#91-국가-단위의-ai-소버린) 근거
+- [Statement on the US government directive to suspend access to Fable 5 and Mythos 5 (Anthropic 공식, 2026-06-12, 직접 fetch 확인)](https://www.anthropic.com/news/fable-mythos-access) — 수출통제 지시로 **모든 외국인**의 접근이 차단된 경위와 Anthropic의 공개 반박. *"safeguards ... overly broad"* 자체 인정 문장의 출처
+- [Redeploying Claude Fable 5 (Anthropic 공식, 2026-06-30 해제, 직접 fetch 확인)](https://www.anthropic.com/news/redeploying-fable-5) — "safety margin"을 일부러 넓게 잡았다는 설계 설명, 새 분류기가 **일상 코딩·디버깅에서 양성 요청을 더 자주 걸러 낸다**는 자체 서술, 그리고 *"강한 규제로 성문화되어야 한다"* 는 맺음
+- [Executive Order 14409, Promoting Advanced Artificial Intelligence Innovation and Security (whitehouse.gov, 2026-06-02, 원문 직접 확인)](https://www.whitehouse.gov/presidential-actions/2026/06/promoting-advanced-artificial-intelligence-innovation-and-security/) — Sec. 3(a) 기밀 벤치마킹과 "covered frontier model" 지정(NSA 국장), Sec. 3(b) 자발적 프레임워크, **Sec. 3(c) 강제 라이선싱 명시적 배제**. "규제 강화"로 요약하면 안 되는 근거
+- [GPT-5.6 System Card (OpenAI Deployment Safety Hub, 직접 fetch 확인)](https://deploymentsafety.openai.com/gpt-5-6/cyber-capability-evaluations-threshold-high) — Sol·Terra·Luna 셋 다 Preparedness Framework **High capability**(사이버 + 생물화학), 사이버 세이프가드가 이전보다 약 10배 차단, 약한 모델로 재시도하는 폴백, Trusted Access for Cyber와 "high-risk jurisdictions" 제한
+- [Introducing Gemini 3.5 Flash Cyber (Google DeepMind, 2026-07-21, 직접 fetch 확인)](https://deepmind.google/blog/introducing-gemini-3-5-flash-cyber/) — *"정부와 신뢰 파트너 전용"* 제한 파일럿. 결과 표 각주에 **Opus 4.6 이후 경쟁 모델은 거부 때문에 표에서 빠졌다**고 적혀 있어, 거부 성향의 제3자 증거로 씁니다
+- [How Far Behind the Frontier are Leading Open Weight Models on Cyber? (UK AI Security Institute, 직접 fetch 확인)](https://www.aisi.gov.uk/blog/how-far-behind-the-frontier-are-leading-open-weight-models-on-cyber) — 공개된 뒤에는 세이프가드 제거·재배포·감시 밖 실행이 가능해 통제 선택지가 영구히 사라진다는 서술. [6.6장](#66-kimi-k3---kimi-delta-attention-kda)의 "가중치째 받는다"의 반대편
+- [It blocked us at 'hello!' Anthropic Fable 5 refusing innocuous prompts (The Register, 2026-06-10, 직접 fetch 확인)](https://www.theregister.com/ai-and-ml/2026/06/10/anthropic-claude-fable-5-refuses-innocuous-prompts/5253754) — Claude Code 이슈 번호가 붙은 오탐 사례들과 Anthropic의 후속 사과. **비표준 칩 커널 개발이 세이프가드 대상**이라는 Anthropic 성명의 출처이기도 합니다([9.1장](#91-국가-단위의-ai-소버린))
+
 - [Artificial Analysis 모델 리더보드 (artificialanalysis.ai, 직접 fetch 확인)](https://artificialanalysis.ai/leaderboards/models) — Intelligence Index v4.1 점수를 직접 확인(정수 반올림). [benchlm.ai 집계](https://benchlm.ai/benchmarks/artificialAnalysis)의 2026-07-26 스냅샷(소수 첫째 자리)과 11개 모델 전부 일치해 교차검증 — [1.2장](#12-그런데-모델의-격차는-36점입니다) 근거
 - [Chinese AI models have lagged the US frontier by 7 months on average since 2023 (Epoch AI, 직접 fetch 확인)](https://epoch.ai/data-insights/us-vs-china-eci) — Epoch Capabilities Index 기준 평균 7개월(최소 4·최대 14개월) 시차. 최신 데이터 시점 2026-01-02라 Kimi K3는 미반영
 
@@ -1278,7 +1361,7 @@ Feynman 세대의 LP40 LPU는 그 다음 버전으로 보입니다[^gpu-roadmap-
 - Kimi K3 자체 발표 벤치마크(Terminal-Bench 2.1 88.3, DeepSWE 67.5, ProgramBench 77.8, FrontierSWE 81.2, SWE Marathon 42.0) 및 하네스 혼용 지적(NxCode) — 2차 매체·블로그 수준. 하네스가 뒤섞여 있어 **본문 표에는 쓰지 않았고**, 단일 하네스인 Artificial Analysis 지수만 사용
 - [Unsloth Dynamic 2.0 GGUFs 공식 문서](https://unsloth.ai/docs/basics/unsloth-dynamic-2.0-ggufs) — 검색 스니펫으로만 확인
 - ~~Kimi K3 활성 파라미터 정확한 수치 — 접근 실패(2026-07-22)~~ → **2026-07-28 해소.** 모델 카드와 공식 블로그를 직접 fetch해 활성 104B·레이어 구성·QAT 정밀도를 1차 확인했고, 위 "직접 확인" 목록으로 옮겼습니다. 2차 보도가 돌던 "활성 약 50B"는 **틀린 값**이었습니다(전문가 FFN분만 센 수치로 보입니다)
-- Kimi K3의 서빙 구성 "B300 8장 대 H200 32장" — 가중치 1.4TB와 각 GPU의 메모리·FP4 지원 여부로부터 이 문서가 **직접 유도한 값**이며 Moonshot 공식 수치가 아닙니다. Moonshot 자신은 "가속기 64장 이상" 권장만 밝히고 있어, 본문에서도 8장은 "가중치가 들어가는 최소"로만 적었습니다
+- Kimi K3의 서빙 구성 "B300 8장 대 H200 32장" — 가중치 실측 1,560.9GB와 각 GPU의 메모리·FP4 지원 여부로부터 이 문서가 **직접 유도한 값**이며 Moonshot 공식 수치가 아닙니다. **장수는 용량 상한이 아니라 노드 단위(8·16·32장)로 올린 값**입니다 — 용량만 보면 B300 6장·H200 20장입니다[^memory-calc]. Moonshot 자신은 "가속기 64장 이상" 권장만 밝히고 있어, 본문에서도 8장은 "가중치가 들어가는 최소"로만 적었습니다
 - GLM-5.2의 MTP 수락 길이 단계별 수치(5.10 → 5.29 → 5.47) — 기술 리포트·모델 카드 기반 보도로 확인. 모델 카드의 "최대 20% 향상" 요약은 1차 확인
 - `llama.cpp` GGUF 세대 계보와 IQ-quants의 중요도 행렬 메커니즘, `IQ4_XS`/`Q4_K_M` bpw 수치 — llama.cpp 저장소 문서와 커뮤니티 정리 기반. **"IQ-quants에 하다마드 회전이 포함된다"는 주장은 1차 확인 실패라 본문에서 제외**했습니다
 - MLX 4비트(`group_size=64`)와 GGUF `Q4_K_M`의 파일 크기·속도 비교 — 커뮤니티 측정만 존재하고 **출처끼리 우열이 엇갈려**, 본문에는 구조적 차이만 적고 승패는 쓰지 않았습니다
@@ -1334,7 +1417,7 @@ NVL72 공식 수치, Groq 3 LPU 통합 등)는 복수 출처로 재확인됐습�
 [^memory-shortage]: “메모리를 쓰는 모든 제품이 같은 폭으로 올랐다”고 일반화하지 않고, **실제로 인상이 공표된 제품의 미국 기준 정가**만 적었습니다. NVIDIA는 2026년 2월 23일 공지에서 DGX Spark를 $3,999 → **$4,699**로 올리며 사유를 “업계 전반의 메모리 공급 제약”이라고 밝혔고 사양은 그대로 뒀습니다. Apple은 2026년 6월 25일 MacBook Air $1,099 → **$1,299**, MacBook Pro $1,699 → **$1,999**, MacBook Neo $599 → **$699**, iPad Air 128GB $599 → **$749**, iPad Pro Wi-Fi 256GB $999 → **$1,199**로 인상하며 “AI 데이터센터의 급격한 확장이 메모리·스토리지 수요를 유례없이 끌어올렸다”고 설명했습니다. 구성·지역에 따라 실제 가격은 다릅니다. 전망치로는 Gartner가 2026년 말까지 DRAM·SSD 합산 130% 상승과 그에 따른 PC 평균가 17%·스마트폰 13% 상승을 제시했습니다(gartner.com이 크롤러를 차단해 원문 대신 동일 수치를 보도한 매체 네 곳으로 교차확인). 소비자용 그래픽카드 소매가 급등도 널리 보도됐지만 **수치가 출처마다 크게 엇갈리고 1차 확인에 실패해 본문과 그림에서 제외**했습니다.
 [^native-precision]: FP16 텐서코어 자체는 볼타 세대부터 있었지만, 이 문서는 최근 세대 중 A 시리즈(암페어)를 기준점으로 씁니다. 여기서 말하는 것은 **네이티브 가속** 여부이지 해당 정밀도의 값을 메모리에 올릴 수 있느냐가 아닙니다. 예를 들어 호퍼에도 FP4 가중치를 적재할 수는 있지만 FP4 텐서코어가 없어 그대로 연산하지 못하고 상위 정밀도로 되돌려야 합니다 — [^memory-calc]의 Kimi K3 사례가 그 경우입니다.
 [^model-table]: 그림의 15개 모델은 2026년 출시 모델이며 파라미터 수 오름차순입니다. 2025년에 나온 Meta Llama 4, xAI Grok은 2026년 모델이 아니라 제외했습니다. **A.X K2(688B-A33B, SK Telecom)와 K-EXAONE 2.0(750B-A37B, LG AI연구원)은 2026년 7월 31일 세션에서 추가했습니다** — 둘 다 Hugging Face 모델 카드와 `config.json`을 직접 확인했습니다. A.X K2는 총 688B / 활성 33B, 라우팅 전문가 256 + 공유 1 중 토큰당 8 + 공유 1, 61레이어(dense 1 + MoE 60), 컨텍스트 262,144, Apache-2.0, 2026-07-29 공개입니다. **막대는 다른 모델과 같은 기준(총 파라미터 = FP8 GB)으로 그렸지만, A.X K2는 사전학습부터 네이티브 FP8(MXFP8 E4M3)이라 배포 체크포인트가 이미 FP8이고 실측 가중치가 647 GiB입니다** — 688GB 어림값과 약 4% 차이이며, 이 문서가 가중치를 실측으로 확인한 다른 사례(`[^v4-spec]`)와 같은 성격의 차이입니다. K-EXAONE 2.0은 실측이 **1,498.7GB(17개 파일)** 로 파라미터당 정확히 2.0바이트라 **배포 원본이 BF16**입니다 — FP8로 내리면 막대의 750GB가 됩니다. Solar Open 2(250B-A15B, Upstage)는 2026년 7월 28일 세션에서 Hugging Face `upstage/Solar-Open2-250B` 모델 카드와 `config.json`을 직접 확인해 추가했습니다 — 총 250,287,794,944개(약 250B), 활성 15B, 라우팅 전문가 320 + 공유 1 중 토큰당 8개 활성, 48레이어, 1M 컨텍스트, NoPE, 한국 정부의 소버린 AI 파운데이션 모델 과제 산출물입니다. 오픈 웨이트 모델은 Hugging Face `config.json`을 직접 fetch해서 총 파라미터를 재계산·교차검증했고, 전부 신고치와 근접한 범위로 확인됨. 검증 방법과 그 외 세부 사항(모델별 출처, 신뢰도, 제외 근거 등)은 [참고 자료](#11-참고-자료) 섹션 참고.
-[^memory-calc]: GLM-5.2(753B)를 FP8로 서빙하려면 단순 계산으로 약 753GB의 메모리가 필요합니다. 회사 추론 머신의 대부분을 차지하는 NVIDIA H200 그래픽카드는 한 장에 141GB의 HBM3e 메모리를 탑재하고 있습니다. 네 장이면 564GB라 부족하고, 여덟 장이면 1,128GB가 되므로 GLM-5.2 FP8 모델을 서빙할 수 있습니다. Kimi K3(2.8T)는 SFT 단계부터 QAT를 거쳐 가중치를 MXFP4(4비트, 파라미터당 0.5바이트)로 네이티브 배포합니다. 하지만 MXFP4/NVFP4 네이티브 가속은 블랙웰부터 지원되고([3장의 네이티브 정밀도 각주](#3-llm을-담기-위해서는-얼마만큼의-메모리가-필요할까요) 참고), 호퍼(H200)에는 FP4 텐서코어가 없어 MXFP4 가중치를 그대로 로드해 돌릴 수 없습니다. 따라서 H200에서는 FP8로 변환해 서빙해야 하며, 이때 필요한 메모리는 파라미터당 1바이트인 약 2.8TB로, H200 8장(1,128GB)은 물론 16장(2,256GB)도 부족하고 32장(약 4.5TB)이 있어야 합니다. 반면 B300(Blackwell Ultra)은 장당 288GB이고 MXFP4/NVFP4를 네이티브 가속하므로, 저장 용량만 필요한 약 1.4TB 기준 8장(2,304GB, 약 2.3TB)이면 서빙할 수 있습니다(KV캐시 등 오버헤드는 별도).
+[^memory-calc]: GLM-5.2(753B)를 FP8로 서빙하려면 단순 계산으로 약 753GB의 메모리가 필요합니다. 회사 추론 머신의 대부분을 차지하는 NVIDIA H200 그래픽카드는 한 장에 141GB의 HBM3e 메모리를 탑재하고 있습니다. 네 장이면 564GB라 부족하고, 여덟 장이면 1,128GB가 되므로 GLM-5.2 FP8 모델을 서빙할 수 있습니다. Kimi K3(2.8T)는 SFT 단계부터 QAT를 거쳐 가중치를 MXFP4로 네이티브 배포합니다. 하지만 MXFP4/NVFP4 네이티브 가속은 블랙웰부터 지원되고([3장의 네이티브 정밀도 각주](#3-llm을-담기-위해서는-얼마만큼의-메모리가-필요할까요) 참고), 호퍼(H200)에는 FP4 텐서코어가 없어 MXFP4 가중치를 그대로 로드해 돌릴 수 없습니다. 따라서 H200에서는 FP8로 변환해 서빙해야 하며, 이때 필요한 메모리는 파라미터당 1바이트인 약 2.8TB입니다. 반면 B300(Blackwell Ultra)은 장당 288GB이고 MXFP4/NVFP4를 네이티브 가속하므로 배포 원본을 그대로 올립니다 — **가중치 실측은 1,560.9GB**입니다(`[^k3-spec]`의 safetensors 합산). 2.8T × 0.5바이트 = 1.4TB보다 큰 것은 MXFP4가 데이터 4비트에 32개마다 E8M0 스케일 8비트를 더해 실은 파라미터당 4.25비트이고, 임베딩·출력층이 고정밀로 남기 때문입니다(실측은 파라미터당 0.5575바이트 — `[^k3-spec]`에 셈을 적었습니다). **K3의 8장·32장은 용량 상한이 아니라 노드 단위입니다** — 서버 노드가 8·16·32장 단위로 구성되므로 용량으로 남는 장수를 그대로 살 수 없습니다. 그래서 B300은 용량으로 6장(1,728GB)이면 담기지만 **8장**(2,304GB)이고, H200은 용량으로 20장(2,820GB)이면 담기지만 **32장**(약 4.5TB)입니다. FP8 변환으로 용량이 1.8배가 되고 노드 단위가 그것을 4배로 벌립니다. **반면 6.4·6.5의 스펙 카드는 용량 기준입니다** — V4 Pro의 "B300 3장이 0.7GB 모자라 4장"이나 GLM-5.2의 "H200 6장·B300 3장"은 노드로 올리면 둘 다 8장이 되어 그 논지가 사라지기 때문입니다(`[^v4-spec]`·`[^glm-spec]`). 어느 기준이든 **가중치만 센 것이고 서빙 가능 구성이 아닙니다** — KV캐시·활성값·통신 버퍼는 별도입니다.
 [^quant-size]: 정확히는 가중치 외에 임베딩·정규화 계수 등 부수적인 파라미터와 실행 시 오버헤드가 붙어 실제 사용량은 이보다 조금 큽니다. 다만 "1B = 1GB"라는 어림값은 어느 자리에서 계산해도 자릿수를 틀리지 않게 해주는 실무 기준선이라 그대로 쓸 만합니다.
 [^node-budget]: **노드 한 대의 메모리 예산은 이 문서가 유도한 값입니다**(2026-07-31). 나누는 틀은 [SGLang 공식 문서](https://docs.sglang.io/docs/advanced_features/hyperparameter_tuning)에서 그대로 가져왔습니다 — *"Total memory usage = model weights + KV cache pool + CUDA graph buffers + activations"*, 그리고 `mem_fraction_static = (model weights + KV cache pool) / GPU memory capacity`입니다. 같은 문서가 활성값 몫으로 **GPU당 5\~8GB**를 남기라고 권고하고, 서버가 뜨기 직전 로그의 `available_gpu_mem`이 그 범위면 적정이라고 확인 방법까지 적습니다. 이 엔진을 기준으로 삼은 이유는 [5장](#5-llm-모델의-연산-프리필과-디코딩)과 6.5의 8×H200 실측이 전부 SGLang 구성이기 때문입니다[^h200-bench]. **계산**: 총량 `141GB × 8 = 1,128GB`, 가중치 `753GB`(장당 94.125GB), 활성값·CUDA 그래프·여유를 권고 상한인 장당 8GB(합 64GB)로 잡으면 KV캐시 풀은 `1,128 − 753 − 64 = 311GB`입니다. **이건 설정을 최대로 올렸을 때의 상한입니다.** 권고 하한 5GB/장이면 335GB로 늘고, 엔진이 자동으로 잡는 기본값은 더 보수적입니다 — 한 사용자 보고([sglang 이슈 #29092](https://github.com/sgl-project/sglang/issues/29092), **2차**)의 관측값 `mem_fraction_static ≈ 0.828`이면 KV는 약 181GB입니다. vLLM으로 계산하면 또 다릅니다: 공식 문서의 `--gpu-memory-utilization` **기본값은 0.92**이고(널리 인용되는 0.9는 옛 버전입니다) 나머지 8%는 조각화 완충이라, 장당 11.3GB가 실행기 밖에 남아 KV는 약 245GB가 됩니다. **사람 수**는 `[^mla-calc]`의 토큰당 KV로 나눈 것입니다 — 311GB = 289.6GiB이므로 64K 대화(2.9GiB) 약 100명, 128K(5.81GiB) 약 50명, 256K(11.6GiB) 약 25명, 1M(46.5GiB) 6명입니다(10진 GB와 2진 GiB를 섞지 않도록 환산했습니다). **교차 검증 둘**: [NVIDIA Dynamo 공식 레시피](https://docs.nvidia.com/dynamo/dev/recipes/glm-5-2)의 8×H200 구성이 64K 중앙 입력에서 동시 32를 받는데 `32 × 2.9GiB = 93GiB`라 289.6GiB 안에 넉넉히 들어가고, 남는 자리가 그 구성이 전제한 캐시 히트 90%의 프리픽스 저장에 쓰입니다. 그리고 같은 레시피가 **H200 + FP8 체크포인트의 상한을 250K**로 못 박습니다 — 그림은 64K·128K와 배수를 맞추려고 **256K**까지 적었으므로 이 상한을 6,144토큰 넘습니다(사람 수는 25명으로 같습니다). 한편 1M을 8×H200에서 돌린 [Phala 사례](https://phala.com/posts/glm-5-2-1m-context-8xh200)는 가중치를 W4AFP8로 눌러 368GB로 줄인 구성이라 전제가 다릅니다.
 
@@ -1358,7 +1441,7 @@ NVL72 공식 수치, Groq 3 LPU 통합 등)는 복수 출처로 재확인됐습�
 
 [^qat]: 모델을 학습하는 동안 저비트 양자화로 인한 오차까지 감안해서 가중치를 조정하는 방식입니다. 학습이 끝난 뒤에 양자화하는 사후 양자화(PTQ, Post-Training Quantization)보다 품질 저하가 작습니다.
 
-[^ai-sovereign]: 2026년 7월 로이터 보도에 따르면 중국 상무부는 Alibaba·ByteDance·Z.ai(Zhipu)와 만나 최신 AI 모델(미공개 오픈웨이트 포함)의 해외 접근 제한을 논의했습니다(아직 확정 규제는 아님). 같은 시기 미국도 특정 프론티어 모델의 배포를 국가안보 사유로 일시 중단·제한한 사례가 있습니다. 즉 GPU 수출 규제뿐 아니라 모델(가중치) 자체의 국외 유출 통제도 논의 대상이 되고 있습니다.
+[^ai-sovereign]: 2026년 7월 로이터 보도에 따르면 중국 상무부는 Alibaba·ByteDance·Z.ai(Zhipu)와 만나 최신 AI 모델(미공개 오픈웨이트 포함)의 해외 접근 제한을 논의했습니다(아직 확정 규제는 아님). 같은 시기 미국도 특정 프론티어 모델의 배포를 국가안보 사유로 일시 중단·제한한 사례가 있습니다 — **2026-06-12 Claude Fable 5·Mythos 5에 대한 수출통제 지시**가 그것입니다[^us-export-directive]. 즉 GPU 수출 규제뿐 아니라 모델(가중치) 자체의 국외 유출 통제도 논의 대상이 되고 있습니다.
 
 [^diffusion-rule]: 2025년 5월, 전 세계를 3단계로 나눠 GPU 접근을 차등화하려던 "AI Diffusion Rule"이 폐기되고 국가별 개별 협상 방식으로 바뀌었습니다. 그 결과 UAE·사우디처럼 미국과 우호적인 국가는 대량의 최신 GPU를 확보하는 반면, 그렇지 못한 국가는 접근 경로 자체가 불투명해지는 구조가 됐습니다. 규칙에 따른 차등에서 관계에 따른 차등으로 바뀐 셈입니다.
 
@@ -1465,7 +1548,7 @@ NVL72 공식 수치, Groq 3 LPU 통합 등)는 복수 출처로 재확인됐습�
 
 [^glm-spec]: **이 카드가 6.4의 `[^v4-spec]`과 다른 점**: 왼쪽 패널이 가격 대비 점수가 아니라 벤치마크입니다. V4는 단가가 논지이고 GLM-5.2는 성적이 논지라서입니다. **왼쪽 여덟 항목은 전부 GLM-5.2 자체 발표표**(모델 카드, 8개 모델 비교)의 값이고, 아래 막대는 그 표에서 가장 높은 다른 모델입니다. **하네스가 항목마다 다릅니다** — 카드 각주가 SWE-bench Pro는 OpenHands, ProgramBench는 Claude Code 2.1.156, Terminal-Bench는 Terminus-2, FrontierSWE는 Proximal 대행 등으로 밝히므로 [1.2장의 원칙](#12-그런데-모델의-격차는-36점입니다)대로 **AAII 점수와 섞지 않았습니다.** GLM-5.2가 1위인 두 항목은 AIME 2026 **99.2**(GPT-5.5 98.3)와 IMOAnswerBench **91.0**(Qwen3.7-Max 90.0)입니다. 1점 안쪽은 MCP-Atlas 76.8(Opus 4.8 77.8) · Terminal-Bench 2.1 82.7(GPT-5.5 83.4) · FrontierSWE 74.4(Opus 4.8 75.1)이고, SWE-bench Pro 62.1은 GPT-5.5 58.6보다 위·Opus 4.8 69.2보다 아래입니다. HLE 40.5와 DeepSWE 46.2는 크게 벌어집니다 — 다만 DeepSWE에서 다른 오픈웨이트는 GLM-5.1 18 · MiniMax M3 20 · DeepSeek-V4-Pro 8입니다. **주의**: 같은 FrontierSWE가 K3 카드의 표에서는 GLM-5.2 67.3으로 적혀 있습니다(GLM 자체 표는 74.4, "Dominance, 2026/06/16 기준"). **같은 이름의 벤치마크라도 제작사마다 값이 다르므로 두 카드의 막대를 서로 비교하지 마세요.** 스펙 값의 근거는 `[^glm-params]`(config) · `[^mla-calc]`(KV캐시) · `[^api-price-2026]`(가격)이고, **가중치만 이 세션에서 새로 실측**했습니다 — HF API `?blobs=true`로 safetensors 282개를 합산해 1,506,667,387,408바이트(**1,506.7GB**)이고 753B로 나누면 파라미터당 정확히 2.0바이트라 **배포 원본이 BF16**입니다(`config.json`에 `quantization_config`가 없는 것과 일치). 최소 하드웨어는 이 문서가 표준으로 쓰는 FP8 753GB 기준이라 H200 6장(846GB)·B300 3장(864GB)이고, BF16 원본이면 11장·6장입니다. MTP 수용 길이 20% 개선은 모델 카드의 *"increasing the acceptance length by up to 20%"* 입니다. **캐시 히트 청구 비율**(2026-07-31, 카드에서 본문으로 옮김): GLM-5.2는 히트 입력을 정가의 **18.6%**($0.26 / $1.40)로 받는데 [V4 Pro는 0.83%](#64-deepseek-v4---hybrid-attention-csa--hca)입니다[^api-price-2026] — **토큰당 KV를 두 자릿수로 줄여 놓은 쪽이 히트를 훨씬 싸게 받습니다.** 두 모델의 토큰당 KV가 46.5KiB 대 5.29GiB/1M(=약 5.3KiB)로 8배 차이인 것과 같은 방향입니다[^mla-calc].
 
-[^k3-spec]: 왼쪽 여덟 항목은 전부 **K3 자체 발표표**(모델 카드, 6개 모델 비교, 전부 최고 노력 설정)의 값이고 아래 막대는 그 표에서 가장 높은 다른 모델입니다. **K3가 1위인 셋**은 AA-LCR **74.7**(GPT-5.5 74.3) · ProgramBench **77.8**(Opus 4.8 77.6) · SWE-Marathon **42.0**(Opus 4.8 40.0)입니다. 0.6점 안쪽은 Terminal-Bench 2.1 88.3(GPT-5.6 Sol 88.8)과 GPQA Diamond 93.5(GPT-5.6 Sol 94.1)이고, FrontierSWE 81.2(Fable 5 86.6) · DeepSWE 67.5(GPT-5.6 Sol 73.0) · HLE-Full 43.5(Fable 5 53.3)는 5점 이상 벌어집니다. **가중치는 이 세션에서 실측**했습니다 — safetensors 96개 합계 1,560,936,091,448바이트(**1,560.9GB**)로 2.8T로 나누면 파라미터당 0.56바이트이므로 MXFP4 네이티브 배포가 맞습니다([^k3-config]의 서술과 일치하고 [^memory-calc]의 "약 1.4TB"와 같은 값입니다 — 1,560.9GB = 1,453.7GiB). **오른쪽 패널의 출처 구분은 이 세션에서 1차 확인한 것입니다.** **KDA**는 Gated DeltaNet(6.3)의 헤드 단위 망각 게이트를 채널 단위로 세분한 것으로, Kimi Linear 논문([arXiv:2510.26692](https://arxiv.org/abs/2510.26692))이 *"extends Gated DeltaNet with a finer-grained gating mechanism"* 이라 적고 48B 모델에서 먼저 검증했습니다. **남들이 딛는 발판이 된 증거**로 FG²-GDN([arXiv:2604.19021](https://arxiv.org/abs/2604.19021))과 Gated DeltaNet-2([arXiv:2605.22791](https://arxiv.org/abs/2605.22791))가 KDA를 기준선으로 두고 확장합니다 — 후자는 *"KDA sharpens forgetting with channel-wise decay"* 로 요약합니다. **AttnRes**는 자체 논문([arXiv:2603.15031](https://arxiv.org/abs/2603.15031))과 공식 구현(`MoonshotAI/Attention-Residuals`)이 함께 나왔고, **DeepSeek V4의 mHC(Manifold-Constrained Hyper-Connections)가 같은 "깊이 축" 문제를 잔차 네 벌로 다르게 풉니다** — 두 계열이 2026년에 나란히 열렸습니다([부록 A](./appendix/deepseek-v4.md) 참고). Stable LatentMoE의 "K2 대비 스케일링 효율 약 2.5배"는 모델 카드의 *"approximate 2.5× improvement in overall scaling efficiency over Kimi K2"* 입니다. **미확인**: 기술 리포트 PDF는 열람하지 않았고, AttnRes가 Kimi Linear 48B 배포본에 실제로 들어갔는지는 `[^attnres]`의 기존 서술을 그대로 두었습니다.
+[^k3-spec]: 왼쪽 여덟 항목은 전부 **K3 자체 발표표**(모델 카드, 6개 모델 비교, 전부 최고 노력 설정)의 값이고 아래 막대는 그 표에서 가장 높은 다른 모델입니다. **K3가 1위인 셋**은 AA-LCR **74.7**(GPT-5.5 74.3) · ProgramBench **77.8**(Opus 4.8 77.6) · SWE-Marathon **42.0**(Opus 4.8 40.0)입니다. 0.6점 안쪽은 Terminal-Bench 2.1 88.3(GPT-5.6 Sol 88.8)과 GPQA Diamond 93.5(GPT-5.6 Sol 94.1)이고, FrontierSWE 81.2(Fable 5 86.6) · DeepSWE 67.5(GPT-5.6 Sol 73.0) · HLE-Full 43.5(Fable 5 53.3)는 5점 이상 벌어집니다. **가중치는 이 세션에서 실측**했습니다 — safetensors 96개 합계 1,560,936,091,448바이트(**1,560.9GB**)로 2.8T로 나누면 파라미터당 **0.5575바이트**입니다. MXFP4는 데이터 4비트에 32개마다 E8M0 스케일 8비트가 따라붙어 파라미터당 **4.25비트 = 0.53125바이트**이므로([7.1의 포맷 정리](#71-model-양자화)) 이 실측은 MXFP4 네이티브 배포와 맞고, 남는 약 5%는 임베딩·출력층처럼 고정밀로 두는 층입니다([^k3-config]의 서술과 일치합니다). `[^memory-calc]`의 "2.8T × 0.5바이트 = 약 1.4TB"는 **스케일을 뺀 맨 데이터만 센 값**이라 실측보다 작습니다 — 두 값을 GB와 GiB로 맞춰 같다고 보면 안 됩니다. **오른쪽 패널의 출처 구분은 이 세션에서 1차 확인한 것입니다.** **KDA**는 Gated DeltaNet(6.3)의 헤드 단위 망각 게이트를 채널 단위로 세분한 것으로, Kimi Linear 논문([arXiv:2510.26692](https://arxiv.org/abs/2510.26692))이 *"extends Gated DeltaNet with a finer-grained gating mechanism"* 이라 적고 48B 모델에서 먼저 검증했습니다. **남들이 딛는 발판이 된 증거**로 FG²-GDN([arXiv:2604.19021](https://arxiv.org/abs/2604.19021))과 Gated DeltaNet-2([arXiv:2605.22791](https://arxiv.org/abs/2605.22791))가 KDA를 기준선으로 두고 확장합니다 — 후자는 *"KDA sharpens forgetting with channel-wise decay"* 로 요약합니다. **AttnRes**는 자체 논문([arXiv:2603.15031](https://arxiv.org/abs/2603.15031))과 공식 구현(`MoonshotAI/Attention-Residuals`)이 함께 나왔고, **DeepSeek V4의 mHC(Manifold-Constrained Hyper-Connections)가 같은 "깊이 축" 문제를 잔차 네 벌로 다르게 풉니다** — 두 계열이 2026년에 나란히 열렸습니다([부록 A](./appendix/deepseek-v4.md) 참고). Stable LatentMoE의 "K2 대비 스케일링 효율 약 2.5배"는 모델 카드의 *"approximate 2.5× improvement in overall scaling efficiency over Kimi K2"* 입니다. **미확인**: 기술 리포트 PDF는 열람하지 않았고, AttnRes가 Kimi Linear 48B 배포본에 실제로 들어갔는지는 `[^attnres]`의 기존 서술을 그대로 두었습니다.
 
 [^kexaone2]: Hugging Face `LGAI-EXAONE/K-EXAONE-2.0-750B-A37B`의 모델 카드와 `config.json`을 직접 확인했습니다(2026-07-31). `architectures: ExaoneMoeForCausalLM`, `num_hidden_layers: 78`, `hidden_size: 6144`, `num_attention_heads: 64`, **`num_key_value_heads: 8`**, `head_dim: 128`, `num_experts: 256`, `num_experts_per_tok: 8`, `max_position_embeddings: 262144`, `vocab_size: 153600`, `num_nextn_predict_layers: 1`. **어텐션은 MLA가 아니라 GQA 8그룹입니다** — `kv_lora_rank`가 없고 Q 64 : KV 8이므로 [^r1-mla]에서 경고한 오독의 반대 경우입니다. `layer_types` 배열을 세면 **`sliding_attention` 58개 + `full_attention` 20개**이고, 모델 카드는 이를 *"1 x Global (NoPE) / 1 x 4096 SWA / 19 x [3 x 128 SWA + 1 x Global] Blocks"* 로 적습니다 — [6.2 Gemma 4](#62-gemma-4---sliding-window-attention-swa)의 배합과 같은 계열이고 창 크기가 **128**까지 내려갑니다. 레이어 구성은 "2 heading Dense + 76 Sparse"에 MTP 1층입니다. **가중치는 실측 1,498,722,576,624바이트(17개 파일, 1,498.7GB)** 로 파라미터당 정확히 2.0바이트이므로 배포 원본이 BF16입니다. **업사이클**: 카드가 *"scaled to more than three times the size of its predecessor through upcycling, followed by continual pretraining, difficulty-focused mid-training, and post-training"* 이라고 밝히고, 깊이와 폭을 함께 늘렸으며 *"clamping after two SwiGLU branches"* 로 깊은 층의 활성값 폭주를 잡았다고 적습니다. 투기적 디코딩은 **MTP와 DSpark 두 가지**를 지원해 약 3\~5배 가속을 발표했습니다([5.4장](#54-투기적-디코딩-순차-병목을-우회하는-법)과 이어집니다). 지원 언어가 6개에서 10개로 늘었고 지식 컷오프는 2025년 2분기입니다. **벤치마크는 자체 발표표**(K-EXAONE 2.0 · K-EXAONE · Qwen3.5 · GLM-5.1 · DSV4 Pro max 5열)이며 굵은 값이 그 행 1위입니다 — OpenAI-MRCR **94.4**(vs 52.3 · 93.0 · 71.5 · 92.9)로 **1위**이고 앞 세대의 52.3에서 크게 뛰었습니다. Ko-LongBench 89.6, AA-LCR 56.2, SWE Bench Verified 68.2(앞 세대 49.4), AIME 2026 92.3, GPQA-Diamond 82.2, MMLU-Pro 83.5, Terminal-Bench 2.1 43.8, IFEval 92.4. **롱컨텍스트 회상을 뺀 대부분은 Qwen3.5·GLM-5.1·DSV4 Pro보다 낮습니다** — 카드 자신도 *"broadly competitive with leading open-weight models"* 라고만 적습니다. 58층이 SWA인데 MRCR이 1위라는 조합은 눈여겨볼 지점이지만, **SWA와 롱컨텍스트 회상의 인과를 이 문서가 확인한 것은 아닙니다**(기술 리포트 PDF 미열람).
 
@@ -1488,6 +1571,14 @@ NVL72 공식 수치, Groq 3 LPU 통합 등)는 복수 출처로 재확인됐습�
 [^dsa-lineage]: DeepSeek이 V3.2에서 도입한 **Lightning Indexer**가 이 계보의 출발점입니다. 가벼운 채점기로 과거 토큰에 점수를 매겨 상위 몇 개만 본격 어텐션에 넘기는 방식이고, DeepSeek은 이를 DSA(DeepSeek Sparse Attention)라 부릅니다. GLM-5.2의 `config.json`에 아키텍처 이름이 `GlmMoeDsaForCausalLM`으로 박혀 있고 `index_topk: 2048`·`index_topk_freq: 4`가 함께 있는 것이 이 계보를 그대로 보여줍니다. **GLM-5.2는 MLA와 DSA를 함께 씁니다** — 잠재 벡터로 저장량을 줄이고 top-k로 읽는 양을 줄이는 두 축입니다. 그래서 저장은 컨텍스트에 선형으로 늘지만 스텝당 읽는 KV는 2,048개로 고정됩니다. 다만 top-k를 고르려면 인덱서가 과거 전체를 채점해야 하므로 그 항은 선형으로 남고, `indexer_types` 배열에서 자체 인덱서를 돌리는 레이어가 78개 중 21개뿐인 것이 바로 그 항을 깎는 장치입니다.
 
 [^k3-config]: Hugging Face `moonshotai/Kimi-K3` 모델 카드를 직접 fetch해 확인한 값입니다(2026-07-28). 총 2.8T / 토큰당 활성 104B, 전문가 896개 중 16개 활성 + **공유 전문가 2개**, 레이어 93개(**KDA 69 + Gated MLA 24**), 가중치 MXFP4 · 활성값 MXFP8, 컨텍스트 1,048,576, 라이선스는 Kimi K3 License. 텍스트 전용이 아니라 **401M 파라미터의 MoonViT-V2 비전 인코더**를 포함한 멀티모달 모델입니다. Per-Head Muon(어텐션 헤드마다 따로 최적화)·SiTU(활성화 함수)·Quantile Balancing·AttnRes의 서술과 **"가속기 64장 이상의 슈퍼노드 구성 권장"** 은 Moonshot 공식 블로그(`kimi.com/blog/kimi-k3`) 직접 확인.
+
+[^frontier-gating]: **[1차]** 세 회사의 공식 발표를 직접 확인했습니다(2026-07-31 조사). **Anthropic** — [Claude Fable 5 and Claude Mythos 5](https://www.anthropic.com/news/claude-fable-5-mythos-5)(2026-06-09): 둘은 **같은 모델**이고 Fable 5에만 세이프가드가 얹혀 있습니다. 글은 *"Mythos-class models have reached a threshold where they present significant risks"* 로 시작하고, Mythos 5를 *"the strongest cybersecurity capabilities of any model in the world"* 로 적으며 **Project Glasswing**(미국 정부와 협력, 사이버 방어자·핵심 인프라 제공자)으로만 배포한다고 밝힙니다. 가격은 1M 토큰당 입력 $10 / 출력 $50으로 `[^api-price-2026]`의 Fable 5 값과 같습니다. **OpenAI** — [GPT-5.6 시스템 카드](https://deploymentsafety.openai.com/gpt-5-6/cyber-capability-evaluations-threshold-high)(직접 fetch 확인): Sol·Terra·Luna **셋 다** Preparedness Framework의 **High capability**(Cybersecurity + Biological/Chemical)이고 AI Self-Improvement는 High 미달입니다. 작은 모델까지 High를 받은 것은 이번이 처음이라고 적습니다. Sol의 사이버 세이프가드는 이전 모델보다 **약 10배** 많은 잠재 유해 활동을 차단하며, 그 마찰 때문에 *"더 낮은 능력의 모델로 재시도"* 하는 선택지를 ChatGPT·Codex에 두었습니다 — **Anthropic의 폴백과 같은 구조입니다.** 더 열린 구성은 **Trusted Access for Cyber**(신원 확인 게이트)로 돌리고, *"high-risk entities and in high-risk jurisdictions"* 접근은 따로 제한한다고 밝힙니다. **Google** — [Introducing Gemini 3.5 Flash Cyber](https://deepmind.google/blog/introducing-gemini-3-5-flash-cyber/)(2026-07-21): 취약점을 찾아 고치는 전용 모델을 CodeMender를 통해 *"exclusively available to governments and trusted partners"* 로 제한 파일럿 배포합니다. **세 회사 모두 "완전판은 심사를 통과한 사람에게"** 라는 같은 구조이고, [9.1의 3단계 통제](#91-국가-단위의-ai-소버린)와 이어집니다.
+
+[^fable-gating]: **[1차]** Fable 5의 거부는 부작용이 아니라 **설계**입니다. 위 출시 글에 따르면 분류기가 덮는 영역은 셋 — **사이버보안 · 생물·화학 · 증류**(다른 모델을 학습시키려 능력을 뽑아내는 시도)입니다. 걸리면 응답을 **Claude Opus 4.8**이 대신 내고 사용자에게 알립니다. Anthropic은 이 쪽이 *"an outright refusal"* 보다 낫다고 설명합니다. **빈도는 분모가 셋 다 달라 하나로 못 박을 수 없습니다.** (1) 출시 글: 평균 **세션 5% 미만**, *"more than 95% of Fable sessions involve no fallback at all"*. (2) [재배포 글](https://www.anthropic.com/news/redeploying-fable-5)(2026-06-30)의 "safety margin" 설명 — 분류기를 **양성일 가능성이 높은 요청에도 걸리게** 일부러 설정하고, 사용자는 그것을 "온당하고 무해한 요청에 대한 거부"로 경험한다고 적습니다. Fable 5는 그 여유를 **이전 어느 출시보다 크게** 잡았습니다. 수출통제 지시를 다룬 [성명](https://www.anthropic.com/news/fable-mythos-access)에도 *"our safeguards are so strong that many users have complained that they are overly broad"* 가 있습니다. 6월 30일의 새 분류기는 *"flagging benign requests more often during routine coding and debugging tasks"* 라고 스스로 밝힙니다. (3) 프론티어 LLM 개발 관련 분류기는 별개로 **약 0.05%의 작업**에 걸립니다. **제3자 실측**: [The Register](https://www.theregister.com/ai-and-ml/2026/06/10/anthropic-claude-fable-5-refuses-innocuous-prompts/5253754)(2026-06-10)는 Claude Code에서 입력 분류기가 세션 첫 턴에 거의 매번 `model_refusal_fallback`을 내고 **입력이 "hello" 하나뿐인 세션**도 걸린 보고(Claude Code 이슈 `#66657`), "Application Security Architect" 이력서 편집 거부(`#66655`) 등을 모았습니다. Anthropic은 같은 기사에 *"We made the wrong tradeoff and we apologize for not getting the balance right"* 라고 답했습니다. **가장 단단한 제3자 근거는 경쟁사 벤치마크의 각주입니다** — Google의 위 글에서 Chrome 커밋 스캐닝 결과 표에 *"More recent competitor model versions after Opus 4.6 refuse to fulfill the tasks due to built-in safety guardrails, and therefore are not shown"* 라고 적혀 **거부 때문에 측정 자체가 안 됐습니다.** **주의**: 이 사건에서 Anthropic이 "같은 취약점을 찾을 수 있다"고 열거한 오픈웨이트는 **Kimi K2.7**이고 K3가 아닙니다(K3는 이보다 한 달 뒤입니다).
+
+[^open-weight-cyber]: **[1차]** 영국 AI Security Institute, ["How Far Behind the Frontier are Leading Open Weight Models on Cyber?"](https://www.aisi.gov.uk/blog/how-far-behind-the-frontier-are-leading-open-weight-models-on-cyber). 폐쇄 모델이 쓸 수 있는 통제 수단(세이프가드 유지, 접근 취소, 사용 감시)을 열거한 뒤 *"Once open weight models are released, these options are lost permanently: safeguards can be removed, and copies can be downloaded, redistributed, and run on private systems beyond monitoring."* 라고 적습니다. **6.6이 말하는 "가중치째 받는다"의 정확한 대응물**이고, 같은 성질이 이 문서에서는 이점(자기 클러스터·자기 데이터)으로, AISI 글에서는 위험(회수 불가)으로 읽힙니다. **둘 다 같은 사실입니다.**
+
+[^us-export-directive]: **[1차]** 이 문서에서 "국가안보 사유로 배포를 제한한 사례"의 실체입니다. 세 문서를 직접 fetch해 확인했습니다(2026-07-31 조사). **(1) 조치.** [Anthropic 성명](https://www.anthropic.com/news/fable-mythos-access)(2026-06-12): 미국 정부가 국가안보 권한을 근거로 **수출통제 지시**를 내려 Fable 5·Mythos 5에 대한 **모든 외국인**(미국 안이든 밖이든, Anthropic 소속 외국인 직원까지)의 접근을 중단시켰습니다. 다른 Anthropic 모델은 영향이 없었습니다. Anthropic은 이행하면서 공개 반박했습니다 — 지시의 근거가 된 우회는 *"모델에게 특정 코드베이스를 읽고 소프트웨어 결함을 고치라고 하는"* 수준이고 같은 능력이 **GPT-5.5를 포함한 다른 모델에서도 널리 가능**하다는 것입니다. **(2) 해제.** [재배포 글](https://www.anthropic.com/news/redeploying-fable-5)(2026-06-30 해제, 7월 1일 재개): 정부·Amazon과 함께 보고서를 검토해 **개선된 분류기**를 학습시켰고, Amazon 보고서의 기법은 **99% 이상 차단**된다고 적습니다. 상무부 CAISI 연구진이 이전·신규 세이프가드를 모두 시험했습니다. **(3) 제도.** [Executive Order 14409, *Promoting Advanced Artificial Intelligence Innovation and Security*](https://www.whitehouse.gov/presidential-actions/2026/06/promoting-advanced-artificial-intelligence-innovation-and-security/)(2026-06-02, 원문 확인). Sec. 3(a)는 모델의 고급 사이버 능력을 재는 **기밀 벤치마킹 절차**와 **"covered frontier model"** 지정 기준을 만들고 **지정 주체를 NSA 국장**으로 둡니다. Sec. 3(b)는 개발사가 출시 30일 전까지 정부에 접근을 주는 **자발적 프레임워크**입니다. 🚨 **이 행정명령을 "규제 강화"로 요약하면 틀립니다** — Sec. 1이 *"we refuse to stifle this innovation with overly burdensome regulation"* 이고 **Sec. 3(c)는 강제 라이선싱·사전승인·허가 요건을 만드는 것이 아니라고 명시**합니다. 게다가 6월 12일 조치는 이 명령이 아니라 **수출통제 권한**으로 나왔습니다. **규제 입법을 요구하는 쪽은 오히려 개발사입니다** — Anthropic은 성명에서 *"정부가 안전하지 않은 배포를 막을 수 있어야 하지만 그것은 투명·공정·명확하고 기술적 사실에 근거한 법정 절차여야 한다"* 고 적고, 재배포 글은 *"These rules should be codified in strong regulation and applied equally across frontier model developers"* 로 맺습니다.
 
 [^k3-active]: 이 구분을 흐리면 모델 간 비교가 깨집니다. **전문가 개수 비율**(896 중 16 = 1.8%)은 MoE 층 안에서만 성립하는 값이고, **파라미터 비율**(104B / 2.8T = 3.7%)은 어텐션·임베딩·항상 켜지는 공유 전문가 2개까지 포함한 실제 활성량입니다. 이 문서의 다른 모델도 파라미터 비율로 적었습니다 — DeepSeek R1은 37B/671B = 5.5%, GLM-5.2는 약 40B/753B = 5.3%. 같은 잣대로 비교하면 K3의 3.7%가 가장 희소합니다. 참고로 [6.1장](#61-deepseek-r1---mixture-of-experts-moe--chain-of-thought-cot)에서 강조한 대로, **이 비율이 낮아져도 메모리에 올릴 양은 2.8T 전부** 그대로입니다.
 

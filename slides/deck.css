@@ -572,18 +572,36 @@ html.rot .reveal {
   z-index: 50;
 }
 
-/* 모바일 안내 — 첫 탭 전까지만 보이는 힌트 */
+/* 모바일 안내 및 테마 버튼 — 전체화면이 아닐 때 탭하면 일정 시간 동안만 노출 */
 .touchhint {
-  position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
-  z-index: 70; display: none;
+  position: fixed; left: 50%; bottom: 68px; transform: translateX(-50%);
+  z-index: 70; display: none; opacity: 0; pointer-events: none;
   font-family: var(--mono); font-size: 13px; letter-spacing: .04em;
   color: var(--muted); background: var(--chip-bg);
   border: 1px solid var(--line-lt); border-radius: 999px;
   padding: 9px 18px; white-space: nowrap;
-  animation: riseIn .5s .6s backwards;
+  transition: opacity .3s ease;
 }
 html.is-touch .touchhint { display: block; }
-html.immersive .touchhint, html.hint-done .touchhint { display: none; }
+html.is-touch.show-hint:not(.immersive) .touchhint { opacity: 1; }
+html.immersive .touchhint { display: none !important; opacity: 0 !important; }
+
+/* 모바일 PBAR — is-touch 일 때 테마 버튼만 노출 */
+html.is-touch .pbar #tb-laser,
+html.is-touch .pbar #tb-pen,
+html.is-touch .pbar #tb-color,
+html.is-touch .pbar #tb-erase,
+html.is-touch .pbar #tb-clear,
+html.is-touch .pbar .sep {
+  display: none !important;
+}
+html.is-touch .pbar {
+  z-index: 75;
+}
+html.is-touch.show-hint:not(.immersive) .pbar {
+  transform: translate(-50%, 0);
+  opacity: 1;
+}
 
 /* 좌하단 챕터 라벨 — 데이터 속성으로 주입 */
 .reveal .slides section[data-chapter]::after {

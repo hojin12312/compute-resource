@@ -89,7 +89,7 @@
      이름이 다른 것이 33개라(prices.html → memory_price_chain.webp) 손으로 적으면 틀립니다.
   4. README에 이미지를 넣고 캡처 두 번.
 
-파일 ↔ 그림 대응 (51장 — README 참조 47장 + 덱 전용 4장)
+파일 ↔ 그림 대응 (54장 — glm_bench·k3_bench·refusal_gate는 덱 전용, README 미편입 · 8장 다섯이 덱 미편입)
   shock.html             → assets/stock_shock.webp               1. Kimi K3는 어떻게 미국 증시를 흔들었나?
   capex.html             → assets/us_china_capex.webp            1.1 미국과 중국, 인프라는 8배 차이입니다
   bench.html             → assets/frontier_bench.webp            1.2 그런데 모델의 격차는 3.6점입니다
@@ -116,7 +116,7 @@
   moe_scope.html         → assets/moe_scope.webp                 어텐션은 담는 값의 1.7%, 읽는 양의 31%입니다
   sparse_map.html        → assets/sparse_attention_map.webp      6.1을 빼면 전부 어텐션 이야기입니다
   swa.html               → assets/swa_layers.webp                6.2 Gemma 4 - Sliding Window Attention (SWA)
-  swa_reach.html         → assets/swa_reach.webp                 6.2 창문 밖 이야기를 막아주는 두 장치 (덱 전용 — README 편입 미정)
+  swa_reach.html         → assets/swa_reach.webp                 6.2 창문 밖 이야기를 막아주는 두 장치
   gdn.html               → assets/gdn_summary_note.webp          6.3 Qwen3-Next-80B-A3B - Gated DeltaNet
   v4_pricing.html        → assets/v4_api_pricing.webp            6.4 DeepSeek V4 - Hybrid Attention (CSA + HC
   v4_spec.html           → assets/v4_spec.webp                   6.4 DeepSeek V4 - Hybrid Attention (CSA + HC
@@ -124,14 +124,17 @@
   gqa.html               → assets/gqa_head_sharing.webp          R1의 어텐션은 MLA입니다 (6.1 · 덱은 아직 6.5)
   indexshare.html        → assets/indexshare.webp                6.5 GLM-5.2 - IndexShare와 비동기 강화학습
   glm_spec.html          → assets/glm_spec.webp                  6.5 GLM-5.2 - IndexShare와 비동기 강화학습
+  glm_bench.html         → assets/glm_bench.webp                 6.5 GLM-5.2 벤치마크 8종 심층 비교 (덱 전용)
   glm_async_rl.html      → assets/glm_async_rl.webp              6.5 학습 클러스터 절반이 추론 서버입니다
   attnres.html           → assets/attention_residuals.webp       6.6 Kimi K3 - Kimi Delta Attention (KDA)
   k3.html                → assets/k3_synthesis.webp              6.6 Kimi K3 - Kimi Delta Attention (KDA)
+  k3_bench.html          → assets/k3_bench.webp                  6.6 Kimi K3 벤치마크 45종 전수 조사 (덱 전용)
   k3_spec.html           → assets/k3_spec.webp                   6.6 Kimi K3 - Kimi Delta Attention (KDA)
+  refusal_gate.html      → assets/refusal_gate.webp              6.6 폐쇄 대 오픈웨이트 거절 매트릭스 (덱 전용)
   quant_map.html         → assets/quantization_map.webp          7.1 Model 양자화
-  quant_intro.html       → assets/quant_two_bills.webp            7. 양자화는 압축입니다 — 두 청구서에 함께 (덱 전용)
-  formats.html           → assets/precision_formats.webp          7. 정밀도 포맷 여섯과 가속 세대 (덱 전용)
-  unimix.html            → assets/uniform_vs_mixed.webp           7. 균일 정밀도 대 혼합 정밀도 (덱 전용)
+  quant_intro.html       → assets/quant_two_bills.webp            7. 양자화는 압축입니다 — 두 청구서에 함께
+  formats.html           → assets/precision_formats.webp          7.1 정밀도 포맷 여섯과 가속 세대
+  unimix.html            → assets/uniform_vs_mixed.webp           7.1 균일 정밀도 대 혼합 정밀도
   hadamard.html          → assets/kv_quant_rotation.webp         7.2 KV 캐시 양자화
   parallel_axes.html     → assets/parallel_axes.webp             8.1 나누는 네 축
   pd_tradeoff.html       → assets/pd_tradeoff.webp               그런데 분리가 처리량을 올려 주는 건 아닙니다

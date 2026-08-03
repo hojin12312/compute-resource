@@ -1,4 +1,4 @@
-/* 그림 47장의 폰트 감사 — check.js가 못 잡는 것을 잡습니다.
+/* 그림 54장의 폰트 감사 — check.js가 못 잡는 것을 잡습니다.
  *
  *   export NODE_PATH="/Users/studio/.npm/_npx/420ff84f11983ee5/node_modules"
  *   node figures/fontcheck.js            전체

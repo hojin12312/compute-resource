@@ -2,11 +2,17 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<link rel="stylesheet" href="base.css?v=f9db9358">
+<link rel="stylesheet" href="base.css?v=6b2b16d2">
 <style>
   .panels { gap:16px; margin-top:18px; align-items:stretch; }
-  .panel { padding:16px 18px 14px; border:1px solid var(--c-333d47); border-radius:11px;
+  .panel { padding:16px 18px 10px; border:1px solid var(--c-333d47); border-radius:11px;
            background:var(--c-161b22); }
+
+  /* 카드 상단 공용 범례를 왼쪽 카드 안으로 옮긴 축소판 */
+  .legend-mini { display:flex; gap:16px; margin-top:10px; padding-top:10px;
+                 border-top:1px solid var(--c-21262d); font-size:10.5px; color:var(--c-9aa7b4); }
+  .legend-mini div { display:flex; align-items:center; gap:6px; }
+  .legend-mini .sw { width:10px; height:10px; border-radius:2px; }
 
   /* ── 좌: 벤치마크 짝 막대 (위 K3 / 아래 같은 표의 최고 다른 모델) ── */
   .grp { display:flex; align-items:center; gap:7px; padding:5px 4px; margin-bottom:4px;
@@ -32,30 +38,23 @@
      타일과 한 줄 행으로 나눴습니다. */
   .mono { font-family:"IBM Plex Mono", "Pretendard Variable", monospace; font-size:.94em; }
 
-  .wcap { display:flex; justify-content:space-between; gap:10px; margin-top:12px;
+  .wcap { display:flex; justify-content:space-between; gap:10px; margin-top:8px;
           font-size:10.5px; color:var(--c-8b96a3); }
   .wcap b { color:var(--c-c3ccd6); font-weight:700; }
-  .wrow { margin-top:8px; }
+  .wrow { margin-top:6px; }
   .whead { display:flex; justify-content:space-between; align-items:baseline; gap:8px;
            font-size:11px; color:var(--c-9aa7b4); }
   .whead b { font:700 12px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-e6edf3); }
   .whead b.cyv { color:var(--c-22a7bd); }
-  .wtrack { position:relative; height:23px;margin-top:4px; border-radius:3px;
-            background:var(--c-1b2027); border:1px solid var(--c-333d47); overflow:hidden; }
+  /* 59·61번(v4_spec·glm_spec)과 같은 GPU 1장 단위 독립 블록 조각 렌더링.
+     칸 사이 3px 틈은 실제 GPU 경계이자 계산에서 빠지는 공간입니다 — vram.html 문법. */
+  .wtrack { position:relative; height:22px; margin-top:5px; border-radius:3px; }
   .wtrack i { display:block; height:100%; }
   .wtrack i.fp4 { background:var(--c-0e8fa3); }
   .wtrack i.fp8 { background:var(--c-c47d15); }
-  /* 두 막대는 **같은 GB 자**(2,880GB)를 씁니다. 칸 크기만 카드마다 다릅니다 —
-     B300은 288GB라 10%마다, H200은 141GB라 4.89583%마다 끊습니다. */
-  .slot { position:absolute; inset:0; }
-  .slot.b300 { background-image:repeating-linear-gradient(to right,
-    transparent 0, transparent calc(10% - 1px), var(--c-c3ccd6) calc(10% - 1px), var(--c-c3ccd6) 10%); }
-  .slot.h200 { background-image:repeating-linear-gradient(to right,
-    transparent 0, transparent calc(4.89583% - 1px),
-    var(--c-c3ccd6) calc(4.89583% - 1px), var(--c-c3ccd6) 4.89583%); }
 
-  .tiles { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px; }
-  .tile { padding:9px 12px; border-radius:7px; background:var(--c-1b2027);
+  .tiles { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+  .tile { padding:7px 11px; border-radius:7px; background:var(--c-1b2027);
           border:1px solid var(--c-21262d); }
   .tile span { display:block; font-size:10px; color:var(--c-8b96a3); }
   .tile strong { display:block; margin-top:3px; font:700 14px "IBM Plex Mono", "Pretendard Variable", monospace;
@@ -63,8 +62,8 @@
   .tile em { display:block; margin-top:3px; font-style:normal; font-size:9.5px;
              color:var(--c-7d8896); line-height:1.4; }
 
-  .lines { margin-top:12px; border-top:1px solid var(--c-333d47); }
-  .line { display:grid; grid-template-columns:86px 1fr; gap:10px; padding:8px 0;
+  .lines { margin-top:6px; border-top:1px solid var(--c-333d47); }
+  .line { display:grid; grid-template-columns:86px 1fr; gap:10px; padding:6px 0;
           border-bottom:1px solid var(--c-21262d); font-size:11px; color:var(--c-9aa7b4); }
   .line:last-child { border-bottom:0; }
   .line > span:first-child { color:var(--c-8b96a3); }
@@ -88,16 +87,15 @@
   <h1>Kimi K3 <span class="cy">&mdash; 스펙 한 장</span></h1>
   <div class="sub">세계 첫 공개 3조급 모델. 왼쪽은 <b>폐쇄 모델과 같은 표에서의 성적</b>, 가운데는 <b>서빙에 필요한 것</b>, 오른쪽은 <b>그 기법이 누구 것인지</b>입니다.</div>
 
-  <div class="legend" style="margin-top:16px">
-    <div><span class="sw cyan"></span>Kimi K3 (max)</div>
-    <div><span class="sw amber"></span>같은 표에서 가장 높은 다른 모델</div>
-  </div>
-
-  <div class="panels">
+  <div class="panels" style="margin-top:16px">
     <div class="panel" style="width:448px">
       <div class="ptitle">오픈웨이트가 1위를 셋 가져갑니다</div>
       <div class="pdesc">전부 <b>K3 자체 발표표</b>의 값 · 6개 모델 비교 · 전부 최고 노력(max)</div>
       <div id="chart" style="margin-top:8px"></div>
+      <div class="legend-mini">
+        <div><span class="sw cyan"></span>Kimi K3 (max)</div>
+        <div><span class="sw amber"></span>같은 표에서 가장 높은 다른 모델</div>
+      </div>
     </div>
 
     <div class="panel" style="width:448px">
@@ -105,36 +103,36 @@
       <div class="pdesc">가중치는 배포된 safetensors 실측, 나머지는 공식 모델 카드&middot;가격표</div>
 
       <div class="wcap"><span>가중치를 올리는 데</span>
-        <span>두 막대는 <b>같은 GB 자</b> &middot; 칸 크기만 카드마다 다릅니다</span></div>
+        <span>칸 하나 = <b>그 줄의 GPU 한 장</b> &middot; 트랙 전체 = <b>실제로 사는 노드 용량</b></span></div>
       <div class="wrow">
-        <div class="whead"><span>MXFP4 &mdash; 배포 원본 &middot; 칸 = B300 288GB</span>
-          <span><b class="cyv">1,560.9</b> GB &middot; 6장</span></div>
-        <div class="wtrack"><i class="fp4" style="width:54.20%"></i><span class="slot b300"></span></div>
+        <div class="whead"><span>MXFP4 &mdash; 배포 원본 &middot; 칸 = B300 288GB &middot; 8장 노드</span>
+          <span><b class="cyv">1,560.9</b> GB <span style="color:var(--c-8b6ff0); font-size:11px">(+13.5GiB KV &middot; 1명)</span> &middot; 6칸 &rarr; <b>8장</b></span></div>
+        <div class="wtrack" id="k3-b300-track"></div>
       </div>
       <div class="wrow">
-        <div class="whead"><span>FP8로 바꾸면 &middot; 칸 = H200 141GB</span>
-          <span><b>약 2,800</b> GB &middot; 20장</span></div>
-        <div class="wtrack"><i class="fp8" style="width:97.22%"></i><span class="slot h200"></span></div>
+        <div class="whead"><span>FP8로 바꾸면 &middot; 칸 = H200 141GB &middot; 32장 노드</span>
+          <span><b>약 2,800</b> GB <span style="color:var(--c-8b6ff0); font-size:11px">(+13.5GiB KV &middot; 1명)</span> &middot; 20칸 &rarr; <b>32장</b></span></div>
+        <div class="wtrack" id="k3-h200-track"></div>
       </div>
 
       <div class="tiles">
         <div class="tile"><span>총 / 활성 파라미터</span><strong>2.8T / 104B</strong>
           <em>전문가 896 중 16 + 공유 2 &middot; 활성 3.7%</em></div>
-        <div class="tile"><span>레이어 &middot; 어텐션</span><strong>93층 &middot; KDA 69 + MLA 24</strong>
+        <div class="tile"><span>레이어 &middot; 어텐션</span><strong>KDA 69 + MLA 24</strong>
           <em>Qwen3-Next의 3:1 배합을 그대로 키운 비율</em></div>
         <div class="tile"><span>최대 컨텍스트</span><strong>1,048,576</strong>
           <em>MoonViT-V2(401M) 비전 인코더 포함</em></div>
-        <div class="tile"><span>KV가 늘어나는 층</span><strong>93층 중 24층</strong>
-          <em>KDA 69층은 고정 크기 상태만 듭니다</em></div>
+        <div class="tile"><span>1M KV캐시 &middot; 1명 &middot; FP8</span><strong>13.5 GiB</strong>
+          <em>Gated MLA 24층만 늘어남</em></div>
       </div>
 
       <div class="lines">
         <div class="line"><span>API 1M 토큰</span>
           <span>입력 <b>$3.00</b> &middot; 캐시 히트 <b>$0.30</b> &middot; 출력 <b>$15.00</b>
             &mdash; 히트가 입력가의 10.0%</span></div>
-        <div class="line"><span>H200의 사정</span>
-          <span>FP4 텐서코어가 없어 FP8로 올려야 합니다. 용량으로 20장이지만
-            노드가 8&middot;16&middot;32장 단위라 <b>32장</b></span></div>
+        <div class="line"><span>장수가 벌어진 이유</span>
+          <span>칸은 <b>용량</b>, 장은 실제로 사는 <b>노드</b> 단위라서입니다 &mdash;
+            H200은 FP4 텐서코어가 없어 FP8로 올려야 하고, 용량 1.8배가 노드를 거쳐 <b>4배</b>로 벌어집니다</span></div>
         <div class="line"><span>라이선스</span>
           <span><b>Kimi K3 License</b> &mdash; MIT나 Apache가 아닌 자체 라이선스</span></div>
       </div>
@@ -208,6 +206,52 @@ for (const [name, sub, us, them, who, win] of rows) {
     + '</span>';
   host.appendChild(d);
 }
+
+/* 59·61번(v4_spec·glm_spec)과 같은 GPU 1장 단위 독립 블록 조각 렌더링.
+   K3는 두 트랙이 서로 다른 GPU·용량을 쓰므로(B300 8장 노드 vs H200 32장 노드),
+   V4의 renderB300Blocks를 GPU 크기·트랙 총량을 인자로 받게 일반화했습니다. */
+const GAP_K3 = 3;
+function renderK3Blocks(gpuSize, totalCapGB, vWeight, vKV, containerId, weightClass) {
+  const container = document.getElementById(containerId);
+  const trackW = container.clientWidth || 410;
+  const slots = totalCapGB / gpuSize;
+  const pxPerGB = (trackW - (slots - 1) * GAP_K3) / totalCapGB;
+  const pitch = gpuSize * pxPerGB + GAP_K3;
+
+  const full = Math.floor(vWeight / gpuSize);
+  const rem = vWeight - full * gpuSize;
+  let currentStart = 0;
+
+  for (let i = 0; i < full; i++) {
+    const s = Math.round(i * pitch);
+    const w = Math.round((i + 1) * pitch) - GAP_K3 - s;
+    const block = document.createElement('i');
+    block.className = weightClass;
+    block.style.cssText = `position:absolute; top:0; height:100%; left:${s}px; width:${w}px; z-index:1; border-radius:2px;`;
+    container.appendChild(block);
+    currentStart = s + w;
+  }
+  if (rem > 0) {
+    const s = Math.round(full * pitch);
+    const w = Math.max(Math.round(rem * pxPerGB), 2);
+    const block = document.createElement('i');
+    block.className = weightClass;
+    block.style.cssText = `position:absolute; top:0; height:100%; left:${s}px; width:${w}px; z-index:1; border-radius:2px;`;
+    container.appendChild(block);
+    currentStart = s + w;
+  }
+  if (vKV > 0) {
+    const kvStart = currentStart + 2;
+    const kvWidth = Math.max(Math.round(vKV * pxPerGB), 3);
+    const kvBlock = document.createElement('i');
+    kvBlock.style.cssText = `position:absolute; top:0; height:100%; left:${kvStart}px; width:${kvWidth}px; z-index:1; border-radius:2px; background:var(--c-8b6ff0);`;
+    container.appendChild(kvBlock);
+  }
+}
+/* B300: 8장 노드(2,304GB) · H200: 32장 노드(4,512GB) — [^memory-calc]의 노드 단위 기준.
+   KV는 1인·1M·FP8 = 13.5GiB(kv_lora_rank 512 + qk_rope_head_dim 64 = 576원소 × Gated MLA 24층). */
+renderK3Blocks(288, 2304, 1560.9, 13.5, 'k3-b300-track', 'fp4');
+renderK3Blocks(141, 4512, 2800, 13.5, 'k3-h200-track', 'fp8');
 </script>
 </body>
 </html>

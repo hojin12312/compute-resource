@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<link rel="stylesheet" href="base.css?v=f9db9358">
+<link rel="stylesheet" href="base.css?v=6b2b16d2">
 <style>
   .panels { gap:16px; margin-top:18px; align-items:stretch; }
   .panel { display:flex; flex-direction:column;
@@ -106,7 +106,7 @@
       <div class="wcap"><span>가중치를 올리는 데</span>
         <span><b>칸 하나 = H200 한 장(141GB)</b> &middot; 트랙 전체 = <b>8장 한 노드 1,128GB</b></span></div>
       <div class="wrow">
-        <div class="whead"><span>FP8로 내려 서빙</span><span><b class="cyv">753.0</b> GB <span style="color:var(--c-22a7bd); font-size:11px">(+249.5GB KV &middot; 5명)</span></span></div>
+        <div class="whead"><span>FP8로 내려 서빙</span><span><b class="cyv">753.0</b> GB <span style="color:var(--c-a48cf5); font-size:11px">(+46.5 GiB KV)</span></span></div>
         <div class="wtrack" id="glm-fp8-track"><span class="h200"></span></div>
       </div>
 
@@ -231,11 +231,11 @@ function renderH200Blocks(vWeight, vKV) {
     const kvWidth = Math.max(Math.round(vKV * pxPerGB_GLM), 3);
     const kvBlock = document.createElement('i');
     kvBlock.className = 'fp';
-    kvBlock.style.cssText = `position:absolute; top:0; height:100%; left:${kvStart}px; width:${kvWidth}px; z-index:1; border-radius:2px; background:var(--c-0e8fa3);`;
+    kvBlock.style.cssText = `position:absolute; top:0; height:100%; left:${kvStart}px; width:${kvWidth}px; z-index:1; border-radius:2px; background:var(--c-8b6ff0);`;
     glmTrack.appendChild(kvBlock);
   }
 }
-renderH200Blocks(753.0, 49.9);
+renderH200Blocks(753.0, 46.5);
 </script>
 </body>
 </html>

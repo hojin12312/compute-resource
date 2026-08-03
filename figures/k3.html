@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<link rel="stylesheet" href="base.css?v=f9db9358">
+<link rel="stylesheet" href="base.css?v=6b2b16d2">
 <style>
   /* 본문 1·2·3의 세 축을 그대로 세 패널로 옮긴 그림입니다.
      예전 판의 가운데 패널은 "어디서 본 것들인가" 글 목록이었는데,
@@ -12,7 +12,7 @@
   .sub { margin-top:9px; font-size:13.5px; }
 
   .panels { gap:20px; margin-top:20px; align-items:stretch; }
-  .panel { display:flex; flex-direction:column; padding:18px 20px;
+  .panel { display:flex; flex-direction:column; padding:18px 20px 10px;
            border:1px solid var(--c-333d47); border-radius:12px; background:var(--c-161b22); }
   .kicker { font:700 10px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-8b96a3); letter-spacing:.09em; }
   .ptitle { margin-top:6px; font-size:16.5px; line-height:1.35; }
@@ -61,51 +61,92 @@
              margin-top:10px; border-radius:3px; }
   .e { fill:var(--c-4d5661); }
   .e.on { fill:var(--c-0e8fa3); }
-  .rr { display:flex; align-items:baseline; gap:9px; padding:4px 0;
-        border-bottom:1px solid var(--c-21262d); }
-  .rr:last-of-type { border-bottom:0; }
-  .rl { width:92px; font-size:11.5px; color:var(--c-9aa7b4); }
-  .rv { width:48px; font:700 15px "IBM Plex Mono", "Pretendard Variable", monospace; }
-  .rn { font-size:10.5px; color:var(--c-7d8896); line-height:1.4; }
+  /* 격자 오른쪽의 빈 공간에 다섯 모델의 활성 비율을 세로로 넣습니다(호진님 지적,
+     2026-08-03) — 격자 194px 높이를 그대로 채우는 세로 목록. */
+  .exwrap { display:flex; align-items:flex-start; gap:16px; margin-top:10px; }
+  .exlist { flex:1; min-width:0; display:flex; flex-direction:column;
+            justify-content:space-between; height:194px; }
+  .exrow { padding:2px 0; border-bottom:1px solid var(--c-21262d); }
+  .exrow:last-child { border-bottom:0; }
+  .exname { display:block; font-size:10px; color:var(--c-8b96a3);
+            white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .expct { display:block; margin-top:1px; font:700 15px "IBM Plex Mono", "Pretendard Variable", monospace;
+           color:var(--c-9aa7b4); }
+  .expct.cy { color:var(--c-22a7bd); }
+  .exsub { display:block; margin-top:1px; font-size:9px; color:var(--c-7d8896); }
 
-  /* 분위수로 커트라인을 다시 긋는다는 개념 */
+  /* 전문가별 부하를 편향으로 맞춘다는 개념 — Moonshot 논문 §2.3.3·Fig.5의
+     m=8 토큰·n=4 전문가·k=1 예시를 그대로 씁니다(부하 4·3·1·0 → 2·2·2·2).
+     예전 판은 한 토큰의 점수 막대에 커트라인이 오르내리는 그림이었는데, 그건
+     "고정 top-k는 분위수 변환에 불변"이라는 자명한 사실이라 오독 소지가 있었습니다
+     (호진님 지적, 2026-08-03). 실제 기법은 토큰의 top-k 선택이 아니라 전문가별
+     편향을 배치 전체의 margin 분위수로 재계산하는 것 — "부하 재분배" 전/후 막대가
+     그 개념을 직접 보여줍니다. */
   .qbox { margin-top:11px; padding:9px 11px; border-radius:8px;
           background:var(--c-1b2027); border:1px solid var(--c-21262d); }
   .qtop { font-size:11px; color:var(--c-c3ccd6); font-weight:700; }
   .qtop span { display:block; margin-top:2px; font-weight:400; font-size:10px; color:var(--c-8b96a3); }
-  .qpair { display:flex; gap:14px; margin-top:8px; }
-  .qone { flex:1; }
-  .qbars { position:relative; display:flex; align-items:flex-end; gap:3px; height:26px; }
-  .qbars i { flex:1; border-radius:2px 2px 0 0; background:var(--c-3f4c58); }
-  .qbars i.pass { background:var(--c-0e8fa3); }
-  .qcut { position:absolute; left:-3px; right:-3px; border-top:1.5px dashed var(--c-e0912a); }
-  .qlab { margin-top:6px; font-size:10px; color:var(--c-8b96a3); }
-  .qlab b { color:var(--c-e0912a); font-weight:700; }
+  .qload { display:flex; align-items:center; gap:10px; margin-top:10px; }
+  .qlside { flex:1; }
+  .qlbars { display:flex; align-items:flex-end; gap:6px; height:32px; }
+  .qlbars i { flex:1; border-radius:2px 2px 0 0; background:var(--c-3f4c58); }
+  .qlbars i.over { background:var(--c-e0912a); }
+  .qlbars i.even { background:var(--c-0e8fa3); }
+  .qlnums { display:flex; gap:6px; margin-top:3px; }
+  .qlnums span { flex:1; text-align:center; font:700 10px "IBM Plex Mono", "Pretendard Variable", monospace;
+                 color:var(--c-8b96a3); }
+  .qlnums span.over { color:var(--c-e0912a); }
+  .qlnums span.even { color:var(--c-0e8fa3); }
+  .qllab { margin-top:6px; font-size:10px; color:var(--c-8b96a3); }
+  .qllab b { color:var(--c-c3ccd6); font-weight:700; }
+  .qlarrow { flex:0 0 auto; align-self:center; display:flex; flex-direction:column; align-items:center;
+             font:700 15px "IBM Plex Mono", monospace; color:var(--c-5d6773); }
+  .qlarrow span { margin-top:2px; font:400 9px "Pretendard Variable", sans-serif; color:var(--c-7d8896);
+                  text-align:center; line-height:1.3; }
+  .qex { margin-top:8px; font-size:9.5px; color:var(--c-7d8896); }
 
-  /* ── 축 3: 언제 4비트가 되나 ── */
+  /* ── 축 3: 언제 4비트가 되나 ──
+     예전 판은 "16비트로 학습 74% · 4비트로 압축 26%"처럼 폭으로 나눈 막대였는데,
+     그러면 모델의 74%가 16비트로 남아 있는 것처럼 읽힙니다 — 실제로는 시간 순서(학습 → 압축)이지
+     구성비가 아닙니다. 그래서 "값이 눈금에 스냅되는 폭"으로 바꿨습니다 — 연한 원(원래 값)에서
+     채운 원(스냅된 4비트 눈금)까지의 거리가 곧 반올림 오차입니다. PTQ는 눈금과 무관하게 학습해
+     스냅 폭이 크고, QAT는 눈금을 겨냥해 학습해 스냅 폭이 작습니다. */
   .tl { margin-top:9px; }
-  .tlrow { margin-top:14px; }
+  .tlhead { display:flex; align-items:center; justify-content:space-between;
+            font-size:10px; color:var(--c-8b96a3); }
+  .tlhead .tlarrow { font-weight:700; color:var(--c-5d6773); }
+  .tlrow { margin-top:6px; }
   .tlname { font-size:11px; color:var(--c-9aa7b4); }
   .tlname b { color:var(--c-c3ccd6); font-weight:700; }
-  .tlbar { display:flex; height:30px; margin-top:6px; border-radius:3px; overflow:hidden;
-           background:var(--c-1b2027); }
-  .tlbar i { display:flex; align-items:center; justify-content:center; height:100%;
-             font:700 10px "Pretendard Variable", sans-serif; white-space:nowrap; }
-  .tlbar i.w16 { background:var(--c-c47d15); color:var(--c-0d1117); }
-  .tlbar i.squeeze { background:var(--c-4a3a1c); color:var(--c-e0912a); }
-  .tlbar i.w4 { background:var(--c-0e8fa3); color:var(--c-0d1117); }
+  .quant { display:block; width:100%; margin-top:4px; }
+  .qgrid { stroke:var(--c-333d47); stroke-width:1; stroke-dasharray:2,3; }
+  .qorig { fill:none; stroke:var(--c-5d6773); stroke-width:1.4; }
+  .qlink { stroke-width:1.4; }
+  .qlink.ptq { stroke:var(--c-e0912a); }
+  .qlink.qat { stroke:var(--c-22a7bd); }
+  .qsnap.ptq { fill:var(--c-c47d15); }
+  .qsnap.qat { fill:var(--c-0e8fa3); }
+  .tlcap { margin-top:2px; font-size:9.5px; color:var(--c-7d8896); }
 
-  .calc { margin-top:16px; padding:15px 12px; border-radius:8px;
+  .calc { margin-top:10px; padding:7px 12px; border-radius:8px;
           background:var(--c-1b2027); border:1px solid var(--c-21262d);
           font:700 13.5px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-c3ccd6); text-align:center; }
   .calc b { color:var(--c-22a7bd); font-size:18px; }
+  .calc .csub { display:block; margin-top:7px; letter-spacing:0;
+                font:400 10.5px "Pretendard Variable", sans-serif; color:var(--c-8b96a3); }
+  .calc .csub b { font-size:11px; color:var(--c-c3ccd6); font-weight:700; }
 
   /* 같은 이유로 SVG입니다 — 16px 칸 = 44.64 디바이스픽셀. 칸 16 + 틈 4(피치 20) ·
      세로 피치 30. 예전 flex-wrap이 내던 배치 그대로 18칸씩 끊습니다. */
   .gpus { display:block; }
   .g.amber { fill:var(--c-c47d15); }
   .g.cyan  { fill:var(--c-0e8fa3); }
-  .hwrow { margin-top:16px; }
+  /* 최소 장수 안에서도 가중치가 실제로 채우는 칸과 노드 단위 때문에 남는 칸을 나눕니다
+     (호진님 지적, 2026-08-03) — 옅은 칸은 architecture_map·desk 등에서 쓰는 "옅은 배경"
+     짝 변수(--c-4a3a1c·--c-0f2930)를 그대로 씁니다. */
+  .g.amber.idle { fill:var(--c-4a3a1c); }
+  .g.cyan.idle  { fill:var(--c-0f2930); }
+  .hwrow { margin-top:11px; }
   .hwlab { display:flex; align-items:baseline; justify-content:space-between; gap:8px;
            font-size:11px; color:var(--c-9aa7b4); margin-bottom:5px; }
   .hwlab b { font:700 17px "IBM Plex Mono", "Pretendard Variable", monospace; }
@@ -151,41 +192,53 @@
       <div class="ptitle">전문가 896개 중 <span class="cy">16개</span>만 켭니다</div>
       <div class="pdesc">점 하나가 전문가 하나 &mdash; 실제 개수 그대로</div>
 
-      <svg class="experts" id="experts" width="222" height="194" viewBox="0 0 222 194"></svg>
-
-      <div style="margin-top:14px">
-        <div class="rr"><span class="rl">전문가 개수</span><span class="rv cy">1.8%</span>
-          <span class="rn">896개 중 16개 &mdash; MoE 층 안에서만 성립</span></div>
-        <div class="rr"><span class="rl">활성 파라미터</span><span class="rv cy">3.7%</span>
-          <span class="rn">2.8T 중 104B &middot; 공유 전문가 2개 포함</span></div>
-        <div class="rr"><span class="rl">같은 잣대의 R1</span>
-          <span class="rv" style="color:var(--c-8b96a3)">5.5%</span>
-          <span class="rn">37B / 671B &mdash; K3가 더 희소합니다</span></div>
+      <div class="exwrap">
+        <svg class="experts" id="experts" width="222" height="194" viewBox="0 0 222 194"></svg>
+        <div class="exlist">
+          <div class="exrow"><span class="exname">전문가 개수</span>
+            <span class="expct cy">1.8%</span><span class="exsub">896개 중 16개</span></div>
+          <div class="exrow"><span class="exname">활성 파라미터</span>
+            <span class="expct cy">3.7%</span><span class="exsub">2.8T 중 104B</span></div>
+          <div class="exrow"><span class="exname">GLM-5.2</span>
+            <span class="expct">5.3%</span><span class="exsub">753B 중 40B</span></div>
+          <div class="exrow"><span class="exname">DeepSeek V4 Flash</span>
+            <span class="expct">4.6%</span><span class="exsub">284B 중 13B</span></div>
+          <div class="exrow"><span class="exname">DeepSeek V4 Pro</span>
+            <span class="expct">3.1%</span><span class="exsub">1.6T 중 49B</span></div>
+        </div>
       </div>
 
       <div class="qbox">
-        <div class="qtop">Quantile Balancing &mdash; 합격선을 매번 다시 긋습니다
-          <span>고정 점수가 아니라 <b style="color:var(--c-c3ccd6)">분포의 분위수</b>로 자릅니다</span></div>
-        <div class="qpair">
-          <div class="qone">
-            <div class="qbars">
-              <i style="height:34%"></i><i class="pass" style="height:82%"></i><i style="height:24%"></i>
-              <i class="pass" style="height:96%"></i><i style="height:46%"></i><i style="height:18%"></i>
-              <i class="pass" style="height:71%"></i><i style="height:29%"></i>
-              <div class="qcut" style="bottom:62%"></div>
+        <div class="qtop">Quantile Balancing &mdash; 전문가마다 편향을 계산합니다
+          <span>고정폭이 아니라 <b style="color:var(--c-c3ccd6)">분위수로 한 번에</b> &middot; 서빙 땐 편향 고정</span></div>
+        <div class="qload">
+          <div class="qlside">
+            <div class="qlbars">
+              <i class="over" style="height:32px"></i>
+              <i class="over" style="height:24px"></i>
+              <i style="height:8px"></i>
+              <i style="height:2px"></i>
             </div>
-            <div class="qlab">점수가 고를 때 &mdash; <b>선이 높이</b></div>
+            <div class="qlnums">
+              <span class="over">4</span><span class="over">3</span><span>1</span><span>0</span>
+            </div>
+            <div class="qllab">보정 전 &mdash; <b>둘은 과부하 &middot; 하나는 고사</b></div>
           </div>
-          <div class="qone">
-            <div class="qbars">
-              <i style="height:16%"></i><i class="pass" style="height:41%"></i><i style="height:12%"></i>
-              <i style="height:9%"></i><i class="pass" style="height:52%"></i><i style="height:22%"></i>
-              <i style="height:14%"></i><i class="pass" style="height:37%"></i>
-              <div class="qcut" style="bottom:31%"></div>
+          <div class="qlarrow">&rarr;<span>편향<br>재계산</span></div>
+          <div class="qlside">
+            <div class="qlbars">
+              <i class="even" style="height:16px"></i>
+              <i class="even" style="height:16px"></i>
+              <i class="even" style="height:16px"></i>
+              <i class="even" style="height:16px"></i>
             </div>
-            <div class="qlab">전체가 낮을 때 &mdash; <b>선도 내려감</b></div>
+            <div class="qlnums">
+              <span class="even">2</span><span class="even">2</span><span class="even">2</span><span class="even">2</span>
+            </div>
+            <div class="qllab">보정 후 &mdash; <b>전문가 4개 모두 균등</b></div>
           </div>
         </div>
+        <div class="qex">Moonshot 논문 Fig. 5 예시 &middot; 토큰 8개 &middot; 전문가 4개 중 1개 선택 &middot; 목표 부하 2</div>
       </div>
 
       <div class="note">두 비율은 <b>분모가 다릅니다.</b> 그리고 켜지는 건 3.7%여도
@@ -197,31 +250,32 @@
       <div class="ptitle">압축한 게 아니라 <span class="cy">4비트로 태어났습니다</span></div>
       <div class="pdesc">7장 양자화를 학습 단계부터 전제로 깔았습니다</div>
 
-      <div class="sect">언제 4비트가 되는가</div>
+      <div class="sect">16비트 값이 4비트 눈금에 스냅되는 폭</div>
       <div class="tl">
+        <div class="tlhead"><span>&#9675; 원래 값(16비트)</span><span class="tlarrow">스냅 오차 &darr;</span><span>&#9679; 눈금 값(4비트)</span></div>
         <div class="tlrow">
           <div class="tlname">보통은 &mdash; <b>다 학습한 뒤 압축</b>(PTQ)</div>
-          <div class="tlbar"><i class="w16" style="width:74%">16비트로 학습</i><i class="squeeze" style="width:26%">4비트로 압축</i></div>
+          <svg class="quant" id="quant-ptq" width="320" height="40" viewBox="0 0 320 40"></svg>
+          <div class="tlcap">눈금과 무관하게 학습해 <b class="am">스냅 폭(오차)이 큽니다</b></div>
         </div>
         <div class="tlrow">
           <div class="tlname">K3는 &mdash; <b>처음부터 4비트를 전제로</b>(QAT)</div>
-          <div class="tlbar"><i class="w4" style="width:100%">4비트를 전제로 학습 &middot; 그대로 배포</i></div>
+          <svg class="quant" id="quant-qat" width="320" height="40" viewBox="0 0 320 40"></svg>
+          <div class="tlcap">눈금을 겨냥해 학습해 <b class="cy">스냅 폭(오차)이 작습니다</b></div>
         </div>
       </div>
 
-      <div class="calc">2.8T &times; 0.5바이트 = <b>약 1.4TB</b></div>
-
       <div class="hwrow">
         <div class="hwlab"><span>H200 &mdash; FP4 텐서코어가 없어 FP8로</span><b class="am">32장</b></div>
-        <svg class="gpus" id="h200" width="356" height="56" viewBox="0 0 356 56"></svg>
+        <svg class="gpus" id="h200" width="316" height="56" viewBox="0 0 316 56"></svg>
       </div>
       <div class="hwrow">
         <div class="hwlab"><span>B300 &mdash; FP4 네이티브</span><b class="cy">8장</b></div>
         <svg class="gpus" id="b300" width="156" height="26" viewBox="0 0 156 26"></svg>
       </div>
 
-      <div class="note">같은 모델인데 <b>4배</b>입니다. 단, 8장은 가중치가 겨우 들어가는 최소이고
-        Moonshot 권장은 <b>64장 이상</b>입니다.</div>
+      <div class="note">같은 모델인데 <b>4배</b>입니다. 옅은 칸은 노드 단위 때문에 남는 자리 &mdash;
+        8장도 가중치가 겨우 들어가는 최소이고 Moonshot 권장은 <b>64장 이상</b>입니다.</div>
     </div>
 
   </div>
@@ -250,14 +304,85 @@ for (let i = 0; i < 896; i++) {
                x: (i % 32) * 7, y: Math.floor(i / 32) * 7,
                width: 5, height: 5, rx: 1 });
 }
-/* 한 줄에 18장씩 — 예전 flex-wrap이 358px 폭에서 내던 배치와 같습니다. */
-for (const [id, n, cls] of [['h200', 32, 'amber'], ['b300', 8, 'cyan']]) {
-  const h = document.getElementById(id);
+/* 16비트 → 4비트 스냅 시각화. 다섯 개 눈금선에 연한 원(원래 값)과 채운 원(스냅된 값)을
+   선으로 이어 오차 크기를 보여줍니다. 같은 눈금이라도 PTQ는 학습이 눈금과 무관해
+   스냅 폭이 크고, QAT는 눈금을 겨냥해 학습해 스냅 폭이 작습니다 — 값은 이 그림을 위해
+   손으로 잡은 예시이고 실제 파라미터 분포가 아닙니다. */
+const LEVELS = [4, 12, 20, 28, 36];
+const QX = [16, 48, 80, 112, 144, 176, 208, 240, 272, 304];
+const SNAP = [12, 28, 4, 36, 20, 12, 28, 4, 36, 20];
+const PTQ_ORIG = [16, 24, 8, 32, 25, 8, 32, 8, 31, 15];
+const QAT_ORIG = [13, 27, 5, 35, 22, 11, 29, 5, 36, 19];
+
+function renderQuant(id, origArr, cls) {
+  const svg = document.getElementById(id);
+  for (const ly of LEVELS) {
+    const line = document.createElementNS(SVGNS, 'line');
+    line.setAttribute('class', 'qgrid');
+    line.setAttribute('x1', 0); line.setAttribute('x2', 320);
+    line.setAttribute('y1', ly); line.setAttribute('y2', ly);
+    svg.appendChild(line);
+  }
+  QX.forEach((x, i) => {
+    const orig = origArr[i], snap = SNAP[i];
+    const link = document.createElementNS(SVGNS, 'line');
+    link.setAttribute('class', 'qlink ' + cls);
+    link.setAttribute('x1', x); link.setAttribute('x2', x);
+    link.setAttribute('y1', orig); link.setAttribute('y2', snap);
+    svg.appendChild(link);
+
+    const o = document.createElementNS(SVGNS, 'circle');
+    o.setAttribute('class', 'qorig');
+    o.setAttribute('cx', x); o.setAttribute('cy', orig); o.setAttribute('r', 2.5);
+    svg.appendChild(o);
+
+    const s = document.createElementNS(SVGNS, 'circle');
+    s.setAttribute('class', 'qsnap ' + cls);
+    s.setAttribute('cx', x); s.setAttribute('cy', snap); s.setAttribute('r', 3);
+    svg.appendChild(s);
+  });
+}
+renderQuant('quant-ptq', PTQ_ORIG, 'ptq');
+renderQuant('quant-qat', QAT_ORIG, 'qat');
+
+/* 한 줄에 16장씩 — H200 32장이 정확히 두 줄을 꽉 채웁니다.
+   B300은 같은 칸 크기·간격을 쓰므로 8장이 한 줄의 절반만 채웁니다.
+   need = 가중치가 실제로 차지하는 장수(정수가 아닌 실수) — H200 2.8TB/141GB=19.858,
+   B300 실측 1,560.9GB/288GB=5.420([^memory-calc]과 같은 값). 정수 부분만큼은 꽉 채우고,
+   경계 카드 한 장은 그 소수부만큼만 아래에서부터 채워 나머지를 옅게 둡니다(호진님 지적,
+   2026-08-03 — "20장"·"6장"은 올림값이라 경계 카드가 실제로는 꽉 차 있지 않습니다). */
+function drawRack(host, cls, n, need) {
+  const full = Math.floor(need), frac = need - full;
   for (let i = 0; i < n; i++) {
-    rect(h, { class: 'g ' + cls, x: (i % 18) * 20, y: Math.floor(i / 18) * 30,
-              width: 16, height: 26, rx: 2 });
+    const x = (i % 16) * 20, y = Math.floor(i / 16) * 30, w = 16, hgt = 26, r = 2;
+    if (i < full) {
+      rect(host, { class: 'g ' + cls, x, y, width: w, height: hgt, rx: r });
+    } else if (i === full && frac > 0) {
+      rect(host, { class: 'g ' + cls + ' idle', x, y, width: w, height: hgt, rx: r });
+      const clipId = 'clip-' + cls + '-' + i;
+      const clip = document.createElementNS(SVGNS, 'clipPath');
+      clip.setAttribute('id', clipId);
+      const cr = document.createElementNS(SVGNS, 'rect');
+      cr.setAttribute('x', x); cr.setAttribute('y', y);
+      cr.setAttribute('width', w); cr.setAttribute('height', hgt); cr.setAttribute('rx', r);
+      clip.appendChild(cr);
+      host.appendChild(clip);
+      const g = document.createElementNS(SVGNS, 'g');
+      g.setAttribute('clip-path', 'url(#' + clipId + ')');
+      const fh = hgt * frac;
+      const fr = document.createElementNS(SVGNS, 'rect');
+      fr.setAttribute('class', 'g ' + cls);
+      fr.setAttribute('x', x); fr.setAttribute('y', y + hgt - fh);
+      fr.setAttribute('width', w); fr.setAttribute('height', fh);
+      g.appendChild(fr);
+      host.appendChild(g);
+    } else {
+      rect(host, { class: 'g ' + cls + ' idle', x, y, width: w, height: hgt, rx: r });
+    }
   }
 }
+drawRack(document.getElementById('h200'), 'amber', 32, 2800 / 141);
+drawRack(document.getElementById('b300'), 'cyan', 8, 1560.9 / 288);
 </script>
 </body>
 </html>

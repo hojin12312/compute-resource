@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=6b2b16d2">
+<style>
+  html, body { height:100%; box-sizing:border-box; }
+  body { padding-top:36px; padding-bottom:30px; display:flex; flex-direction:column; }
+  .panels { margin-top:auto; margin-bottom:auto; }
+
+  .panel-cat { width:600px; flex-shrink:0; }
+  .panel-cards { width:600px; flex-shrink:0; }
+
+  .cat-row { display:flex; align-items:center; gap:14px; height:34px; }
+  .cat-row + .cat-row { margin-top:6px; }
+  .cat-name { width:96px; flex-shrink:0; font-size:13.5px; color:var(--c-c3ccd6); text-align:right; }
+  .cat-dots { flex-shrink:0; }
+  .dot { fill:var(--c-4d5661); }
+  .dot.on { fill:var(--c-0e8fa3); }
+  .cat-frac { font:700 14px "IBM Plex Mono", monospace; color:var(--c-e6edf3); white-space:nowrap; }
+  .cat-frac .sl { font-weight:400; color:var(--c-8b96a3); }
+
+  .total-line { margin-top:20px; padding:14px 18px; background:var(--c-1b2027);
+                border-radius:8px; border:1px solid var(--c-21262d);
+                display:flex; align-items:baseline; justify-content:space-between; }
+  .total-line .tl-label { font-size:13.5px; color:var(--c-9aa7b4); }
+  .total-line .tl-num { font:700 22px "IBM Plex Mono", monospace; color:var(--c-22a7bd); }
+  .total-line .tl-num span { font-size:14px; color:var(--c-8b96a3); font-weight:400; }
+
+  .b-card { padding:11px 14px; background:var(--c-1b2027);
+            border-radius:8px; border:1px solid var(--c-21262d); }
+  .b-card + .b-card { margin-top:9px; }
+  .b-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:7px; }
+  .b-title { font:700 12.5px "Pretendard Variable", sans-serif; color:var(--c-e6edf3); }
+  .b-title span { font-weight:400; font-size:11px; color:var(--c-8b96a3); }
+  .badge-win { font:700 10px "IBM Plex Mono", sans-serif; padding:2px 6px; border-radius:3px;
+               background:var(--c-12333a); color:var(--c-22a7bd); flex-shrink:0; }
+  .bar-stack { display:flex; flex-direction:column; gap:4px; }
+  .bar-line { display:flex; align-items:center; gap:8px; height:16px; }
+  .bar-name { width:118px; font-size:10.5px; color:var(--c-8b96a3); text-align:right; flex-shrink:0; }
+  .bar-name.us { color:var(--c-e6edf3); font-weight:700; }
+  .bar-track { height:100%; border-radius:2px; flex-shrink:0; }
+  .bar-track.us { background:var(--c-0e8fa3); }
+  .bar-track.them { background:var(--c-4d5661); }
+  .bar-num { font:700 10.5px "IBM Plex Mono", monospace; color:var(--c-9aa7b4); white-space:nowrap; }
+  .bar-num.cy { color:var(--c-22a7bd); }
+</style>
+</head>
+<body>
+  <h1>Kimi K3 <span class="cy">&mdash; 벤치마크 45종 전수 조사</span></h1>
+  <div class="sub">공식 모델 카드(Hugging Face)가 공개한 전체 비교표 기준 · 6개 모델 중 각 항목 1위 집계</div>
+
+  <div class="panels">
+    <div class="panel-cat">
+      <div class="ptitle">카테고리별 1위 비율</div>
+      <div class="pdesc">막대 위 점 하나가 벤치마크 하나입니다 &middot; 채운 점 = K3가 1위</div>
+
+      <div class="cat-row"><span class="cat-name">추론&middot;지식</span>
+        <svg class="cat-dots" width="56" height="10" viewBox="0 0 56 10"></svg>
+        <span class="cat-frac" data-cat="reason"></span></div>
+      <div class="cat-row"><span class="cat-name">코딩</span>
+        <svg class="cat-dots" width="121" height="10" viewBox="0 0 121 10"></svg>
+        <span class="cat-frac" data-cat="code"></span></div>
+      <div class="cat-row"><span class="cat-name">에이전틱</span>
+        <svg class="cat-dots" width="290" height="10" viewBox="0 0 290 10"></svg>
+        <span class="cat-frac" data-cat="agent"></span></div>
+      <div class="cat-row"><span class="cat-name">비전</span>
+        <svg class="cat-dots" width="134" height="10" viewBox="0 0 134 10"></svg>
+        <span class="cat-frac" data-cat="vision"></span></div>
+
+      <div class="total-line">
+        <span class="tl-label">전체 45개 항목 중 K3가 1위</span>
+        <span class="tl-num">15<span>/45 &middot; 33%</span></span>
+      </div>
+    </div>
+
+    <div class="panel-cards">
+      <div class="ptitle">대표 사례 &mdash; 표 전체에서 새로 확인된 1위</div>
+      <div class="pdesc">스펙 카드가 이미 다룬 AA-LCR&middot;ProgramBench&middot;SWE-Marathon 외의 항목</div>
+
+      <div class="b-card">
+        <div class="b-head"><span class="b-title">BrowseComp <span>&middot; 웹 리서치</span></span>
+          <span class="badge-win">1위</span></div>
+        <div class="bar-stack">
+          <div class="bar-line"><span class="bar-name us">Kimi K3</span><div class="bar-track us" style="width:219px"></div><span class="bar-num cy">91.2</span></div>
+          <div class="bar-line"><span class="bar-name">GPT-5.6 Sol</span><div class="bar-track them" style="width:217px"></div><span class="bar-num">90.4</span></div>
+        </div>
+      </div>
+
+      <div class="b-card">
+        <div class="b-head"><span class="b-title">MCPMark-Verified <span>&middot; MCP 도구 사용</span></span>
+          <span class="badge-win">1위</span></div>
+        <div class="bar-stack">
+          <div class="bar-line"><span class="bar-name us">Kimi K3</span><div class="bar-track us" style="width:227px"></div><span class="bar-num cy">94.5</span></div>
+          <div class="bar-line"><span class="bar-name">GPT-5.5 / GPT-5.6 Sol</span><div class="bar-track them" style="width:223px"></div><span class="bar-num">92.9</span></div>
+        </div>
+      </div>
+
+      <div class="b-card">
+        <div class="b-head"><span class="b-title">Harvey Lab-AA <span>&middot; 법률 전문 에이전트</span></span>
+          <span class="badge-win">1위</span></div>
+        <div class="bar-stack">
+          <div class="bar-line"><span class="bar-name us">Kimi K3</span><div class="bar-track us" style="width:227px"></div><span class="bar-num cy">94.6</span></div>
+          <div class="bar-line"><span class="bar-name">Claude Fable 5</span><div class="bar-track them" style="width:225px"></div><span class="bar-num">93.6</span></div>
+        </div>
+      </div>
+
+      <div class="b-card">
+        <div class="b-head"><span class="b-title">OmniDocBench <span>&middot; 비전&middot;문서 이해</span></span>
+          <span class="badge-win">1위</span></div>
+        <div class="bar-stack">
+          <div class="bar-line"><span class="bar-name us">Kimi K3</span><div class="bar-track us" style="width:219px"></div><span class="bar-num cy">91.1</span></div>
+          <div class="bar-line"><span class="bar-name">Claude Fable 5</span><div class="bar-track them" style="width:215px"></div><span class="bar-num">89.8</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot"><b>스펙 카드의 "8개 중 3개 1위"는 이 표의 일부만 추린 것입니다</b> &mdash; 45개 전체로 보면 1위가 <b class="cy">15개(33%)</b>이고, 에이전틱&middot;비전 영역이 특히 강합니다.</div>
+
+<script>
+const CATS = {
+  reason: { total: 4, win: 1 },
+  code:   { total: 9, win: 2 },
+  agent:  { total: 22, win: 9 },
+  vision: { total: 10, win: 3 },
+};
+const NS = 'http://www.w3.org/2000/svg';
+document.querySelectorAll('.cat-dots').forEach(svg => {
+  const row = svg.closest('.cat-row');
+  const key = row.querySelector('.cat-frac').dataset.cat;
+  const { total, win } = CATS[key];
+  for (let i = 0; i < total; i++) {
+    const dot = document.createElementNS(NS, 'rect');
+    dot.setAttribute('x', i * 13);
+    dot.setAttribute('y', 0);
+    dot.setAttribute('width', 10);
+    dot.setAttribute('height', 10);
+    dot.setAttribute('rx', 2);
+    dot.setAttribute('class', 'dot' + (i < win ? ' on' : ''));
+    svg.appendChild(dot);
+  }
+  const frac = row.querySelector('.cat-frac');
+  frac.innerHTML = win + '<span class="sl">/' + total + '</span>';
+});
+</script>
+</body>
+</html>

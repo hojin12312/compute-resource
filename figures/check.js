@@ -1,4 +1,4 @@
-/* 그림 39장 레이아웃 회귀 검사.
+/* 그림 54장 레이아웃 회귀 검사.
  *
  *   node figures/check.js              모든 그림
  *   node figures/check.js v4_spec k3   일부만

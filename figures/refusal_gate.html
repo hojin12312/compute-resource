@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=6b2b16d2">
+<style>
+  /* margin-top/bottom:auto가 body 전체(768px) 기준으로 위아래를 똑같이 나누는데,
+     .foot은 position:absolute라 그 계산에 안 잡힙니다. 그래서 위 여백만 크고
+     .foot 바로 위 여백은 아주 좁았습니다. padding-bottom을 foot 높이만큼 미리
+     떼어 두면 auto 여백이 foot 윗선을 기준으로 다시 반씩 나뉩니다. */
+  body { display:flex; flex-direction:column; padding-bottom:59px; }
+
+  .wrap { margin-top:auto; margin-bottom:auto; display:flex; flex-direction:column; align-items:center; }
+
+  /* 4열 그리드 — 1열은 행 라벨, 4열은 빈 자리입니다. 1열 폭 = 4열 폭이라
+     가운데 2×2 칸(2·3열)이 캔버스 정중앙에 옵니다. 라벨까지 통째로 중앙정렬하면
+     칸 블록이 라벨 폭만큼 오른쪽으로 쏠려 보였던 것을 이렇게 바로잡았습니다. */
+  .matrix { display:grid; grid-template-columns:210px 400px 400px 210px;
+            grid-template-rows:66px 178px 178px; gap:7px; }
+  .hcell { display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+           padding-bottom:12px; font:700 15px "Pretendard Variable", sans-serif; color:var(--c-c3ccd6);
+           text-align:center; }
+  .hcell span { margin-top:4px; font-weight:400; font-size:11.5px; color:var(--c-7d8896); }
+  .rcell { display:flex; flex-direction:column; align-items:flex-end; justify-content:center;
+           padding-right:20px; font:700 16px "Pretendard Variable", sans-serif; color:var(--c-e6edf3);
+           text-align:right; }
+  .rcell span { margin-top:4px; font-weight:400; font-size:11.5px; color:var(--c-8b96a3); }
+
+  .cell { border-radius:16px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+          gap:13px; }
+  .cell.no  { background:var(--c-221a0d); border:1px solid var(--c-4a3216); color:var(--c-e0912a); }
+  .cell.yes { background:var(--c-12333a); border:1px solid var(--c-1c5560); color:var(--c-22a7bd); }
+  .cell svg { width:46px; height:46px; stroke:currentColor; }
+  .cell .lbl { font:700 19px "Pretendard Variable", sans-serif; }
+
+  .evidence { display:flex; gap:14px; margin-top:16px; }
+  .ev { padding:10px 15px; border-radius:8px; background:var(--c-1b2027); border:1px solid var(--c-21262d);
+        font-size:11px; color:var(--c-9aa7b4); line-height:1.5; }
+  .ev b { color:var(--c-c3ccd6); font-weight:700; }
+</style>
+</head>
+<body>
+  <h1>폐쇄 모델은 <span class="am">의심스러운 요청도, 양성 요청도</span> 거절합니다</h1>
+  <div class="sub">문제는 <b>양성 요청 거절</b>입니다 &mdash; 오픈웨이트는 <b class="cy">Kimi K3를 포함해</b> 상대적으로 자유롭습니다</div>
+
+  <div class="wrap">
+    <div class="matrix">
+      <div></div>
+      <div class="hcell">의심스러운 요청<span>예 &middot; 사이버공격 기법</span></div>
+      <div class="hcell">양성 요청<span>예 &middot; 일상 코딩&middot;디버깅</span></div>
+      <div></div>
+
+      <div class="rcell">폐쇄 모델<span>Anthropic&middot;OpenAI&middot;Google</span></div>
+      <div class="cell no">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.6" stroke-linecap="round"><path d="M6 6L18 18M18 6L6 18"/></svg>
+        <span class="lbl">거절</span>
+      </div>
+      <div class="cell no">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.6" stroke-linecap="round"><path d="M6 6L18 18M18 6L6 18"/></svg>
+        <span class="lbl">거절</span>
+      </div>
+      <div></div>
+
+      <div class="rcell">오픈웨이트<span>Kimi K3 등</span></div>
+      <div class="cell yes">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+        <span class="lbl">통과</span>
+      </div>
+      <div class="cell yes">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+        <span class="lbl">통과</span>
+      </div>
+      <div></div>
+    </div>
+
+    <div class="evidence">
+      <div class="ev"><b>Anthropic</b> &middot; 2026-06-09<br>Fable 5 공개 / 해제판 Mythos 5는 Glasswing 전용</div>
+      <div class="ev"><b>OpenAI</b> &middot; GPT-5.6<br>차단 10배 강화 &middot; 개방형은 심사</div>
+      <div class="ev"><b>Google</b> &middot; 2026-07-21<br>Flash Cyber &mdash; 정부&middot;파트너 한정 파일럿</div>
+    </div>
+  </div>
+
+  <div class="foot">Fable 5의 거절은 <b>사고가 아니라 설계</b>입니다 &mdash; 오픈웨이트에는 이 층 자체가 <b>없습니다.</b></div>
+</body>
+</html>
