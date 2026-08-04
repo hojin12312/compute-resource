@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=2a58053d">
+<style>
+  body { padding-top:52px; }
+  /* flex-shrink:0 필수 — 없으면 긴 막대 행만 눌려 0점 선과 막대 길이가 함께 틀어집니다
+     (bench.html과 같은 이유). 이 그림은 bench.html의 짝이라 눈금(SCALE 8.4)도 같게 뒀습니다. */
+  .bar { display:flex; align-items:center; gap:10px; margin-top:3px; }
+  .bar > * { flex-shrink:0; }
+  .blab { flex:0 0 224px; text-align:right; font-size:11.5px; color:var(--c-c3ccd6);
+          line-height:1.2; white-space:nowrap; }
+    /* 인라인입니다 — display:block으로 두 줄이 되면 행 높이가 막대(19px)가 아니라
+     이름표(23px)에 끌려가 21행이 캔버스를 넘칩니다. */
+  .blab span { font-size:9.5px; color:var(--c-7d8896); margin-left:3px; }
+  .blab.on { color:var(--c-a48cf5); font-weight:700; }
+  /* 강조는 띠로만 합니다 — 값에 따라 투명도를 주면 같은 44점 셋의 길이는 같은데
+     진하기가 갈려 "동률"이라는 이 그림의 논지가 흐려집니다. */
+  .bar.on { background:var(--v-24); border-radius:3px; padding:2px 0; margin-top:1px; }
+  .zero { flex:0 0 2px; background:var(--c-3d4650); height:19px; }
+  .track { flex:0 0 auto; height:19px; border-radius:0 3px 3px 0; }
+  .bval { flex:0 0 auto; font-size:12px; font-weight:700; white-space:nowrap; }
+  .tag { flex:0 0 auto; font-size:11px; color:var(--c-a48cf5); white-space:nowrap; margin-left:2px; }
+  /* 네 번째 계열 — 미·중·한 밖(현재 Mistral 하나). 회색이라 채도 기준에는 못 미치지만
+     "그 외"라는 뜻을 지는 자리이고 이름표가 국가를 직접 답니다. */
+  .other { background:var(--c-5d6773); }
+  .gr { color:var(--c-9aa7b4); }
+
+  .big { font-size:52px; font-weight:700; letter-spacing:-.03em; line-height:1; }
+  .kv { font-size:13.5px; color:var(--c-9aa7b4); line-height:1.7; margin-top:12px; }
+  .kv b { color:var(--c-e6edf3); font-weight:700; }
+  .why { border-left:2px solid var(--c-2b333d); padding-left:18px; margin-top:24px;
+         font-size:13.5px; color:var(--c-8b96a3); line-height:1.8; }
+  .why b { color:var(--c-c3ccd6); font-weight:600; }
+
+  /* 이 지수에 아직 없는 모델 — 순위표가 한국 모델 전부를 담은 것이 아니라는 표시 */
+  .rest { margin-top:24px; padding-top:15px; border-top:1px solid var(--c-21262d); }
+  .resttop { font-size:12.5px; color:var(--c-8b96a3); line-height:1.6; }
+  .restrow { display:flex; justify-content:space-between; font-size:12.5px;
+             color:var(--c-9aa7b4); margin-top:9px; }
+  .restrow b { color:var(--c-c3ccd6); font-weight:700; }
+</style>
+</head>
+<body>
+  <h1>그 자리에서 나온 점수가 <span class="vi">44점</span>입니다</h1>
+  <div class="sub">Artificial Analysis Intelligence Index &mdash; 값이 클수록 좋습니다. 계열마다 <b style="color:var(--c-c3ccd6)">최고 설정 하나</b>만 뽑았고 공식 표기에 맞춰 정수로 그렸습니다. <b style="color:var(--c-c3ccd6)">2026년 2분기 이후 공개 모델만</b> 담았습니다 &mdash; 그래서 1장의 상위 15개와 목록이 다릅니다. 44점 위는 7월 28일, 한국은 7월 31일, 아래는 8월 4일 리더보드입니다.</div>
+
+  <div class="legend">
+    <div><span class="sw amber"></span>미국</div>
+    <div><span class="sw cyan"></span>중국</div>
+    <div><span class="sw violet"></span>한국</div>
+    <div><span class="sw" style="background:var(--c-5d6773)"></span>그 외 국가</div>
+  </div>
+
+  <div class="panels" style="margin-top:14px; gap:46px">
+    <div class="panel" style="width:850px">
+      <div class="ptitle">종합 지능 지수</div>
+      <div class="pdesc" style="margin-bottom:12px">왼쪽 끝이 0점 &mdash; 같은 하네스로 측정한 단일 기준입니다</div>
+      <div id="bars"></div>
+    </div>
+
+    <div class="panel" style="width:330px">
+      <div class="ptitle">한국 최고 &middot; Motif 3 Beta</div>
+      <div class="pdesc">모티프테크놀로지스 &middot; 314B 중 활성 약 13B</div>
+      <div class="big vi" style="margin-top:16px">44점</div>
+      <div class="kv"><b>가중치가 공개된 모델</b>만 세면 <b>공동 4위</b>입니다 &mdash; 위는 Kimi K3(57)·GLM-5.2(51)·DeepSeek V4 Flash(50) 셋뿐이고, 같은 44점에 MiniMax-M3·DeepSeek V4 Pro가 있습니다. <b>미국·중국 밖에서는 1위</b>입니다.</div>
+
+      <div class="why">
+        GPU는 <b>10배</b> 부족한데<br>
+        1위와는 <b>17점</b>, Kimi K3와는 <b>13점</b> 차이입니다.<br>
+        <b>활성 13B만 켜서 앉은 자리입니다.</b>
+      </div>
+
+      <div class="rest">
+        <div class="resttop">7월 독파모 넷 중 <b style="color:var(--c-c3ccd6)">지수에 오른 것은 Motif 3뿐</b>입니다.</div>
+        <div class="restrow"><span>K-EXAONE 2.0 &middot; LG &middot; 750B</span><b>미등재</b></div>
+        <div class="restrow"><span>A.X K2 &middot; SK텔레콤 &middot; 688B</span><b>미등재</b></div>
+        <div class="restrow"><span>Solar Open 2 &middot; 업스테이지 &middot; 250B</span><b>미등재</b></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    장수는 <b>10배</b>, 점수는 <b>13점</b> &mdash; 그 간격을 메운 것이 <b>6·7장에서 본 기법들</b>입니다.
+  </div>
+
+<script>
+/* 값은 전부 정수입니다 — AAII 공식 FAQ가 오픈웨이트 상위를 "Kimi K3 (57),
+   GLM-5.2 (51), MiniMax-M3 (44)"로 적고, 한국 모델도 리더보드에 정수로만 실립니다.
+   1장 bench.html의 소수 첫째 자리 값을 반올림하면 여기 값과 같습니다.
+   Motif 3의 44는 그래서 중국 44 둘과 **같은 길이**로 그려집니다 — 동률이 사실입니다. */
+const D = [
+  { n: 'Claude Opus 5',                s: 'Anthropic',        v: 61, c: 'amber',  t: 'am' },
+  { n: 'Claude Fable 5',               s: 'Anthropic',        v: 60, c: 'amber',  t: 'am' },
+  { n: 'GPT-5.6 Sol',                  s: 'OpenAI',           v: 59, c: 'amber',  t: 'am' },
+  { n: 'Kimi K3',                      s: 'Moonshot AI',      v: 57, c: 'cyan',   t: 'cy' },
+  { n: 'GPT-5.6 Terra',                s: 'OpenAI',           v: 55, c: 'amber',  t: 'am' },
+  { n: 'Grok 4.5',                     s: 'xAI',              v: 54, c: 'amber',  t: 'am' },
+  { n: 'Claude Sonnet 5',              s: 'Anthropic',        v: 53, c: 'amber',  t: 'am' },
+  /* Qwen3.8 Max — 2026-08-03 공개, 2.4T 파라미터, AAII **53**. 상위 버전 규칙에 따라
+     Qwen3.7 Max(46)를 대체합니다. **오늘(8-04)은 오픈웨이트가 아닙니다** — SCMP가
+     "ahead of an open-weights release next week"라고 적었습니다(`RESEARCH.md` §52.6).
+     가중치가 풀리면 오픈웨이트 2위가 되어 **Motif 3은 공동 5위로 밀립니다.** */
+  { n: 'Qwen3.8 Max',                  s: 'Alibaba',          v: 53, c: 'cyan',   t: 'cy' },
+  { n: 'GPT-5.6 Luna',                 s: 'OpenAI',           v: 51, c: 'amber',  t: 'am' },
+  { n: 'GLM-5.2',                      s: 'Zhipu AI',         v: 51, c: 'cyan',   t: 'cy' },
+  { n: 'Muse Spark 1.1',               s: 'Meta',             v: 51, c: 'amber',  t: 'am' },
+  { n: 'Gemini 3.6 Flash',             s: 'Google',           v: 50, c: 'amber',  t: 'am' },
+  /* V4 Flash 0731은 **부록 C**의 주인공입니다 — AA 독립 실측 49.9(보도자료 표기 "50").
+     §16.2의 7월 28일 스냅샷에는 없습니다(0731 정식판이 **7월 31일** 공개라서).
+     같은 V4라도 Pro(44)와 Flash(50)는 **같은 버전의 제품 티어**라 둘 다 남깁니다 —
+     GPT-5.6 Sol·Terra·Luna와 같은 처리입니다. */
+  { n: 'DeepSeek V4 Flash 0731',       s: 'DeepSeek',         v: 50, c: 'cyan',   t: 'cy' },
+
+  { n: 'MiniMax-M3',                   s: 'MiniMax',          v: 44, c: 'cyan',   t: 'cy' },
+  { n: 'DeepSeek V4 Pro',              s: 'DeepSeek',         v: 44, c: 'cyan',   t: 'cy' },
+  { n: 'Motif 3 Beta',                 s: '모티프테크놀로지스 · 한국', v: 44, c: 'violet', t: 'vi',
+    on: true, tag: '← 오픈웨이트 공동 4위' },
+  /* 44점 아래는 8월 4일 열람분입니다(`RESEARCH.md` §52.2·§52.5). 고르는 규칙 셋 —
+     (1) **2026년 2분기 이후 공개**(호진님 지시). 그래서 Claude 4.5 Haiku(2025-10)를 뺐고,
+         44점 위에서도 Claude Opus 4.8(56)·GPT-5.5(55)·Gemini 3.1 Pro(46)를 뺐습니다.
+         **1장 bench.html의 상위 15개와 목록이 다른 이유가 이것입니다.**
+     (2) §16.3의 **계열별 최고 하나**. 추론 노력 설정(max/high/low) 행은 접고, Sol·Terra·Luna
+         같은 **제품 변종은 따로** 셉니다(1장과 같은 처리).
+     (3) 국적이 확인된 것만. Nex-N2-Pro·Agnes 2.5 Pro는 소속 미상이라 뺐습니다.
+     (2)를 **버전에도** 적용합니다 — `Gemini 3.5 Flash-Lite 36`은 같은 계열의 상위 버전
+     `Gemini 3.6 Flash 50`이 이미 있어 뺐습니다(호진님 지적). 반대로 Sol·Terra·Luna나
+     Opus·Fable·Sonnet처럼 **같은 버전의 제품 티어**는 서로 상위/하위가 아니라 남깁니다.
+     앞 세대 한국 모델 여섯(K-EXAONE 236B 22 · EXAONE 4.5 20 · HyperCLOVA 17 · Mi:dm 16 ·
+     Solar Open 100B 15 · Solar Pro 3 14)이 있던 자리입니다. 존재 사실은 오른쪽에 한 줄로. */
+  { n: 'MiMo-V2.5-Pro',                s: 'Xiaomi',           v: 42, c: 'cyan',   t: 'cy' },
+  { n: 'Hy3',                          s: 'Tencent',          v: 41, c: 'cyan',   t: 'cy' },
+  { n: 'Inkling',                      s: 'Thinking Machines', v: 41, c: 'amber',  t: 'am' },
+  { n: 'Nemotron 3 Ultra',             s: 'NVIDIA',           v: 38, c: 'amber',  t: 'am' },
+  { n: 'Mistral Medium 3.5',           s: 'Mistral',        v: 30, c: 'other',  t: 'gr' },
+];
+const SCALE = 7.6;   // 1점당 px — 21행이 되며 이름표가 넓어져 1장(8.4)보다 줄였습니다
+const host = document.getElementById('bars');
+D.forEach(d => {
+  const row = document.createElement('div'); row.className = 'bar' + (d.on ? ' on' : '');
+  row.innerHTML =
+    '<div class="blab' + (d.on ? ' on' : '') + '">' + d.n + '<span>· ' + d.s + '</span></div>' +
+    '<div class="zero"></div>' +
+    '<div class="track ' + d.c + '" style="width:' + (d.v * SCALE) + 'px"></div>' +
+    '<div class="bval ' + d.t + '">' + d.v + '</div>' +
+    (d.tag ? '<div class="tag">' + d.tag + '</div>' : '');
+  host.appendChild(row);
+});
+</script>
+</body>
+</html>

@@ -62,13 +62,14 @@
         </div>
       </div>
       <div class="tochalf">
-        <div class="hk">후반부 · 6~9장</div>
+        <div class="hk">후반부 · 6~10장</div>
         <div class="hw">그것을 어떻게 깎는가</div>
         <div class="tocl">
           <div class="ti"><span class="tn">6</span><span class="tt">아키텍처 살펴보기<em>여섯 모델의 여섯 전략</em></span></div>
           <div class="ti"><span class="tn">7</span><span class="tt">양자화<em>비트를 줄여 둘 다 깎기</em></span></div>
-          <div class="ti"><span class="tn">8</span><span class="tt">AI 소버린<em>누가 소유하고 어디서 돌리는가</em></span></div>
-          <div class="ti"><span class="tn">9</span><span class="tt">GPU 로드맵<em>하드웨어는 어디로 가는가</em></span></div>
+          <div class="ti"><span class="tn">8</span><span class="tt">AI 소버린<em>국가 · 기업 · 개인의 자립</em></span></div>
+          <div class="ti"><span class="tn">9</span><span class="tt">추론 엔진과 커널<em>하드웨어와 모델을 잇는 소프트웨어</em></span></div>
+          <div class="ti"><span class="tn">10</span><span class="tt">GPU 로드맵<em>하드웨어는 어디로 가는가</em></span></div>
         </div>
       </div>
     </div>
@@ -635,13 +636,14 @@
         </div>
       </div>
       <div class="tochalf on">
-        <div class="hk">후반부 · 6~9장</div>
+        <div class="hk">후반부 · 6~10장</div>
         <div class="hw">그것을 어떻게 깎는가</div>
         <div class="tocl">
           <div class="ti"><span class="tn">6</span><span class="tt">아키텍처 살펴보기<em>여섯 모델의 여섯 전략</em></span></div>
           <div class="ti"><span class="tn">7</span><span class="tt">양자화<em>비트를 줄여 둘 다 깎기</em></span></div>
-          <div class="ti"><span class="tn">8</span><span class="tt">AI 소버린<em>누가 소유하고 어디서 돌리는가</em></span></div>
-          <div class="ti"><span class="tn">9</span><span class="tt">GPU 로드맵<em>하드웨어는 어디로 가는가</em></span></div>
+          <div class="ti"><span class="tn">8</span><span class="tt">AI 소버린<em>국가 · 기업 · 개인의 자립</em></span></div>
+          <div class="ti"><span class="tn">9</span><span class="tt">추론 엔진과 커널<em>하드웨어와 모델을 잇는 소프트웨어</em></span></div>
+          <div class="ti"><span class="tn">10</span><span class="tt">GPU 로드맵<em>하드웨어는 어디로 가는가</em></span></div>
         </div>
       </div>
     </div>
@@ -1613,251 +1615,369 @@
   <div class="ctag">Chapter 08</div>
   <h2>AI 소버린</h2>
   <blockquote>"더 이상 AI는 모두의 것이 아니라,<br>각자 자신의 것을 만들어야 하는 국가 전략자산이 되었다"</blockquote>
-  <div class="cwhat">6장의 여섯 기법이 <b>왜 나왔는지</b>, 그 바깥의 이유.</div>
+  <div class="cwhat">국가 · 기업 · 개인 단위의 주권 확보와 기술 자립.</div>
 </section>
 
 <section data-chapter="8.1 국가">
   <div class="eyebrow">8.1 국가 단위</div>
-  <h2>통제의 범위가 <span class="am">3단계</span>로 넓어졌습니다</h2>
-  <div class="lead">지금까지의 아키텍처 이야기는 결국 <b>"GPU가 부족해도 어떻게 쓸 만한 모델을 만드느냐"</b>로 수렴합니다.
-    그리고 그 부족은 기술 문제가 아니라 <b>규제의 결과</b>입니다.</div>
+  <h2>외부 통제의 <span class="am">3가지 위협</span>과 기술 자립</h2>
+  <div class="lead">AI 자립은 국가 안보와 미래 산업의 생존 조건입니다. 지정학적 통제가 3개 영역으로 넓어지고 있습니다.</div>
   <div class="body">
     <table class="mid">
-      <tr><th>단계</th><th>통제 대상</th><th>실제로 벌어진 일</th></tr>
-      <tr><td><b>1. 하드웨어</b></td><td>GPU 수출</td><td>Blackwell 계열 중국 수출 차단. H20·성능을 깎은 H200조차 케이스별 라이선스와 관세를 거쳐야 통과</td></tr>
-      <tr class="hi"><td><b>2. 모델 설계</b></td><td class="cy">통제가 아니라 <b>결과</b></td><td>제약이 <b>MoE·선형 어텐션·KV캐시 압축·네이티브 저비트 양자화</b>를 낳음</td></tr>
-      <tr><td><b>3. 모델 자체</b></td><td>가중치 배포</td><td>중국은 최신 모델의 해외 접근 제한을 논의, 미국은 <b class="am">자국 모델에 수출통제 지시</b>를 걸어 모든 외국인의 접근을 한때 차단</td></tr>
+      <tr><th>영역</th><th>통제 대상</th><th>실제로 벌어진 일</th></tr>
+      <tr><td><b>1. 하드웨어</b></td><td>GPU 수출 규제</td><td>Blackwell 계열 중국 수출 차단. H20·H200조차 케이스별 라이선스 적용</td></tr>
+      <tr><td><b>2. 모델 자체</b></td><td>가중치 & API 접근</td><td>최신 프론티어 모델의 해외 배포 차단 및 국적 기반 접근 제한 지시</td></tr>
+      <tr><td><b>3. 소프트웨어</b></td><td>커널 & 최적화 SW</td><td><b>비표준 칩 커널 개발</b>을 AI 세이프가드로 블록하여 칩 최적화 유출 방지</td></tr>
     </table>
   </div>
   <div class="foot cy-l">
-    <b>2단계가 방금 본 6장 전체입니다.</b> "싸게, 그러나 뛰어나게"는 선택이 아니라 <b>제재가 강제한 방향</b>이었습니다.
+    <b>통제의 위협 속에서</b> 자국 GPU 확보, 독자 모델 학습, 그리고 자원 절감 기술(MoE, 저비트 양자화)이 <b>필수 생존 조건</b>이 되었습니다.
   </div>
   <aside class="notes">
-    여기가 6장을 회수하는 지점입니다 — "방금 본 여섯 기법이 이 표의 2단계입니다"라고 짚어주세요.
-    수입이 막힌 중국은 Huawei Ascend(910C, 950 시리즈)로 인프라를 자체 조달하는 한편,
-    연산량과 메모리를 극단적으로 아끼는 아키텍처를 발전시켰습니다.
-    3단계가 특히 최근 변화입니다 — <b>가장 앞선 모델은 국내 전용으로 묶고 한 세대 뒤처진 것만 공개</b>.
-    오픈웨이트조차 계층화 대상이 되고 있습니다.
-    <b>그 계층화가 중국만의 일이 아닙니다</b> — 6.6 마지막 장에서 본 그 사건입니다.
-    2026-06-09 Anthropic이 같은 모델을 Fable 5(공개)와 Mythos 5(정부 협력 프로그램 전용)로 갈랐고,
-    <b>6월 12일 미국 정부가 그 두 모델에 대한 모든 외국인의 접근을 수출통제 지시로 차단</b>했습니다
-    (Anthropic 소속 외국인 직원까지 포함, 6월 30일 해제). 자국 기업의 자국 모델인데 국적으로 갈랐습니다.
-    <b>그리고 통제 대상에 "그 칩을 위한 소프트웨어"가 들어왔습니다</b> — Fable 5가 막는 목록에
-    <b>특정 비표준 칩을 위한 커널 개발</b>이 있고, 이유는 미국·동맹이 프론티어 칩과 그것을 제 성능으로
-    돌리는 소프트웨어 양쪽에서 가진 우위를 지키는 것이라고 Anthropic이 밝혔습니다.
-    <b>1단계가 칩을, 3단계가 가중치를 막는 사이 그 둘을 잇는 커널까지</b> 지도에 올랐습니다 —
-    8.4(엔진과 커널)가 왜 소버린의 일부인지가 여기서 분명해집니다.
-    <b>주의</b> — "미국이 규제했다"로 요약하지 마세요. 6월 2일 행정명령은 강제 라이선싱을 명시적으로
-    배제한 자발적 틀이고, 12일 차단은 <b>수출통제 권한</b>으로 나왔습니다. 규제 입법을 요구한 쪽은
-    오히려 Anthropic입니다. <b>표에 새 행을 넣지는 않았습니다</b> — 3단계 안의 사례입니다.
+    하드웨어, 모델, 소프트웨어/커널의 3대 통제 영역을 설명합니다.
+    1단계(칩)와 2단계(모델 가중치) 통제 사이에서 칩 최적화 커널 개발까지 통제 지도에 올라간 현 상황을 지적하고,
+    제재 속에서 6장의 자원 절감 아키텍처(MoE, 저비트 양자화)가 탄생하고 발전해 온 맥락을 강조해 주세요.
+  </aside>
+</section>
+
+
+
+<section class="fig" data-chapter="8.1 국가">
+  <img src="../assets/kr_infra.webp?v=20260804r" alt="국가별 AI 가속기 장수 비교 — 미국 약 100만 장 이상, 중국 약 30만 장, xAI Colossus 1 한 곳 22만 장, 한국 합산 약 7만 3천 장(정부 2만 2,840 + 민간 추산 5만)">
+  <aside class="notes">
+    <b>분모를 장수로 통일했습니다.</b> 금액으로 견주면 미·중은 하이퍼스케일러 설비투자인데
+    한국은 정부 예산이라 성격이 달라집니다. 그래서 1장에서 쓴 돈 대신 여기서는 장수로 갑니다.
+    짚을 곳은 세 번째 회색 막대입니다 — <b>xAI Colossus 1 한 곳이 22만 장</b>이고,
+    한국 정부가 1·2차로 확보한 물량 전체가 <b>2만 2,840장</b>입니다. 데이터센터 단 한 곳과 약 10배 차이입니다.
+    민간 5만 장을 합쳐도 약 3배입니다.
+    아래 100% 막대는 정부 확보분의 내역입니다 — 1차(2025년 12월) B200 10,080 + H200 3,056,
+    2차 'AI 고속도로' B300 7,688 + Vera Rubin 2,016으로 예산 2조 800억 원입니다.
+    <b>정직하게 덧붙일 것 둘.</b> 하나, 장수로만 견줬습니다 — Colossus는 H100 세대이고
+    한국 확보분은 B200·B300 세대라 장당 성능이 다릅니다. 둘, 민간 5만 장은 업계 합산 추산이고
+    미국·중국 값도 하이퍼스케일러 추정치입니다.
   </aside>
 </section>
 
 <section class="fig" data-chapter="8.1 국가">
-  <img src="../assets/ai_sovereignty.webp?v=20260804r" alt="하드웨어 → 모델 설계 → 모델 자체로 넓어지는 통제의 범위">
+  <img src="../assets/kr_bench.webp?v=20260804r" alt="AAII 종합 지능 지수 가로 막대 — 미국·중국·한국·프랑스 21개 모델. Motif 3 Beta가 44점으로 오픈웨이트 공동 4위이고, 위로 DeepSeek V4 Flash 0731 50점, 아래로 MiMo-V2.5-Pro·Hy3·Inkling·Nemotron 3 Ultra·Mistral Medium 3.5가 이어짐">
   <aside class="notes">
-    자국 GPU도 자국 모델도 없는 국가는 <b>세 단계 모두에서 남의 결정에 종속</b>됩니다.
-    "모든 나라가 자기 자신의 AI를 만들어야 하는 시대"라는 말은 그런 뜻입니다.
+    앞 장에서 장수는 10배 뒤였습니다. 그런데 <b>점수는 그렇지 않습니다.</b>
+    <b>Motif 3 Beta 44점</b> — <b>가중치가 공개된 모델만 세면 공동 4위</b>입니다.
+    위는 Kimi K3(57)·GLM-5.2(51)·DeepSeek V4 Flash 0731(50) 셋뿐이고, 같은 44점에
+    MiniMax-M3·DeepSeek V4 Pro가 있습니다. 미국·중국 밖에서는 1위입니다.
+    1위 Claude Opus 5와는 17점, Kimi K3와는 13점 차이입니다.
+    <b>이 순위는 곧 한 번 더 밀릴 수 있습니다</b> — 8월 3일 공개된 <b>Qwen3.8 Max</b>(2.4T · 53점)가
+    <b>다음 주 가중치 공개</b>를 예고했습니다(SCMP). 풀리면 오픈웨이트 2위가 되고
+    Motif 3은 공동 5위가 됩니다. <b>발표 직전에 다시 확인하세요.</b>
+    <b>Motif 3이 21개 중 16번째</b>라는 위치가 요점입니다. 그리고 <b>Qwen3.8 Max는 2.4T인데 53점</b>이라, 314B짜리 Motif 3의 44점과 나란히 놓으면 <b>크기가 곧 점수가 아니라는</b> 이 문서의 논지가 한 번 더 섭니다. 아래로 Xiaomi MiMo-V2.5-Pro, Tencent Hy3,
+    Thinking Machines의 <b>Inkling</b>, <b>NVIDIA Nemotron 3 Ultra</b>, <b>Mistral</b>이 이어집니다. 두 곳을 짚으면 좋습니다 —
+    <b>Inkling은 총 975B</b>(활성 41B)인데 41점이라 <b>314B짜리 Motif 3보다 아래</b>이고,
+    유럽 소버린의 간판인 <b>Mistral Medium 3.5가 30점</b>이라 이 장의 논지와 바로 이어집니다.
+    <b>이 그림은 2026년 2분기 이후 공개 모델만</b> 담았습니다(호진님 기준). 그래서
+    <b>1장 8번 슬라이드의 상위 15개와 목록이 다릅니다</b> — Claude Opus 4.8(56)·GPT-5.5(55)·
+    Gemini 3.1 Pro(46)·Claude 4.5 Haiku(30) 같은 앞 세대가 빠져 있습니다.
+    <b>계열 안에서도 상위 버전 하나만</b> 남깁니다 — Gemini는 3.6 Flash(50)를 두고 3.5 Flash-Lite(36)를
+    뺐습니다. 다만 Sol·Terra·Luna나 Opus·Fable·Sonnet, <b>DeepSeek V4 Pro·Flash</b>처럼
+    <b>같은 버전의 제품 티어</b>는 서로 상위/하위가 아니라 그대로 둡니다. 질문이 나오면 이 기준을
+    말해 주시면 됩니다.
+    <b>DeepSeek이 두 줄인 것이 눈에 띌 수 있습니다</b> — V4 Flash 0731이 <b>50점</b>으로 V4 Pro(44)보다
+    <b>위</b>입니다. 싼 쪽이 더 높은 이 뒤집힘이 <b>부록 C</b>가 통째로 다루는 주제이고,
+    49.9는 <b>발표 벤치마크 아홉 개 중 유일한 독립 실측</b>입니다(나머지는 DeepSeek 자체 하네스).
+    314B 중 <b>활성 약 13B</b>만 켜는 MoE고, 모델 카드가 "완전 자체 설계"라고 밝힙니다
+    (해외 모델의 재파라미터화가 아니라는 뜻 — 독파모 독자성 기준과 직접 이어집니다).
+    <b>잣대를 섞지 마세요.</b> 이 막대는 전부 AAII 단일 하네스 값이고 정수 표기입니다.
+    <b>7월 독파모 네 모델 중 지수에 오른 것은 Motif 3 하나뿐입니다</b> — K-EXAONE 2.0(LG 750B)·
+    A.X K2(SK텔레콤 688B)·Solar Open 2(업스테이지 250B)는 공개가 7월 하순이라 이 스냅샷에 없습니다.
+    <b>표의 <span class="vi">K-EXAONE 22점</span>은 1차 시즌 모델(236B, 2025-12-31)의 값이지
+    K-EXAONE 2.0의 값이 아닙니다</b> — 이름이 비슷해 헷갈리기 쉬운 곳입니다.
+    A.X K2는 자체 발표로 AIME26 97.1을 냈지만 그건 제작사 수치라 같은 표에 올리지 않습니다.
+    AAII는 Agents에 34%를 배정하는데 A.X K2 모델 카드 스스로 에이전트 성능이 약하다고 적었습니다.
+    <b>같은 모델의 추론 노력 설정이 리더보드에서는 각각 한 줄</b>이라 그대로 뽑으면 순위가 엉킵니다.
+    이 그림은 계열마다 <b>최고 설정 하나</b>만 뽑은 값입니다.
+    <b>지수는 갱신됩니다</b> — 발표 전에 다시 확인하세요(44점 위는 7월 28·31일, 아래는 8월 4일 열람).
+    참고로 <b>AA는 Motif 3의 국가를 `USA`로 잘못 적어 두었습니다</b> — 다시 열어 볼 때 헷갈리지 마세요.
   </aside>
 </section>
 
-<section data-chapter="8.2 한국">
-  <div class="eyebrow">8.2 그럼 한국은 어디쯤 있나</div>
-  <h2>우리도 <span class="am">1단계</span>와 <span class="vi">3단계</span>를 동시에 밀고 있습니다</h2>
-  <div class="body">
-    <div class="cols c2">
-      <div class="card am-b">
-        <span class="k">1단계 · GPU를 사 모으는 쪽</span>
-        <table class="mid" style="margin-top:14px">
-          <tr><td>정부 1차 확보분</td><td><b class="am">약 1만 3천 장</b><br><span class="gr">B200 10,080 + H200 3,056</span></td></tr>
-          <tr><td>'AI 고속도로' 2차</td><td><b class="am"><span class="num">9,704</span>장</b><br><span class="gr">B300 7,688 + Vera Rubin 2,016</span></td></tr>
-          <tr><td>국가 AI 컴퓨팅 센터</td><td><b>1만 5천 장</b> 이상<br><span class="gr">2028년 가동 목표</span></td></tr>
-        </table>
-      </div>
-      <div class="card vi-b">
-        <span class="k">3단계 · 모델을 직접 만드는 쪽</span>
-        <h4>'독파모' — 독자 AI 파운데이션 모델</h4>
-        <p>정부가 GPU와 데이터를 대주고 여러 팀이
-        <b>6개월마다 평가받아 떨어지는 서바이벌</b>입니다.<br><br>
-        2026년 1월 1차 평가에서 두 팀이 탈락했는데, 그중 한 사유가 오늘 주제와 정확히 겹칩니다 —<br>
-        <b class="vi">"해외 모델을 파인튜닝한 파생형은 독자 모델로 인정하지 않는다"</b><br><br>
-        3장 모델 표의 <b>Motif 3(314B, 한국)</b>가 이 경쟁에 있는 팀의 모델입니다.</p>
-      </div>
-    </div>
-  </div>
-  <div class="foot">
-    Colossus 1 <b>한 곳</b>이 <b class="am">22만 장</b>, 한국 정부 확보분 <b>전부</b>가 <b class="cy">약 2.3만 장</b> —
-    <b>약 10배</b>입니다. 그래서 6·7장이 우리에겐 교양이 아니라 <b>생존 조건</b>입니다.
-  </div>
+<section class="fig" data-chapter="8.2 기업">
+  <img src="../assets/sov_boundary.webp?v=20260804r" alt="사내 경계를 사이에 둔 두 그림 — 공용 API는 사내 자료가 경계를 넘어 외부 모델로 가고, 온프레미스는 모델을 경계 안으로 들여 넘는 선이 없음. 아래 띠는 모델 한 벌 대 회사 수만큼 한 벌">
   <aside class="notes">
-    여기가 "그래서 우리는?"에 답하는 자리입니다. 앞 슬라이드가 미·중 이야기라 남의 집 사정처럼 들렸을 텐데,
-    같은 3단계 틀에 우리를 얹으면 바로 우리 이야기가 됩니다.
-    왼쪽 단서 두 개를 꼭 붙여주세요 — 이 표는 <b>정부 확보 물량만</b> 센 것이라 민간 보유분은 빠져 있고,
-    Colossus와의 10배 비교는 H100 세대가 섞인 22만 장과 B200·B300 세대 2만여 장을 <b>장수로만</b> 견준 것이라
-    규모감이지 성능 비교가 아닙니다(세대가 오르면 장당 성능·메모리가 크게 늘어납니다).
-    오른쪽 독파모 탈락 사유가 이 발표의 6장과 이어집니다 — 남의 모델을 다듬는 것과 직접 만드는 것을
-    국가가 구분하기 시작했다는 뜻이니까요. 2차 확보분은 B300이 연내, Vera Rubin이 2027년 상반기부터 가동입니다.
+    기업이 온프레미스를 짓는 첫 이유를 <b>비용이 아니라 경계</b>로 잡았습니다.
+    왼쪽에서 짚을 곳은 <b>경계를 넘는 앰버 선 하나</b>입니다 — 질문만 나가는 게 아니라
+    <b>질문에 실린 사내 자료가 함께</b> 나갑니다. 고객 정보·기밀 코드·영업 비밀이 그렇습니다.
+    넘는 순간 보관 기간·학습 사용·중단 통보가 전부 상대의 정책이 됩니다.
+    오른쪽은 자료를 옮기는 대신 <b>모델을 안으로 들인</b> 그림이고, 요점은
+    <b>경계를 넘는 선이 하나도 없다</b>는 것입니다.
+    <b>아래 띠가 이 장의 결론입니다.</b> 공용 API는 회사가 몇이든 모델이 남의 데이터센터에
+    <b>한 벌</b>이면 됩니다. 소버린은 <b>회사 수만큼 한 벌씩</b>이고, 그만큼 가속기도 따라 붙습니다.
+    <b>이것이 소버린이 하드웨어 수요를 만드는 기본 구조</b>이고, 같은 논리가 국가에도 개인에도 적용됩니다.
   </aside>
 </section>
 
-<section data-chapter="8.3 개인">
-  <div class="eyebrow">8.3 개인이 소유한 AI</div>
-  <h2>같은 논리를 <span class="cy">개인 단위</span>로 좁혀도</h2>
-  <div class="lead">개인도 애플 실리콘·DGX Spark 같은 로컬 AI 하드웨어를 찾고 있습니다.
-    <b>API 비용을 아끼려는 게 아닙니다.</b></div>
-  <div class="body">
-    <div class="card cy-b" style="max-width:1080px">
-      <p style="font-size:23px">내 대화 기록, 내 파일, 내 업무 맥락을 담아 두고 나만을 위해 돌아가는 비서를
-      <b>내가 소유한 하드웨어에서</b> 돌리려는 것입니다.</p>
-    </div>
-    <div class="lead" style="margin-top:32px">문제는 <b>개인은 칩을 설계할 수 없다</b>는 점입니다. 그래서 개인의 소버린은 두 가지에 그대로 종속됩니다.</div>
-    <ul style="margin-top:22px">
-      <li><b>국가 간 GPU 배분</b> — 우리나라가 GPU를 얼마나 확보하느냐(방금 본 그 숫자)</li>
-      <li><b>모델 경량화</b> — 6·7장에서 본 MoE·선형 어텐션·양자화가 얼마나 더 나아가느냐</li>
-    </ul>
-  </div>
-  <div class="foot">
-    그리고 이 흐름은 토큰 소모를 다시 가속합니다 — <b>2장의 토큰 폭증은 끝이 아니라 시작이었습니다.</b>
-  </div>
+<section class="fig" data-chapter="8.3 개인">
+  <img src="../assets/sov_personal.webp?v=20260804r" alt="개인의 맥락이 대화 기록·내 파일·업무 맥락·습관 순으로 쌓여 대체 불가가 되는 그림과, 개인이 정하지 못하는 두 손잡이(국가 GPU 확보·모델 경량화). 아래는 사람 수만큼 늘어나는 사본">
+  <aside class="notes">
+    같은 논리를 개인으로 좁힌 장입니다. <b>API 비용을 아끼려는 게 아닙니다</b> —
+    개인의 경계 안에 있는 것은 회사 문서가 아니라 <b>나 자신의 기록</b>입니다.
+    왼쪽 층을 아래에서 위로 읽어 주세요. 대화 기록·내 파일까지는 남의 것으로 바꿔 끼울 수 있지만,
+    업무 맥락과 습관·말투까지 쌓이면 <b>그 자체가 나를 설명하는 자료</b>가 되어 대체가 안 됩니다.
+    오른쪽이 개인의 한계입니다 — <b>개인은 칩을 설계할 수 없습니다.</b> 그래서 개인의 소버린은
+    자기가 못 정하는 손잡이 둘에 매달립니다. 하나는 <b>국가가 GPU를 얼마나 확보하느냐</b>
+    (앞 장에서 본 2만 2,840장), 다른 하나는 <b>연구가 모델을 얼마나 줄이느냐</b>(6·7장).
+    개인이 직접 고르는 것은 기기 한 대뿐입니다.
+    아래 띠는 사본이 <b>사람 수만큼</b>으로 가장 잘게 쪼개진다는 뜻입니다.
+  </aside>
 </section>
 
-<section data-chapter="8.4 추론 엔진">
-  <div class="eyebrow">8.4 그 하드웨어에서 무엇으로 돌리나</div>
-  <h2>프레임워크와 <span class="cy">추론 엔진</span>은 다릅니다</h2>
-  <div class="lead">칩과 모델 사이에서 두 청구서를 실제로 관리하는 소프트웨어가 추론 엔진입니다.</div>
-  <div class="body">
-    <div class="cols c2">
-      <div class="card am-b">
-        <span class="k">프레임워크</span>
-        <h4>모델을 만들고 학습</h4>
-        <p>미분·역전파와 텐서 연산이 핵심<br><br><b>PyTorch · JAX · MLX</b></p>
-      </div>
-      <div class="card cy-b">
-        <span class="k">추론 엔진</span>
-        <h4>완성된 가중치를 서빙</h4>
-        <p>KV 페이지·연속 배치·프리픽스 재사용<br><br><b>vLLM · SGLang · llama.cpp · oMLX</b></p>
-      </div>
-    </div>
-  </div>
-  <div class="foot">6·7장이 <b>모델 쪽</b>에서 청구서를 깎았다면, 엔진은 <b class="cy">서버 쪽</b>에서 깎습니다.</div>
-</section>
-
-<section class="fig" data-chapter="8.4 추론 엔진">
-  <img src="../assets/inference_engine_stack.webp?v=20260804r" alt="애플 실리콘 위에서 MLX, mlx-lm, oMLX와 앱이 쌓이고 추론 엔진이 KV 페이지와 연속 배치를 담당하는 스택">
+<section class="fig" data-chapter="8. AI 소버린">
+  <img src="../assets/sov_stack.webp?v=20260804r" alt="국가·기업·개인 세 층 표 — 하드웨어 규모는 줄고 학습 대 추론 비중은 추론 쪽으로 이동하지만 메모리 띠는 세 층을 관통하고, 예산은 아래로 갈수록 작아짐">
+  <aside class="notes">
+    <b>8장 정리이자 다음 장으로 넘기는 다리입니다.</b> 세 가지를 차례로 짚어 주세요.
+    <b>하나, 소버린은 세 층 모두에서 하드웨어를 부릅니다.</b> 수요가 한곳에 모이는 대신
+    국가·기업·개인으로 퍼집니다.
+    <b>둘, 아래로 갈수록 학습이 빠지고 추론이 채웁니다.</b> 국가는 파운데이션 모델을 직접
+    학습하지만(독파모), 기업은 파인튜닝이 가끔이고 서빙이 연중 무휴이며, 개인은 거의 전부 추론입니다.
+    <b>셋, 그런데 메모리 띠는 세 층을 관통합니다.</b> 학습이 빠져도 메모리는 안 빠집니다 —
+    추론은 가중치를 통째로 얹고 시작하고 그 위에 사용자마다 KV캐시가 또 붙기 때문입니다.
+    <b>3장과 4장의 두 청구서가 여기서 다시 나옵니다.</b>
+    마지막으로 <b>예산 칸</b>을 짚어 주세요. 조 단위 → 억 단위 → 백만 원 단위입니다.
+    <b>같은 모델을 가장 작은 통에 넣어야 하는 쪽이 개인</b>이고, 그래서
+    <b>6·7장의 절감 기법이 가장 먼저 필요한 곳도 개인</b>입니다 — MoE·선형 어텐션·양자화가
+    교양이 아니라 생존 조건이라는 이 문서의 결론이 여기서 닫힙니다.
+  </aside>
 </section>
 
 <!-- ══════════════════════════════════════ 9장 ══════════════════════════ -->
 <section class="chapter">
   <div class="cnum">09</div>
-  <div class="ctag">Chapter 09 · 부록</div>
-  <h2>NVIDIA 데이터센터<br>GPU 로드맵</h2>
-  <blockquote>Hopper → Blackwell → Rubin → Feynman</blockquote>
-  <div class="cwhat">하드웨어 쪽에서는 <b>대역폭이 용량보다 빠르게</b> 자라고 있습니다.</div>
+  <div class="ctag">Chapter 09</div>
+  <h2>추론 엔진과 커널</h2>
+  <blockquote>"칩을 샀다고 모델이 도는 게 아닙니다"</blockquote>
+  <div class="cwhat">하드웨어와 모델 사이에서 성능을 이끌어내는 소프트웨어 스택.</div>
 </section>
 
-<section data-chapter="9. GPU 로드맵">
-  <div class="eyebrow">세대별 스펙</div>
-  <h2>세대를 과학자 이름으로 명명합니다</h2>
+<section data-chapter="9.1 추론 엔진">
+  <div class="eyebrow">9.1 추론 엔진의 역할</div>
+  <h2>추론 엔진이란 <span class="cy">무엇인가</span></h2>
+  <div class="lead">학습이 끝난 모델 가중치를 하드웨어 위에서 <b>최저 지연·최고 처리량으로 서빙</b>하는 전용 소프트웨어입니다.</div>
   <div class="body">
-    <table class="tight">
-      <tr><th>세대</th><th>시기</th><th>공정</th><th>메모리</th><th>대역폭</th><th>비고</th></tr>
-      <tr><td>H100</td><td class="n">2022</td><td class="n">TSMC 4N</td><td class="n">HBM3 80GB</td><td class="n">3.35TB/s</td><td></td></tr>
-      <tr class="hi"><td>H200</td><td class="n">2024</td><td class="n">TSMC 4N</td><td class="n">HBM3e 141GB</td><td class="n">4.8TB/s</td><td>이 발표의 메모리 계산 기준</td></tr>
-      <tr><td>B200 <span class="gr">Blackwell</span></td><td class="n">2024</td><td class="n">TSMC 4NP</td><td class="n">HBM3e 192GB</td><td class="n">8TB/s</td><td>일부 소스는 180GB로도 표기</td></tr>
-      <tr class="hi"><td>B300 <span class="gr">Blackwell Ultra</span></td><td class="n">2025</td><td class="n">TSMC 4NP</td><td class="n">HBM3e 288GB</td><td class="n">8TB/s</td><td>이 발표의 메모리 계산 기준</td></tr>
-      <tr><td>Rubin R100</td><td class="n">2026</td><td class="n">TSMC N3</td><td class="n">HBM4 288GB</td><td class="n cy">22TB/s</td><td>Vera CPU와 페어링</td></tr>
-      <tr><td>Rubin Ultra</td><td class="n">2027</td><td class="n">N3 refine</td><td class="n">HBM4 확장</td><td class="n gr">-</td><td>밀도 향상, 테이프아웃 단계</td></tr>
-      <tr><td>Feynman</td><td class="n">2028</td><td class="n">TSMC A16</td><td class="n">커스텀 HBM <span class="gr">1TB+ 보고</span></td><td class="n gr">-</td><td>3D 다이 스태킹, 광 NVLink</td></tr>
-    </table>
-  </div>
-</section>
-
-<section class="fig" data-chapter="9. GPU 로드맵">
-  <img src="../assets/gpu_roadmap.webp?v=20260804r" alt="H100 대비 배수로 본 GPU 세대별 메모리 용량과 대역폭 — 대역폭이 더 가파르다">
-  <aside class="notes">
-    단위가 다른 두 지표(GB와 TB/s)를 같은 축에 그리면 안 되니, <b>H100 대비 배수</b>로 인덱싱했습니다.
-    보시면 <b>대역폭 곡선이 훨씬 가파릅니다</b> — 하드웨어도 디코딩 병목을 알고 있다는 뜻입니다.
-  </aside>
-</section>
-
-<section data-chapter="9.1 Vera Rubin">
-  <div class="eyebrow">9.1 Vera Rubin 플랫폼</div>
-  <h2>핵심은 용량이 아니라 <span class="cy">대역폭</span>입니다</h2>
-  <div class="body">
-    <table class="mid">
-      <tr><th>구성 단위</th><th>GPU 메모리 · 대역폭</th><th>NVFP4 추론</th><th>NVLink</th></tr>
-      <tr><td>Rubin GPU 1개</td><td class="n">HBM4 288GB / 22TB/s</td><td class="n">50 PFLOPS</td><td class="n">3.6TB/s</td></tr>
-      <tr><td>Vera Rubin Superchip <span class="gr">CPU 1 + GPU 2</span></td><td class="n">576GB / 44TB/s</td><td class="n">100 PFLOPS</td><td class="n">7.2TB/s</td></tr>
-      <tr class="hi"><td>Vera Rubin NVL72 <span class="gr">CPU 36 + GPU 72</span></td><td class="n cy">20.7TB / 1,580TB/s</td><td class="n">3,600 PFLOPS</td><td class="n">260TB/s</td></tr>
-    </table>
-    <div class="lead" style="margin-top:34px">
-      HBM4에서 용량은 B300과 <b>같은 288GB</b>인데, 대역폭이 <b class="cy">8TB/s → 22TB/s로 거의 3배</b> 뜁니다.
+    <div class="cols c2">
+      <div class="card cy-b">
+        <span class="k">핵심 역할 · 추론 엔진 (Inference Engine)</span>
+        <h4>완성된 모델의 고성능 서빙에 올인</h4>
+        <p>• <b>KV캐시 메모리 관리</b>: PagedAttention으로 파편화 제거<br><br>
+        • <b>요청 스케줄링</b>: Continuous Batching(연속 배치) 및 프리픽스 캐싱<br><br>
+        • <b>대표 엔진</b>: vLLM · SGLang · TensorRT-LLM · llama.cpp · oMLX</p>
+      </div>
+      <div class="card am-b">
+        <span class="k">참고 · 프레임워크 (Framework)와의 차이</span>
+        <h4>모델을 만들고 학습시키는 도구</h4>
+        <p>• <b>프레임워크 정의</b>: 미분·역전파로 가중치를 학습 (PyTorch, JAX, MLX)<br><br>
+        • <b>핵심 차이점</b>: 추론 엔진은 역전파/학습 기능을 버리고 <b>서버 메모리 관리와 서빙 속도에만 올인</b>한 시스템 소프트웨어입니다.</p>
+      </div>
     </div>
   </div>
-  <div class="foot">
-    이 발표가 반복한 <b>"디코딩 = 메모리 대역폭 병목"</b> 논리대로면, 같은 모델의 디코딩 처리량이 그만큼 좋아질 여지가 있습니다.
-  </div>
+  <div class="foot">6·7장이 <b>모델 쪽</b>에서 청구서를 깎았다면, 추론 엔진은 <b class="cy">서버 메모리와 처리량</b> 청구서를 깎습니다.</div>
   <aside class="notes">
-    미국 천문학자 베라 루빈(암흑물질 증거 발견)의 이름을 땄습니다.
-    NVL72는 2026-06-01 GTC 타이베이에서 양산 개시가 발표됐고,
-    이 표는 <b>NVIDIA 공식 스펙 페이지를 직접 fetch해서</b> 확인한 수치입니다.
+    추론 엔진의 개념(완성된 가중치를 최적의 메모리/배치 정책으로 서빙하는 소프트웨어)을 먼저 다루고,
+    학습용 프레임워크(PyTorch 등)와의 차이점을 보조 설명으로 첨언하는 슬라이드입니다.
   </aside>
 </section>
 
-<section data-chapter="9.2 Groq 3 LPU">
-  <div class="eyebrow">9.2 Groq 3 LPU</div>
-  <h2>디코딩 병목을 <span class="vi">하드웨어로</span> 겨냥하다</h2>
-  <div class="lead">Rubin 플랫폼에는 GPU 외에 <b>추론 전용 가속기 Groq 3 LPU</b>가 함께 들어갑니다 —
-    원래 경쟁 관계였던 두 회사의 <b>이례적인 결합</b>입니다.</div>
+<section data-chapter="9.1 추론 엔진">
+  <div class="eyebrow">9.1 추론 엔진 스택</div>
+  <h2>실제 <span class="cy">서빙 스택 구조 예시</span></h2>
   <div class="body">
-    <div class="cols c2u">
-      <table class="mid">
-        <tr><th>Groq 3 LPX 랙</th><th></th></tr>
-        <tr><td>LPU</td><td class="n">256개</td></tr>
-        <tr class="hi"><td>SRAM</td><td class="n vi"><b>128GB</b> <span class="gr">칩당이 아니라 랙 합산</span></td></tr>
-        <tr class="hi"><td>메모리 대역폭</td><td class="n vi"><b>40PB/s</b></td></tr>
-        <tr><td>스케일업 대역폭</td><td class="n">640TB/s <span class="gr">랙 내부</span></td></tr>
-        <tr><td>NVL72 병행 배치 시</td><td class="n">와트당 성능 <b>35배</b>, 토큰당 비용 최대 <b>10배</b> 절감</td></tr>
-      </table>
-      <div class="card vi-b">
-        <p><b>SRAM 128GB에 40PB/s</b> — HBM을 버리고 온칩 SRAM에 올려 대역폭을 <b>두 자릿수 배</b>로 끌어올린 설계입니다.<br><br>
-        이 발표가 반복해온 <b>"디코딩 = 메모리 대역폭 병목"을 하드웨어 레벨에서 직접 겨냥</b>한 것입니다.</p>
+    <table class="tight" style="margin-top:12px; font-size:12px; white-space:nowrap; width:100%">
+      <tr>
+        <th>소프트웨어 계층 (Layer)</th>
+        <th>애플 실리콘 <span class="gr">(Apple Silicon)</span> 스택</th>
+        <th class="hi">NVIDIA DGX Spark <span class="cy">(NVIDIA)</span> 스택</th>
+      </tr>
+      <tr>
+        <td><b>1. 하드웨어 인프라</b></td>
+        <td class="n">Apple M2 / M3 / M4 Max·Ultra</td>
+        <td class="n cy"><b>NVIDIA DGX Spark / Workstation</b></td>
+      </tr>
+      <tr>
+        <td><b>2. 가속 드라이버 / API</b></td>
+        <td class="n">Metal / Metal Performance Shaders</td>
+        <td class="n">CUDA / cuBLAS / CUTLASS</td>
+      </tr>
+      <tr>
+        <td><b>3. 코어 연산 프레임워크</b></td>
+        <td class="n">MLX <span class="gr">(Apple 연산 프레임워크)</span></td>
+        <td class="n">PyTorch (CUDA) / TensorRT</td>
+      </tr>
+      <tr>
+        <td><b>4. 모델 최적화 라이브러리</b></td>
+        <td class="n">mlx-lm <span class="gr">(MLX LLM 실행기)</span></td>
+        <td class="n cy"><b>TensorRT-LLM</b></td>
+      </tr>
+      <tr>
+        <td><b>5. 추론 엔진 / 서빙 서버</b></td>
+        <td class="n">oMLX / Ollama (MLX)</td>
+        <td class="n cy"><b>NVIDIA NIM / vLLM / llama.cpp</b></td>
+      </tr>
+      <tr>
+        <td><b>6. 최상단 앱 / API</b></td>
+        <td class="n">Local AI App / Agent API</td>
+        <td class="n">ChatRTX / Enterprise Agent API</td>
+      </tr>
+    </table>
+  </div>
+  <div class="foot">
+    애플의 <b>MLX → mlx-lm → oMLX</b> 스택에 1:1로 대칭되는 엔터프라이즈 및 로컬 스택이 NVIDIA의 <b>CUDA → TensorRT-LLM → NIM / llama.cpp</b> 구조입니다.
+  </div>
+  <aside class="notes">
+    애플 실리콘 서빙 스택(Metal/MLX/mlx-lm/oMLX)과 NVIDIA DGX Spark 서빙 스택(CUDA/TensorRT-LLM/NIM/llama.cpp)을 레이어별로 1:1 대칭 비교한 표입니다.
+  </aside>
+</section>
+
+<section data-chapter="9.2 최적화 커널">
+  <div class="eyebrow">9.2 최적화 커널</div>
+  <h2>하드웨어와 모델을 잇는 <span class="am">커널</span>의 역할</h2>
+  <div class="lead">GPU/NPU 연산 장치에서 텐서 연산의 병목을 없애는 최하단 최적화 코드입니다.</div>
+  <div class="body">
+    <div class="cols c2">
+      <div class="card cy-b">
+        <span class="k">최적화 커널 (Kernel)이란?</span>
+        <h4>연산 장치 맞춤형 오케스트레이션</h4>
+        <p>• GPU 코어에 메모리 로드와 행렬 연산을 명령하는 최하단 코드<br><br>
+        • <b>CUDA, Triton, Metal Performance Shaders</b><br><br>
+        • FlashAttention, PagedAttention 커널이 비약적 속도향상 달성</p>
+      </div>
+      <div class="card am-b">
+        <span class="k">커널 자립과 기술 통제</span>
+        <h4>커널이 소버린의 일부인 이유</h4>
+        <p>• 칩이 있어도 <b>최적화 커널이 없으면 제성능의 30%도 못 냄</b><br><br>
+        • Anthropic Fable 5가 <b>"비표준 칩 커널 개발"을 통제 대상으로 포함</b>한 이유<br><br>
+        • 독자 칩(NPU) 개발 시 커널 생태계 자립이 필수 조건</p>
       </div>
     </div>
   </div>
   <div class="foot">
-    대신 용량이 <b>랙 전체로 128GB</b>라, <b class="am">3장의 용량 청구서</b> 앞에서는 여전히 좁습니다.
+    커널 최적화는 하드웨어와 소프트웨어가 만나는 지점이며, 최고 수준의 엔지니어링 역량이 요구되는 분야입니다.
   </div>
   <aside class="notes">
-    이 슬라이드가 두 축을 마지막으로 한 번 더 대비시킵니다 —
-    대역폭 청구서는 하드웨어로 때려잡을 수 있는데, <b>용량 청구서는 여전히 남습니다.</b>
-    Feynman 세대의 LP40 LPU는 그 다음 버전으로 보입니다.
+    커널의 핵심 역할과, 소프트웨어 통제 맥락에서 커널 최적화가 갖는 국가적/기술적 의미를 짚어줍니다.
   </aside>
 </section>
 
-<!-- ══════════════════════════════════════ 마무리 ══════════════════════ -->
+<!-- ══════════════════════════════════════ 10장 ══════════════════════════ -->
 <section class="chapter">
-  <div class="ctag">정리</div>
-  <h2>결국 두 장의 청구서였습니다</h2>
-  <div class="cols c2" style="margin-top:42px">
-    <div class="card am-b">
-      <span class="k">청구서 1 · 용량</span>
-      <p><b>모델 사이즈에 정확히 비례.</b><br>
-      손잡이는 양자화뿐 — 그래서 <b>2.8T 모델이 존재해도 내 PC에선 안 돕니다.</b></p>
-    </div>
-    <div class="card cy-b">
-      <span class="k">청구서 2 · KV캐시</span>
-      <p><b>모델 × 사용자 × 길이 × 정밀도.</b><br>
-      넷이 곱으로 붙고 <b>사람마다 따로</b> 듭니다 — 그래서 아키텍처 경쟁이 여기서 벌어집니다.</p>
-    </div>
-  </div>
-  <div class="foot cy-l">
-    <b>아키텍처가 가격표를 만들고, 가격표가 우리가 할 수 있는 일을 바꿉니다.</b>
+  <div class="cnum">10</div>
+  <div class="ctag">Chapter 10 · 부록</div>
+  <h2>NVIDIA 데이터센터<br>GPU 로드맵</h2>
+  <blockquote>Hopper → Blackwell → Rubin → Feynman</blockquote>
+  <div class="cwhat">NVIDIA 데이터센터 GPU 세대별 주요 스펙과 발전 동향.</div>
+</section>
+
+<section data-chapter="10. GPU 로드맵">
+  <div class="eyebrow">10. GPU 로드맵 · 세대별 스펙</div>
+  <h2>NVIDIA 데이터센터 <span class="am">GPU 제품 히스토리</span></h2>
+  <div class="body">
+    <table class="tight">
+      <tr><th>세대</th><th>시기</th><th>공정</th><th>메모리</th><th>대역폭</th><th>비고</th></tr>
+      <tr><td>V100 <span class="gr">Volta</span></td><td class="n">2017</td><td class="n">TSMC 12nm</td><td class="n">HBM2 32GB</td><td class="n">0.9TB/s</td><td>첫 HBM 적용 세대</td></tr>
+      <tr><td>A100 <span class="gr">Ampere</span></td><td class="n">2020</td><td class="n">TSMC 7nm</td><td class="n">HBM2e 80GB</td><td class="n">2.0TB/s</td><td>주요 데이터센터 기본 칩</td></tr>
+      <tr><td>H100 <span class="gr">Hopper</span></td><td class="n">2022</td><td class="n">TSMC 4N</td><td class="n">HBM3 80GB</td><td class="n">3.35TB/s</td><td>1세대 Transformer Engine (FP8)</td></tr>
+      <tr class="hi"><td>H200</td><td class="n">2024</td><td class="n">TSMC 4N</td><td class="n">HBM3e 141GB</td><td class="n">4.8TB/s</td><td>이 발표의 메모리 계산 기준 (100%)</td></tr>
+      <tr><td>B200 <span class="gr">Blackwell</span></td><td class="n">2024</td><td class="n">TSMC 4NP</td><td class="n">HBM3e 192GB</td><td class="n">8TB/s</td><td>2세대 TE (FP4 연산기 도입)</td></tr>
+      <tr class="hi"><td>B300 <span class="gr">Blackwell Ultra</span></td><td class="n">2025</td><td class="n">TSMC 4NP</td><td class="n">HBM3e 288GB</td><td class="n">8TB/s</td><td>이 발표의 메모리 계산 기준 (204%)</td></tr>
+      <tr><td>Rubin R100</td><td class="n">2026</td><td class="n">TSMC N3</td><td class="n">HBM4 288GB</td><td class="n cy">22TB/s</td><td>3세대 TE (TurboQuant HW 가속) · Vera CPU</td></tr>
+      <tr><td>Rubin Ultra</td><td class="n">2027</td><td class="n">N3 refine</td><td class="n">HBM4 확장</td><td class="n gr">-</td><td>밀도 향상, 테이프아웃 단계</td></tr>
+      <tr><td>Feynman</td><td class="n">2028</td><td class="n">TSMC A16</td><td class="n">커스텀 HBM <span class="gr">1TB+ 보고</span></td><td class="n gr">-</td><td>3D 다이 스태킹, 광 NVLink</td></tr>
+    </table>
   </div>
   <aside class="notes">
-    마무리 문장 — 6.4에서 했던 이야기를 다시 꺼냅니다.
-    아까워서 못 돌리던 것들이 계산이 맞기 시작하면, 그건 "좀 싸다"가 아니라 하던 일이 달라진다는 뜻입니다.
-    질문 받겠습니다.
+    NVIDIA 데이터센터 GPU의 주요 세대별(V100~Rubin, Feynman) 공정, 메모리, 대역폭 및 기술 스펙 발전 히스토리표입니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="10. GPU 로드맵">
+  <img src="../assets/gpu_roadmap.webp?v=20260804r" alt="H200 (100%) 대비 배수로 본 GPU 세대별 메모리 용량과 대역폭">
+  <aside class="notes">
+    단위가 다른 두 지표(GB와 TB/s)를 같은 축에 그리기 위해, <b>H200 (100%) 대비 배수</b>로 인덱싱했습니다.
+  </aside>
+</section>
+
+<section data-chapter="10.1 플랫폼 비교">
+  <div class="eyebrow">10.1 플랫폼 직접 비교</div>
+  <h2>NVIDIA 세대별 & <span class="cy">랙 스케일 플랫폼</span> 비교</h2>
+  <div class="body">
+    <table class="tight" style="font-size:12px; white-space:nowrap; width:100%">
+      <tr>
+        <th>구분</th>
+        <th>H200 <span class="gr">(Hopper)</span></th>
+        <th>B300 <span class="gr">(Blackwell Ultra)</span></th>
+        <th>Grace Blackwell <span class="gr">(GB200/300 NVL72)</span></th>
+        <th class="hi">Vera Rubin <span class="cy">(NVL72 / 2026 예정)</span></th>
+      </tr>
+      <tr>
+        <td><b>CPU + GPU 구성</b></td>
+        <td class="n">단일 호스트 / 8-GPU</td>
+        <td class="n">단일 호스트 / 8-GPU</td>
+        <td class="n am"><b>Grace 36 + Blackwell 72</b></td>
+        <td class="n cy"><b>Vera 36 + Rubin 72</b></td>
+      </tr>
+      <tr>
+        <td><b>메모리 용량</b></td>
+        <td class="n">HBM3e 141GB <span class="gr">(100%)</span></td>
+        <td class="n">HBM3e 288GB <span class="gr">(204%)</span></td>
+        <td class="n">13.8TB~20.7TB <span class="gr">(랙 합산)</span></td>
+        <td class="n cy"><b>HBM4 20.7TB</b> <span class="gr">(랙 합산)</span></td>
+      </tr>
+      <tr>
+        <td><b>메모리 대역폭</b></td>
+        <td class="n">4.8 TB/s <span class="gr">(100%)</span></td>
+        <td class="n">8.0 TB/s <span class="gr">(167%)</span></td>
+        <td class="n">576 TB/s <span class="gr">(랙 전체)</span></td>
+        <td class="n cy"><b>1,580 TB/s</b> <span class="gr">(랙 전체)</span></td>
+      </tr>
+      <tr>
+        <td><b>NVLink 대역폭</b></td>
+        <td class="n">900 GB/s</td>
+        <td class="n">1.8 TB/s</td>
+        <td class="n">130 TB/s</td>
+        <td class="n cy"><b>260 TB/s</b></td>
+      </tr>
+      <tr>
+        <td><b>특징 및 가속</b></td>
+        <td>기존 HGX 공랭/수랭</td>
+        <td>FP4 추론 엔진 내재화</td>
+        <td>Grace-Blackwell 수랭 랙</td>
+        <td>3세대 TE (TurboQuant HW 가속) + Groq 3 LPU <span class="gr">(SRAM 128GB)</span></td>
+      </tr>
+    </table>
+  </div>
+  <div class="foot">
+    스탠드얼론 서버(H200, B300)에서 <b>CPU-GPU 결합 랙 스케일(Grace Blackwell, Vera Rubin)</b>로 진화하며 대역폭과 통합 성능이 비약적으로 확장됩니다.
+  </div>
+  <aside class="notes">
+    H200, B300, Grace Blackwell(GB200/GB300 NVL72), Vera Rubin(NVL72) 4개 주요 플랫폼의 스펙과 직결 비교표입니다.
+  </aside>
+</section>
+
+
+<section class="chapter" style="text-align:center">
+  <div class="ctag" style="margin-bottom:18px">Closing & Q&A</div>
+  <h1 style="font-size:78px; font-weight:800; letter-spacing:-.02em; margin-bottom:28px">
+    <span class="cy">감사합니다</span>
+  </h1>
+  
+  <div class="card cy-b" style="max-width:880px; margin:0 auto; padding:28px 36px">
+    <div style="font-size:22px; line-height:1.7; color:var(--fg)">
+      대한민국 <b class="am">코스피(KOSPI) 지수의 힘찬 우상향</b>과<br>
+      <b class="cy">K-반도체 & AI 밸류체인</b> 기업들의 지속적인 주가 상승을 진심으로 기원합니다 📈🚀
+    </div>
+  </div>
+
+  <div style="margin-top:32px; font-size:15px; color:var(--gr)">
+    AI 컴퓨팅 자원과 독자 파운데이션 모델 생태계 발표를 경청해 주셔서 감사합니다.
+  </div>
+  <aside class="notes">
+    발표를 마무리합니다. 대한민국 코스피 지수 및 반도체·AI 관련 주가의 상승을 기원하며 Q&A 질문을 받습니다.
   </aside>
 </section>
 

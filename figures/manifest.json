@@ -1,6 +1,6 @@
 {
  "_주석": "assets 이름 → figures 소스와 내용 해시. figures/recapture.js의 MAP에서 생성합니다 (node figures/manifest.js). 직접 고치지 마세요. v는 그림별 캐시 버스터, ver은 캡처본용 한 벌 토큰, css는 base.css 해시입니다.",
- "ver": "75dd04fb",
+ "ver": "ecf51799",
  "css": "2a58053d",
  "figures": {
   "stock_shock": "shock.html",
@@ -61,6 +61,11 @@
   "expert_parallel": "expert_parallel.html",
   "pd_split": "pd_split.html",
   "ai_sovereignty": "sovereign.html",
+  "kr_infra": "kr_infra.html",
+  "kr_bench": "kr_bench.html",
+  "sov_boundary": "sov_boundary.html",
+  "sov_personal": "sov_personal.html",
+  "sov_stack": "sov_stack.html",
   "inference_engine_stack": "engine_stack.html",
   "gpu_roadmap": "roadmap.html"
  },
@@ -123,7 +128,12 @@
   "expert_parallel.html": "61e348fb",
   "pd_split.html": "ac932ab7",
   "sovereign.html": "59410123",
+  "kr_infra.html": "c8b47f8d",
+  "kr_bench.html": "04470809",
+  "sov_boundary.html": "b3928fe4",
+  "sov_personal.html": "2ed44cf6",
+  "sov_stack.html": "dc8b78c8",
   "engine_stack.html": "078bc80f",
-  "roadmap.html": "d715e29c"
+  "roadmap.html": "078103ac"
  }
 }

@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=2a58053d">
+<style>
+  body { padding-top:52px; }
+  /* flex-shrink:0 필수 — 없으면 긴 막대 행만 눌려 0 선과 막대 길이가 함께 틀어집니다
+     (capex.html·bench.html과 같은 이유). */
+  .bar { display:flex; align-items:center; gap:12px; margin-top:12px; }
+  .bar > * { flex-shrink:0; }
+  .blab { flex:0 0 176px; text-align:right; font-size:13.5px; color:var(--c-c3ccd6); line-height:1.2; }
+  .blab span { display:block; font-size:10px; line-height:1.2; color:var(--c-7d8896); margin-top:2px; }
+  .blab.kr { color:var(--c-a48cf5); font-weight:700; }
+  .zero { flex:0 0 2px; background:var(--c-3d4650); height:34px; }
+  .track { flex:0 0 auto; height:34px; border-radius:0 3px 3px 0; }
+  .bval { flex:0 0 auto; font-size:15px; font-weight:700; white-space:nowrap; }
+
+  /* 한국 합산을 이루는 두 줄. 합산 행 아래에 들여쓰고 세로 괄호로 묶습니다 —
+     "7.3만 = 5만 + 2.28만"이 색이 아니라 구조로 읽히게 합니다. */
+  .sub-grp { margin-top:6px; padding-left:60px; }
+  .sub-grp .bar { margin-top:6px; }
+  .sub-grp .blab { flex:0 0 92px; font-size:12px; color:var(--c-9aa7b4); }
+  .sub-grp .blab span { font-size:9.5px; }
+  .sub-grp .zero { height:22px; background:var(--c-2b333d); }
+  .sub-grp .track { height:22px; }
+  .sub-grp .bval { font-size:13px; }
+  .tie { flex:0 0 12px; height:22px; border-left:2px solid var(--c-333d47);
+         border-top:2px solid var(--c-333d47); }
+  .tie.last { border-top:0; border-bottom:2px solid var(--c-333d47); }
+
+  .refnote { margin-top:8px; margin-left:190px; font-size:11.5px; color:var(--c-7d8896); }
+
+  /* 정부 확보분 내역 — 여기만 눈금이 다릅니다(2만 2,840장을 100%로 편 부분·전체 막대).
+     위 막대와 같은 눈금으로 그리면 12px짜리 조각 둘이 되어 아무것도 안 보입니다. */
+  .brk { margin-top:24px; padding-top:16px; border-top:1px solid var(--c-21262d); }
+  .brktitle { font-size:12.5px; color:var(--c-8b96a3); }
+  .brktitle b { color:var(--c-c3ccd6); font-weight:700; }
+  .seg { display:flex; gap:2px; margin-top:10px; }
+  .seg > div { height:22px; border-radius:2px; }
+  .seglab { display:flex; gap:2px; margin-top:8px; font-size:11.5px; color:var(--c-9aa7b4); }
+  .seglab > div { line-height:1.45; }
+  .seglab b { display:block; color:var(--c-c3ccd6); font-weight:700; font-size:12px; }
+
+  .big { font-size:52px; font-weight:700; letter-spacing:-.03em; line-height:1; }
+  .kv { font-size:13.5px; color:var(--c-9aa7b4); line-height:1.7; margin-top:12px; }
+  .kv b { color:var(--c-e6edf3); font-weight:700; }
+  .why { border-left:2px solid var(--c-2b333d); padding-left:18px; margin-top:24px;
+         font-size:13.5px; color:var(--c-8b96a3); line-height:1.8; }
+  .why b { color:var(--c-c3ccd6); font-weight:600; }
+
+  /* 정부 확보분의 내역 — 장수만으로는 "무슨 칩이냐"가 안 보입니다 */
+  .rest { margin-top:24px; padding-top:15px; border-top:1px solid var(--c-21262d); }
+  .resttop { font-size:12.5px; color:var(--c-8b96a3); line-height:1.6; }
+  .restrow { display:flex; justify-content:space-between; font-size:12.5px;
+             color:var(--c-9aa7b4); margin-top:9px; }
+  .restrow b { color:var(--c-a48cf5); font-weight:700; }
+</style>
+</head>
+<body>
+  <h1>한국은 GPU가 <span class="vi">10배</span> 부족한 자리에서 시작합니다</h1>
+  <div class="sub">국가별 AI 가속기 <b style="color:var(--c-c3ccd6)">장수</b> 기준 &mdash; 금액이 아니라 장수로 분모를 통일했습니다. 미국·중국은 하이퍼스케일러 합산 추정, 한국은 정부 1·2차 확보분에 민간 추산을 더한 값입니다.</div>
+
+  <div class="legend">
+    <div><span class="sw amber"></span>미국</div>
+    <div><span class="sw cyan"></span>중국</div>
+    <div><span class="sw violet"></span>한국</div>
+    <div><span class="sw" style="background:var(--c-5d6773)"></span>참고 &middot; 데이터센터 한 곳</div>
+  </div>
+
+  <div class="panels" style="margin-top:22px; gap:50px">
+    <div class="panel" style="width:830px">
+      <div class="ptitle">보유 · 확보 가속기 장수</div>
+      <div class="pdesc">왼쪽 끝이 0 &mdash; 같은 눈금 하나로 그렸습니다</div>
+
+      <div style="margin-top:10px">
+        <div class="bar">
+          <div class="blab">미국 하이퍼스케일러<span>합산 추정</span></div>
+          <div class="zero"></div>
+          <div class="track amber" style="width:490px"></div>
+          <div class="bval am">약 100만 장 이상</div>
+        </div>
+
+        <div class="bar">
+          <div class="blab">중국 하이퍼스케일러<span>합산 추정 · 자국 칩 병행</span></div>
+          <div class="zero"></div>
+          <div class="track cyan" style="width:147px"></div>
+          <div class="bval cy">약 30만 장</div>
+        </div>
+
+        <div class="bar">
+          <div class="blab">xAI Colossus 1<span>데이터센터 단 한 곳</span></div>
+          <div class="zero"></div>
+          <div class="track" style="width:108px; background:var(--c-5d6773)"></div>
+          <div class="bval" style="color:var(--c-9aa7b4)">22만 장</div>
+        </div>
+
+        <div class="bar">
+          <div class="blab kr">한국 합산<span>정부 + 민간</span></div>
+          <div class="zero"></div>
+          <div class="track violet" style="width:36px"></div>
+          <div class="bval vi">약 7만 3천 장</div>
+        </div>
+
+        <div class="sub-grp">
+          <div class="bar">
+            <div class="tie"></div>
+            <div class="blab">민간 개별 구축</div>
+            <div class="zero"></div>
+            <div class="track" style="width:25px; background:var(--c-a48cf5)"></div>
+            <div class="bval" style="color:var(--c-9aa7b4)">약 5만 장 <span style="font-weight:400; font-size:11.5px">(추산)</span></div>
+          </div>
+          <div class="bar">
+            <div class="tie last"></div>
+            <div class="blab">정부 1·2차 확보</div>
+            <div class="zero"></div>
+            <div class="track violet" style="width:11px"></div>
+            <div class="bval vi">2만 2,840장</div>
+          </div>
+        </div>
+
+        <div class="refnote">한국 두 줄은 위 합산 막대를 쪼갠 것입니다 &mdash; 여기까지 눈금이 같습니다.</div>
+
+        <div class="brk">
+          <div class="brktitle">아래 막대만 눈금이 다릅니다 &mdash; 맨 아래 줄 <b>2만 2,840장</b>을 100%로 편 것입니다.</div>
+          <div class="seg">
+            <div class="violet" style="width:475px"></div>
+            <div style="width:351px; background:var(--c-a48cf5)"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-top:5px;
+                      font-size:10.5px; color:var(--c-7d8896)"><span>0</span><span>2만 2,840장 = 100%</span></div>
+          <div class="seglab">
+            <div style="width:475px"><b>1차 &middot; 2025년 12월 &middot; 13,136장</b>B200 10,080 + H200 3,056</div>
+            <div style="width:351px"><b>2차 &middot; AI 고속도로 &middot; 9,704장</b>B300 7,688 + Vera Rubin 2,016 &middot; 2조 800억 원</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="width:340px">
+      <div class="ptitle">데이터센터 한 곳과 견줘도</div>
+      <div class="pdesc">Colossus 1 22만 장 &divide; 정부 1·2차 2만 2,840장</div>
+      <div class="big vi" style="margin-top:16px">10배</div>
+      <div class="kv">민간 추산 5만 장을 합쳐도 <b>약 3배</b> 차이입니다.</div>
+
+      <div class="why">
+        이 조건에서 <b>네 팀</b>이 250B·314B·<br>
+        688B·750B 파운데이션 모델을 냈습니다.<br>
+        <b>절감 기술이 교양이 아니라 생존 조건인 이유입니다.</b>
+      </div>
+
+      <div class="rest">
+        <div class="resttop"><b style="color:var(--c-c3ccd6)">장수로만 견준 값입니다.</b> Colossus 1은 H100 세대 22만 장이고 한국 정부 확보분은 B200·B300 세대 2만여 장이라, 장당 성능은 이 그림에 들어 있지 않습니다. 민간 5만 장은 업계 합산 추산이고 미국·중국 값도 추정치입니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    장수는 <b>10배</b> 뒤입니다. <b>그런데 거기서 나온 모델의 점수는 10배 뒤가 아닙니다</b> &mdash; 다음 장에서 같은 지수로 봅니다.
+  </div>
+</body>
+</html>

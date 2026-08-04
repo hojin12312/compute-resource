@@ -89,8 +89,9 @@
      이름이 다른 것이 33개라(prices.html → memory_price_chain.webp) 손으로 적으면 틀립니다.
   4. README에 이미지를 넣고 캡처 두 번.
 
-파일 ↔ 그림 대응 (60장 — glm_bench·k3_bench·refusal_gate·quant_calib·rotation_absorb·
-                    rotation_family·quant_gain 일곱은 덱 전용, README 미편입 · 8장 다섯이 덱 미편입)
+파일 ↔ 그림 대응 (65장 — glm_bench·k3_bench·refusal_gate·quant_calib·rotation_absorb·
+                    rotation_family·quant_gain·kr_infra·kr_bench·sov_boundary·sov_personal·
+                    sov_stack 열둘은 덱 전용, README 미편입 · 8장 다섯이 덱 미편입)
   shock.html             → assets/stock_shock.webp               1. Kimi K3는 어떻게 미국 증시를 흔들었나?
   capex.html             → assets/us_china_capex.webp            1.1 미국과 중국, 인프라는 8배 차이입니다
   bench.html             → assets/frontier_bench.webp            1.2 그런데 모델의 격차는 3.6점입니다
@@ -147,6 +148,11 @@
   expert_parallel.html   → assets/expert_parallel.webp           8.3 MoE는 전문가로 나눕니다
   pd_split.html          → assets/pd_split.webp                  8.4 프리필과 디코딩을 다른 GPU로
   sovereign.html         → assets/ai_sovereignty.webp            9.1 국가 단위의 AI 소버린
+  kr_infra.html          → assets/kr_infra.webp                  9.2 국가별 가속기 장수 비교 (덱 전용)
+  kr_bench.html          → assets/kr_bench.webp                  9.2 한국 모델의 AAII 지수 위치 (덱 전용)
+  sov_boundary.html      → assets/sov_boundary.webp              9.3 기업이 자체 인프라를 짓는 이유 (덱 전용)
+  sov_personal.html      → assets/sov_personal.webp              9.3 개인의 맥락과 두 종속 (덱 전용)
+  sov_stack.html         → assets/sov_stack.webp                 9.3 국가·기업·개인 세 층의 메모리 수요 (덱 전용)
   engine_stack.html      → assets/inference_engine_stack.webp    맥에서는 이렇게 갈립니다
   roadmap.html           → assets/gpu_roadmap.webp               10. 부록: NVIDIA 데이터센터 GPU 로드맵
 

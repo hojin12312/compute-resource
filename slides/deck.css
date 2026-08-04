@@ -385,6 +385,7 @@ html, body { background: var(--letterbox); }
 .foot b { color: var(--fg); font-weight: 700; }
 .foot.cy-l { border-top-color: rgba(14,143,163,.5); }
 .foot.am-l { border-top-color: rgba(196,125,21,.5); }   /* 앰버 결론 — "비싼 쪽"이 결론인 슬라이드 */
+.foot.vi-l { border-top-color: rgba(139,111,240,.5); }  /* 보라 결론 — 8.1의 한국 도입(세션 39) */
 
 /* 인용 — 절 첫머리 문장 */
 .reveal blockquote {

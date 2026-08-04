@@ -5,60 +5,33 @@
 <link rel="stylesheet" href="base.css?v=2a58053d">
 <style>
   body { padding-top:70px; }
-  .chart { display:flex; align-items:flex-end; gap:0; height:330px; margin-top:26px; }
-  .col { width:172px; display:flex; flex-direction:column; align-items:center; }
+  .chart { display:flex; align-items:flex-end; gap:0; height:330px; margin-top:26px; justify-content:space-around; }
+  .col { flex:1; max-width:150px; display:flex; flex-direction:column; align-items:center; }
   .pair { display:flex; align-items:flex-end; gap:5px; }
-  .b { width:44px; border-radius:3px 3px 0 0; }
-  .vals { display:flex; gap:5px; margin-bottom:10px; }
-  .v { width:44px; text-align:center; font-size:13px; font-weight:700; line-height:1.25; }
-  .v span { display:block; font-size:10.5px; font-weight:400; color:var(--c-6b7684); margin-top:2px; }
-  .base { border-top:1px solid var(--c-21262d); display:flex; }
-  .meta { width:172px; text-align:center; padding-top:12px; }
+  .b { width:38px; border-radius:3px 3px 0 0; }
+  .vals { display:flex; gap:4px; margin-bottom:10px; }
+  .v { width:38px; text-align:center; font-size:12px; font-weight:700; line-height:1.25; }
+  .v span { display:block; font-size:10px; font-weight:400; color:var(--c-6b7684); margin-top:2px; }
+  .base { border-top:1px solid var(--c-21262d); display:flex; justify-content:space-around; }
+  .meta { flex:1; max-width:150px; text-align:center; padding-top:12px; }
   .gen { font-size:14px; font-weight:700; color:var(--c-e6edf3); }
   .yr { font-size:12px; color:var(--c-7d8896); margin-top:4px; }
   .node { font-size:11.5px; color:var(--c-5d6773); margin-top:5px; }
-
-  .side { position:absolute; right:56px; top:150px; width:330px;
-          border-left:1px solid var(--c-21262d); padding-left:32px; }
-  .sh { font-size:15px; font-weight:700; color:var(--c-e6edf3); }
-  .sb { font-size:13.5px; color:var(--c-8b96a3); line-height:1.8; margin-top:12px; }
-  .sb b { color:var(--c-c3ccd6); font-weight:600; }
 </style>
 </head>
 <body>
-  <h1>GPU 로드맵 &mdash; <span class="cy">대역폭이 용량보다 빨리 뜁니다</span></h1>
-  <div class="sub">Hopper → Blackwell → Rubin → Feynman. 이 문서의 계산에 쓴 세대는 <b class="am">H200</b>과 <b class="cy">B300</b>입니다.</div>
+  <h1>GPU 세대별 주요 로드맵</h1>
+  <div class="sub">Volta(V100)부터 Rubin까지 H200 (100% 기준) 메모리 용량 및 대역폭 상대 비교</div>
 
   <div class="legend">
     <div><span class="sw amber"></span>메모리 용량</div>
     <div><span class="sw cyan"></span>메모리 대역폭</div>
-    <div style="color:var(--c-7d8896)">막대 높이 = <b style="color:var(--c-c3ccd6)">H100 대비 배수</b> &mdash; 단위가 다른 둘을 같은 자로 재기 위해</div>
+    <div style="color:var(--c-7d8896)">막대 높이 = <b style="color:var(--c-c3ccd6)">H200 기준 배수 (H200 = 1.0x / 100%)</b></div>
   </div>
 
-  <div style="width:870px">
+  <div style="width:1150px; margin:0 auto;">
     <div class="chart" id="chart"></div>
     <div class="base" id="base"></div>
-  </div>
-
-  <div class="side">
-    <div class="sh">HBM4가 바꾸는 것</div>
-    <div class="sb">
-      Rubin은 용량이 B300과 <b>똑같은 288GB</b>인데,
-      대역폭만 8TB/s → <b>22TB/s</b>로 뜁니다.<br>
-      H100 기준으로 보면 용량은 <b class="am">3.6배</b>,
-      대역폭은 <b class="cy">6.6배</b>입니다.
-    </div>
-    <div class="sh" style="margin-top:30px">이 문서의 논리대로면</div>
-    <div class="sb">
-      디코딩은 <b>메모리 대역폭이 천장</b>이었죠.
-      그러니 같은 모델을 Rubin에서 돌리면
-      <b>디코딩 처리량이 유의미하게 늘어납니다</b> &mdash;
-      모델을 하나도 바꾸지 않고도.
-    </div>
-    <div class="sb" style="margin-top:26px; color:var(--c-7d8896)">
-      Feynman(2028)은 커스텀 HBM 1TB+가 보고돼 있으나
-      아직 확정 스펙이 아닙니다.
-    </div>
   </div>
 
   <div class="foot">
@@ -67,32 +40,34 @@
 
 <script>
 const D = [
+  { gen: 'V100',   yr: '2017', node: 'TSMC 12nm', mem: 32,  bw: 0.9 },
+  { gen: 'A100',   yr: '2020', node: 'TSMC 7nm',  mem: 80,  bw: 2.0 },
   { gen: 'H100',   yr: '2022', node: 'TSMC 4N',   mem: 80,  bw: 3.35 },
   { gen: 'H200',   yr: '2024', node: 'TSMC 4N',   mem: 141, bw: 4.8,  mark: 'am' },
   { gen: 'B200',   yr: '2024', node: 'TSMC 4NP',  mem: 192, bw: 8 },
   { gen: 'B300',   yr: '2025', node: 'TSMC 4NP',  mem: 288, bw: 8,    mark: 'cy' },
   { gen: 'Rubin',  yr: '2026', node: 'TSMC N3',   mem: 288, bw: 22 },
 ];
-const MEM0 = D[0].mem, BW0 = D[0].bw;
-const MAX = 6.6, H = 268;              // 최대 배수(대역폭 22/3.35)에 맞춘 공통 축
+const MEM0 = 141, BW0 = 4.8; // H200 100% 기준
+const MAX = 4.58, H = 268;
 const chart = document.getElementById('chart'), base = document.getElementById('base');
 D.forEach(d => {
   const mx = d.mem / MEM0, bx = d.bw / BW0;
   const col = document.createElement('div'); col.className = 'col';
   col.innerHTML =
     '<div class="vals">' +
-      '<div class="v am">×' + mx.toFixed(1) + '<span>' + d.mem + 'GB</span></div>' +
-      '<div class="v cy">×' + bx.toFixed(1) + '<span>' + d.bw + 'TB/s</span></div>' +
+      '<div class="v am">×' + mx.toFixed(2) + '<span>' + d.mem + 'GB</span></div>' +
+      '<div class="v cy">×' + bx.toFixed(2) + '<span>' + d.bw + 'TB/s</span></div>' +
     '</div>' +
     '<div class="pair">' +
-      '<div class="b amber" style="height:' + (mx / MAX * H) + 'px"></div>' +
-      '<div class="b cyan" style="height:' + (bx / MAX * H) + 'px"></div>' +
+      '<div class="b amber" style="height:' + Math.max(10, Math.round(mx / MAX * H)) + 'px"></div>' +
+      '<div class="b cyan" style="height:' + Math.max(10, Math.round(bx / MAX * H)) + 'px"></div>' +
     '</div>';
   chart.appendChild(col);
 
   const m = document.createElement('div'); m.className = 'meta';
-  const gcls = d.mark === 'am' ? ' style="color:var(--c-e0912a)"' : d.mark === 'cy' ? ' style="color:var(--c-22a7bd)"' : '';
-  m.innerHTML = '<div class="gen"' + gcls + '>' + d.gen + '</div>' +
+  const gcls = d.gen === 'H200' ? ' style="color:var(--c-e0912a)"' : d.mark === 'cy' ? ' style="color:var(--c-22a7bd)"' : '';
+  m.innerHTML = '<div class="gen"' + gcls + '>' + d.gen + (d.gen === 'H200' ? ' <span style="font-size:10px; color:var(--c-e0912a)">(100%)</span>' : '') + '</div>' +
                 '<div class="yr">' + d.yr + '</div><div class="node">' + d.node + '</div>';
   base.appendChild(m);
 });

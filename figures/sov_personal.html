@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=2a58053d">
+<style>
+  body { padding-top:52px; }
+  .stitle { font-size:16px; font-weight:700; letter-spacing:-.01em; }
+  .sdesc { font-size:12.5px; color:var(--c-8b96a3); margin-top:3px; margin-bottom:16px; }
+
+  /* 쌓이는 층 — 위로 갈수록 "나만의 것"이 됩니다. 폭이 아니라 색 농도로 대체 불가를 보입니다. */
+  .layer { display:flex; align-items:center; gap:14px; margin-top:10px; }
+  .layer > * { flex-shrink:0; }
+  .lbar { width:300px; height:50px; border-radius:4px; display:flex; align-items:center;
+          padding-left:12px; font-size:12.5px; font-weight:700; }
+  .ltext { font-size:11.5px; color:var(--c-8b96a3); line-height:1.35; width:250px; }
+  .ltext b { color:var(--c-c3ccd6); font-weight:600; }
+
+  /* 축은 그림 방향과 같아야 합니다 — 계층이 상하이므로 축도 세로 레일입니다.
+     처음엔 막대 아래에 좌우 라벨(바꿔 끼울 수 있음 ↔ 대체 불가)을 뒀는데,
+     막대 폭이 넷 다 같아 좌우로는 아무것도 인코딩하지 않으면서 좌우 축이
+     있는 것처럼 읽혔습니다(호진님 지적). */
+  .stack { display:flex; gap:13px; }
+  .stack > * { flex-shrink:0; }
+  .layers .layer:first-child { margin-top:0; }
+
+  .big { font-size:44px; font-weight:700; letter-spacing:-.03em; line-height:1.1; }
+  .kv { font-size:13.5px; color:var(--c-9aa7b4); line-height:1.7; margin-top:12px; }
+  .kv b { color:var(--c-e6edf3); font-weight:700; }
+
+  /* 개인이 손댈 수 없는 두 손잡이 */
+  .knob { border:1px solid var(--c-233039); border-radius:6px; padding:15px 16px; margin-top:14px; }
+  .knob .kt { font-size:13px; font-weight:700; color:var(--c-c3ccd6); }
+  .knob .kd { font-size:11.5px; color:var(--c-8b96a3); line-height:1.5; margin-top:5px; }
+  .knob .kd b { color:var(--c-9aa7b4); font-weight:600; }
+  .who { float:right; font-size:10px; padding:2px 8px; border-radius:9px;
+         border:1px solid var(--c-4a3a1c); color:var(--c-e0912a); }
+
+  /* 반복되는 작은 칸이라 div 격자가 아니라 SVG로 그립니다(캡처 배율에서 칸이 갈립니다). */
+  .tailstrip { margin-top:22px; padding-top:15px; border-top:1px solid var(--c-21262d); }
+  .tsl { font-size:13px; color:var(--c-9aa7b4); }
+  .tsl b { color:var(--c-22a7bd); font-weight:700; }
+  .tsn { font-size:11.5px; color:var(--c-7d8896); margin-top:8px; line-height:1.5; }
+  .tsn b { color:var(--c-9aa7b4); font-weight:600; }
+</style>
+</head>
+<body>
+  <h1>개인의 맥락은 <span class="cy">남에게 줄 수 없습니다</span></h1>
+  <div class="sub">개인이 로컬 하드웨어를 찾는 이유도 기업과 같습니다 &mdash; API 비용이 아니라 경계입니다. 다만 개인의 경계 안에 있는 것은 회사 문서가 아니라 <b style="color:var(--c-c3ccd6)">나 자신의 기록</b>이라 쌓일수록 대체가 어려워집니다. 개념도입니다.</div>
+
+  <div class="panels" style="margin-top:24px; gap:54px">
+    <div class="panel" style="width:620px">
+      <div class="stitle">쓸수록 쌓이고, 쌓일수록 나만의 것이 됩니다</div>
+      <div class="sdesc">아래에서 위로 갈수록 다른 사람의 것으로 바꿔 끼울 수 없습니다</div>
+
+      <div class="stack">
+      <svg width="30" height="230">
+        <defs>
+          <marker id="up" viewBox="0 0 8 8" refX="4" refY="7" markerWidth="8" markerHeight="8" orient="auto">
+            <path d="M0 8 L4 0 L8 8 z" fill="var(--c-5d6773)"/>
+          </marker>
+        </defs>
+        <path d="M22 224 L22 12" fill="none" stroke="var(--c-5d6773)" stroke-width="1.5" marker-end="url(#up)"/>
+        <text x="11" y="52" font-size="10.5" fill="var(--c-c3ccd6)" text-anchor="middle"
+              transform="rotate(-90 11 52)">대체 불가</text>
+        <text x="11" y="166" font-size="10.5" fill="var(--c-7d8896)" text-anchor="middle"
+              transform="rotate(-90 11 166)">바꿔 끼울 수 있음</text>
+      </svg>
+      <div class="layers">
+      <div class="layer">
+        <div class="lbar" style="background:var(--a-36); color:var(--c-22a7bd); border:1px solid var(--c-17505c)">습관 · 말투 · 선호</div>
+        <div class="ltext">모아 놓으면 <b>나를 그대로 설명하는 자료</b>가 됩니다</div>
+      </div>
+      <div class="layer">
+        <div class="lbar" style="background:var(--a-35); color:var(--c-22a7bd); border:1px solid var(--c-2f6b78)">업무 맥락</div>
+        <div class="ltext">진행 중인 일, 미완의 판단, 사내 사정</div>
+      </div>
+      <div class="layer">
+        <div class="lbar" style="background:var(--c-1c222a); color:var(--c-c3ccd6); border:1px solid var(--c-233039)">내 파일</div>
+        <div class="ltext">메모 · 계약서 · 사진 · 코드</div>
+      </div>
+      <div class="layer">
+        <div class="lbar" style="background:var(--c-161b22); color:var(--c-9aa7b4); border:1px solid var(--c-21262d)">대화 기록</div>
+        <div class="ltext">지금까지 주고받은 전부</div>
+      </div>
+      </div>
+      </div>
+
+      <div class="kv" style="width:576px; margin-top:16px">그래서 개인의 경계는 <b>사람 수만큼</b> 있습니다. 기업의 경계가 회사 수만큼이었던 것과 같은 논리이고, 여기가 <b>가장 잘게 쪼개진 끝</b>입니다.</div>
+    </div>
+
+    <div class="panel" style="width:466px">
+      <div class="stitle">그런데 개인은 칩을 설계할 수 없습니다</div>
+      <div class="sdesc">개인의 소버린은 자기가 못 정하는 손잡이 둘에 그대로 매달립니다</div>
+
+      <div class="knob">
+        <div class="kt"><span class="who">국가가 정함</span>GPU를 얼마나 확보하느냐</div>
+        <div class="kd">앞에서 본 <b>정부 1·2차 2만 2,840장</b>이 개인에게 내려오는 몫의 출발점입니다. 국가 소버린의 성과가 곧 개인의 선택지입니다.</div>
+      </div>
+
+      <div class="knob">
+        <div class="kt"><span class="who">연구가 정함</span>모델이 얼마나 작아지느냐</div>
+        <div class="kd">6장의 <b>MoE·선형 어텐션</b>과 7장의 <b>양자화</b>가 더 나아가는 만큼, 같은 기기에서 더 큰 모델이 돕니다.</div>
+      </div>
+
+      <div class="kv">개인이 직접 고르는 것은 <b>기기 한 대</b>뿐입니다 &mdash; 애플 실리콘 맥, DGX Spark 같은 것들입니다.</div>
+    </div>
+  </div>
+
+  <div class="tailstrip">
+    <div class="tsl">그래서 사본은 여기서 가장 많아집니다 &mdash; <b>사람 수만큼</b></div>
+    <svg id="dots" width="1264" height="52"></svg>
+    <div class="tsn">기업의 경계가 회사 수만큼이었다면, 개인의 경계는 <b>쓰는 사람 수만큼</b>입니다. 한 벌이 작아지는 대신 벌 수가 늘어납니다.</div>
+  </div>
+
+  <div class="foot">
+    국가도 기업도 개인도 <b>같은 이유</b>로 자기 하드웨어를 원합니다. 다음 장에서 셋을 한 그림에 놓습니다.
+  </div>
+<script>
+/* 한 사람 = 한 칸. 개수는 "많다"는 뜻만 지므로 세지 마세요 — 그림 부제에 개념도라고 적었습니다. */
+const COLS = 76, ROWS = 3, CELL = 12, DOT = 8;
+let out = '';
+for (let r = 0; r < ROWS; r++)
+  for (let c = 0; c < COLS; c++)
+    out += '<rect x="' + (c * CELL) + '" y="' + (r * CELL + 6) + '" width="' + DOT + '" height="' + DOT +
+           '" rx="1.5" fill="var(--c-0e8fa3)" opacity="' + (0.35 + 0.55 * ((r * COLS + c) % 7) / 6) + '"/>';
+document.getElementById('dots').innerHTML = out;
+</script>
+</body>
+</html>

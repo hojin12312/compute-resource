@@ -101,6 +101,11 @@ const MAP = {
   'expert_parallel.html':'expert_parallel',
   'pd_split.html':       'pd_split',
   'sovereign.html':  'ai_sovereignty',
+  'kr_infra.html':   'kr_infra',
+  'kr_bench.html':   'kr_bench',
+  'sov_boundary.html': 'sov_boundary',
+  'sov_personal.html': 'sov_personal',
+  'sov_stack.html':    'sov_stack',
   'engine_stack.html':'inference_engine_stack',
   'roadmap.html':    'gpu_roadmap',
 };

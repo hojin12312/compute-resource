@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=2a58053d">
+<style>
+  body { padding-top:52px; }
+  .grid { position:relative; margin-top:20px; }
+  .hdr, .row { display:flex; align-items:center; gap:16px; }
+  .hdr > *, .row > * { flex-shrink:0; }
+  .hdr { font-size:11.5px; color:var(--c-7d8896); padding-bottom:8px;
+         border-bottom:1px solid var(--c-21262d); }
+  .row { height:104px; border-bottom:1px solid var(--c-1b2027); }
+
+  .c1 { width:112px; }
+  .c2 { width:250px; }
+  .c3 { width:392px; }
+  .c4 { width:206px; }
+  .c5 { width:132px; }
+
+  .tier  { font-size:17px; font-weight:700; letter-spacing:-.01em; }
+  .tier span { display:block; font-size:10.5px; font-weight:400; color:var(--c-7d8896); margin-top:3px; }
+
+  .hw { font-size:13px; color:var(--c-c3ccd6); font-weight:600; line-height:1.35; }
+  .hw span { display:block; font-size:11px; color:var(--c-7d8896); font-weight:400; margin-top:4px; }
+
+  /* 학습 ↔ 추론 — 눈금 없는 100% 막대입니다. 비율은 개념적 표현이라 숫자를 달지 않습니다. */
+  .mix { display:flex; gap:2px; height:26px; }
+  .mix > div { border-radius:2px; display:flex; align-items:center; justify-content:center;
+               font-size:11px; font-weight:700; white-space:nowrap; overflow:hidden; }
+  .tr { background:var(--c-c47d15); color:var(--c-221a0d); }
+  .inf{ background:var(--c-0e8fa3); color:var(--c-0f2930); }
+  .mixnote { font-size:11.5px; color:var(--c-8b96a3); margin-top:9px; line-height:1.4; }
+  .mixnote b { color:var(--c-c3ccd6); font-weight:600; }
+
+  /* 메모리 — 세 줄을 관통하는 한 덩어리입니다. 끊기면 "전 구간"이라는 뜻이 사라집니다. */
+  .memband { position:absolute; width:206px; border-radius:6px;
+             background:var(--a-35); border:1px solid var(--c-17505c); }
+  .memcell { position:relative; z-index:1; font-size:12px; color:var(--c-22a7bd);
+             font-weight:700; line-height:1.35; padding-left:13px; }
+  .memcell span { display:block; font-size:10.5px; color:var(--ink-score-cy);
+                  font-weight:400; margin-top:3px; }
+
+  .money { height:26px; border-radius:3px; background:var(--c-3b4652); }
+  .moneylab { font-size:11px; color:var(--c-8b96a3); margin-top:6px; }
+
+  .tail { display:flex; gap:16px; align-items:flex-start; margin-top:24px;
+          padding-top:18px; border-top:1px solid var(--c-21262d); }
+  .tailtext { width:770px; font-size:13px; color:var(--c-9aa7b4); line-height:1.65; }
+  .tailtext b { color:var(--c-e6edf3); font-weight:700; }
+  .chips { display:flex; gap:7px; margin-top:13px; }
+  .chip { font-size:11px; padding:4px 10px; border-radius:11px;
+          border:1px solid var(--c-17505c); color:var(--c-22a7bd); white-space:nowrap; }
+</style>
+</head>
+<body>
+  <h1>세 층 모두 하드웨어를 부르고, 아래로 갈수록 <span class="cy">추론</span>입니다</h1>
+  <div class="sub">국가 &rarr; 기업 &rarr; 개인으로 내려갈수록 경계 수는 늘고 한 곳의 규모는 줄지만, 학습이 빠진 자리를 추론이 채웁니다. <b style="color:var(--c-c3ccd6)">메모리는 세 층 어디서도 빠지지 않습니다.</b> 비율은 개념적 표현입니다.</div>
+
+  <div class="legend">
+    <div><span class="sw amber"></span>학습</div>
+    <div><span class="sw cyan"></span>추론</div>
+  </div>
+
+  <div class="grid">
+    <!-- 세 줄을 관통하는 메모리 띠. 헤더(29px) 아래부터 세 줄(92×3)만큼 덮습니다. -->
+    <div class="memband" style="left:806px; top:29px; height:312px"></div>
+
+    <div class="hdr">
+      <div class="c1">층</div>
+      <div class="c2">하드웨어</div>
+      <div class="c3">일의 성격 &mdash; 학습 대 추론</div>
+      <div class="c4" style="color:var(--c-22a7bd); font-weight:700">메모리</div>
+      <div class="c5">예산</div>
+    </div>
+
+    <div class="row">
+      <div class="c1 tier">국가<span>경계 수 · 적음</span></div>
+      <div class="c2 hw">GPU 클러스터<span>정부 1·2차 2만 2,840장 · 국가 AI 컴퓨팅 센터</span></div>
+      <div class="c3">
+        <div class="mix"><div class="tr" style="width:212px">학습</div><div class="inf" style="width:178px">추론</div></div>
+        <div class="mixnote">파운데이션 모델을 <b>직접 학습</b>합니다 &mdash; 독파모가 그것입니다</div>
+      </div>
+      <div class="c4 memcell">학습 클러스터의 HBM<span>가중치 · 옵티마이저 · 체크포인트</span></div>
+      <div class="c5"><div class="money" style="width:132px"></div><div class="moneylab">조 단위</div></div>
+    </div>
+
+    <div class="row">
+      <div class="c1 tier">기업<span>경계 수 · 많음</span></div>
+      <div class="c2 hw">사내 노드 몇 대<span>온프레미스 · 사설 클라우드</span></div>
+      <div class="c3">
+        <div class="mix"><div class="tr" style="width:78px">학습</div><div class="inf" style="width:312px">추론</div></div>
+        <div class="mixnote">파인튜닝은 가끔, <b>서빙은 연중 무휴</b>입니다</div>
+      </div>
+      <div class="c4 memcell">노드의 HBM<span>가중치 + 동시 사용자 KV캐시</span></div>
+      <div class="c5"><div class="money" style="width:62px"></div><div class="moneylab">억 단위</div></div>
+    </div>
+
+    <div class="row" style="border-bottom:0">
+      <div class="c1 tier">개인<span>경계 수 · 가장 많음</span></div>
+      <div class="c2 hw">기기 한 대<span>애플 실리콘 맥 · DGX Spark</span></div>
+      <div class="c3">
+        <div class="mix"><div class="tr" style="width:16px"></div><div class="inf" style="width:374px">추론</div></div>
+        <div class="mixnote"><b>거의 전부 추론</b>입니다 &mdash; 학습은 남이 해 둔 것을 받아 씁니다</div>
+      </div>
+      <div class="c4 memcell">통합 메모리 한 덩어리<span>가중치와 캐시가 같은 통을 나눠 씁니다</span></div>
+      <div class="c5"><div class="money" style="width:20px"></div><div class="moneylab">백만 원 단위</div></div>
+    </div>
+  </div>
+
+  <div class="tail">
+    <div class="tailtext">
+      학습이 빠져도 메모리가 빠지지 않습니다 &mdash; <b>추론은 가중치를 통째로 얹고 시작하고, 그 위에 사용자마다 KV캐시가 또 붙습니다.</b>
+      그래서 소버린은 세 층 어디서 일어나든 메모리 수요로 끝납니다.
+      다만 <b>아래로 갈수록 예산이 작아집니다.</b> 같은 모델을 훨씬 작은 통에 넣어야 하는 쪽이 개인이고,
+      그래서 <b>6·7장의 절감 기법이 가장 먼저 필요한 곳도 개인</b>입니다.
+      <div class="chips">
+        <div class="chip">MoE &mdash; 읽는 양을 줄임</div>
+        <div class="chip">선형 어텐션 &mdash; KV캐시를 줄임</div>
+        <div class="chip">양자화 &mdash; 둘 다 줄임</div>
+      </div>
+    </div>
+    <div class="tailtext" style="width:412px; border-left:2px solid var(--c-2b333d); padding-left:18px">
+      국가가 GPU를 얼마나 확보하고 연구가 모델을 얼마나 줄이느냐 &mdash;
+      <b>개인의 선택지는 그 둘의 결과로 정해집니다.</b>
+    </div>
+  </div>
+
+  <div class="foot">
+    소버린은 <b>수요를 한곳에 모으는 대신 세 층으로 퍼뜨립니다</b> &mdash; 그리고 퍼진 자리마다 메모리를 다시 요구합니다.
+  </div>
+</body>
+</html>
