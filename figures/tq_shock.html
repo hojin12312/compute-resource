@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=2a58053d">
+<style>
+  body { padding-top:74px; }
+  /* shock.html과 같은 양식입니다 — 1장의 K3 충격과 나란히 읽히도록 일부러 맞췄습니다.
+     flex-shrink:0 필수 — 없으면 긴 막대 행만 눌려 0% 선과 막대 길이가 함께 틀어집니다 */
+  .bar { display:flex; align-items:center; gap:15px; margin-top:17px; }
+  .blab { flex:0 0 250px; text-align:right; font-size:13.5px; color:var(--c-c3ccd6); line-height:1.4; }
+  .blab span { display:block; font-size:11.5px; color:var(--c-7d8896); margin-top:3px; }
+  .zero { flex:0 0 2px; background:var(--c-3d4650); height:34px; }
+  .track { flex:0 0 auto; height:34px; }
+  .bval { flex:0 0 auto; font-size:17px; font-weight:700; white-space:nowrap; }
+
+  .big { font-size:56px; font-weight:700; letter-spacing:-.03em; line-height:1; }
+  .kv { font-size:13.5px; color:var(--c-9aa7b4); line-height:1.7; margin-top:12px; }
+  .kv b { color:var(--c-e6edf3); font-weight:700; }
+  .reax { margin-top:34px; border-top:1px solid var(--c-2b333d); padding-top:16px; }
+  .rtitle { font-size:16px; font-weight:700; letter-spacing:-.01em; margin-bottom:10px; }
+  .rrow { font-size:13.5px; color:var(--c-8b96a3); line-height:1.7; margin-top:7px; }
+  .rrow b { color:var(--c-c3ccd6); font-weight:600; }
+  .rsrc { display:inline-block; width:104px; font-size:12px; font-weight:700;
+          color:var(--c-7d8896); letter-spacing:.02em; }
+
+  .why { border-left:2px solid var(--c-2b333d); padding-left:18px; margin-top:30px;
+         font-size:13.5px; color:var(--c-8b96a3); line-height:1.8; }
+  .why b { color:var(--c-c3ccd6); font-weight:600; }
+</style>
+</head>
+<body>
+  <h1>발표 이틀 뒤, <span class="am">메모리가 흔들렸습니다</span></h1>
+  <div class="sub">2026년 3월 24일 구글 리서치가 KV캐시 <b>6배 절감</b>을 공개 &rarr; 3월 25일 미국 증시, 3월 26일 한국 증시.</div>
+
+  <div class="panels" style="margin-top:34px; gap:60px">
+    <div class="panel" style="width:850px">
+      <div class="ptitle">발표 직후 하락률</div>
+      <div class="pdesc">왼쪽 끝이 0% &mdash; 막대가 길수록 많이 빠졌습니다</div>
+      <div style="margin-top:14px" id="bars"></div>
+    </div>
+
+    <div class="panel" style="width:330px">
+      <div class="ptitle">한 달로 보면</div>
+      <div class="pdesc">2월 27일 &rarr; 3월 27일</div>
+      <div class="big am" style="margin-top:20px">−20.2%</div>
+      <div class="kv">삼성전자가 21만 6,500원에서<br><b>17만 2,700원</b>이 됐습니다.<br>SK하이닉스는 <b>−16.6%</b>.</div>
+
+      <div class="why">
+        다만 이 한 달에는 <b>중동 지정학 리스크</b>가<br>
+        겹쳐 있습니다 &mdash; 터보퀀트 <b>단독의 결과가 아닙니다.</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="reax">
+    <div class="rtitle">반박은 곧바로 나왔습니다</div>
+    <div class="rrow"><span class="rsrc">JP모건</span>이미 공개된 기술이라 <b>새 악재가 아니고</b>, 효율이 오르면 처리량이 늘어 수요는 오히려 는다</div>
+    <div class="rrow"><span class="rsrc">DS투자증권</span>KV캐시 압축은 <b>추론</b> 쪽이라 <b>훈련 중심 HBM 수요에는 미미</b>하다</div>
+    <div class="rrow"><span class="rsrc">모건스탠리</span>목표가 <b>유지</b> &mdash; 삼성전자 28만원 · SK하이닉스 160만원</div>
+    <div class="rrow"><span class="rsrc">스토리지 업계</span>압축된 캐시는 <b>계층으로 내려갑니다</b> &mdash; 용량 문제가 <b>I/O 문제</b>로 바뀌며 호스트 DRAM·NAND 쪽 수요가 붙습니다</div>
+  </div>
+
+  <div class="foot">
+    KV캐시는 <b>HBM에 삽니다.</b> 다만 HBM은 가속기 패키지에 <b>고정 용량으로 붙어</b> 나옵니다 &mdash; 아껴 쓴다고 H200 한 장의 <b>141GB가 줄지는 않습니다.</b>
+  </div>
+
+<script>
+/* t는 화면에 찍는 문자열입니다 — 출처가 소수 둘째 자리까지 준 값과 첫째 자리까지 준 값이
+   섞여 있어 toFixed로 자리수를 통일하면 없는 정밀도를 지어내게 됩니다 */
+const D = [
+  { n: 'SK하이닉스',  s: '3월 26일 · 93만 3,000원',  v: 6.23, t: '6.23' },
+  { n: '삼성전자',    s: '3월 26일 · 18만 100원',    v: 4.71, t: '4.71' },
+  { n: '샌디스크',    s: '3월 25일 · $702.48',       v: 3.5,  t: '3.5'  },
+  { n: '마이크론',    s: '3월 25일 · $382.09',       v: 3.4,  t: '3.4'  },
+  { n: '코스피 지수', s: '3월 26일 · 증시 전체',      v: 3.22, t: '3.22' },
+];
+const SCALE = 78;   // 1%당 px — 최장 막대(6.23%)가 패널 안에 들어가는 최댓값. 넘으면 flex가 눌러 비율이 깨집니다
+const host = document.getElementById('bars');
+D.forEach(d => {
+  const row = document.createElement('div'); row.className = 'bar';
+  row.innerHTML =
+    '<div class="blab">' + d.n + '<span>' + d.s + '</span></div>' +
+    '<div class="zero"></div>' +
+    '<div class="track amber" style="width:' + (d.v * SCALE) + 'px; opacity:' + (0.45 + d.v / 14) + '"></div>' +
+    '<div class="bval am">−' + d.t + '%</div>';
+  host.appendChild(row);
+});
+</script>
+</body>
+</html>

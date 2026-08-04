@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=2a58053d">
+<style>
+  /* 회전 계열 네 기법 한 장 — 덱 83·84번(TurboQuant·PolarQuant 각 한 장)을 합쳐 대체합니다.
+     핵심 대비는 1번과 3번입니다: 같은 정규분포 위에 QuaRot은 균일 눈금, TurboQuant는
+     로이드-맥스 눈금을 얹습니다. 눈금 좌표는 손으로 찍지 말고 계산해서 넣으세요 —
+     로이드-맥스 16레벨(σ=1)은 ±0.128 0.388 0.657 0.942 1.256 1.618 2.069 2.733이고,
+     같은 ±3σ 균일 대비 MSE가 1.31배 좋습니다(수치해로 확인). */
+  body { padding-top:50px; }
+
+  .cols4 { display:grid; grid-template-columns:repeat(4, 1fr); gap:18px; margin-top:26px; align-items:stretch; }
+  .panel { border:1px solid var(--c-333d47); border-radius:12px; background:var(--c-161b22);
+           padding:16px 15px; display:flex; flex-direction:column; justify-content:space-between; }
+  .panel.am { border-color:var(--c-96590a); }
+  .panel.cy { border-color:var(--c-2f6b78); }
+  .panel.vi { border-color:var(--c-6f52d6); }
+
+  .phead { border-bottom:1px solid var(--c-2b333d); padding-bottom:9px; margin-bottom:11px; }
+  .phead .yr { font:700 10px "IBM Plex Mono", monospace; color:var(--c-7d8896); letter-spacing:.06em; }
+  .phead h3 { font-size:19px; margin-top:3px; }
+  .phead h3.am { color:var(--c-e0912a); }
+  .phead h3.cy { color:var(--c-22a7bd); }
+  .phead h3.vi { color:var(--c-a48cf5); }
+  .phead .role { font-size:12px; color:var(--c-8b96a3); margin-top:3px; }
+
+  .stage { background:var(--c-0d1117); border:1px solid var(--c-2b333d); border-radius:8px;
+           padding:6px; margin-bottom:10px; display:flex; justify-content:center; }
+
+  .key { font:700 11.5px "IBM Plex Mono", monospace; text-align:center; padding:7px 6px;
+         border-radius:6px; margin-bottom:10px; line-height:1.5; }
+  .key.am { background:var(--a-37); color:var(--c-e0912a); }
+  .key.cy { background:var(--a-36); color:var(--c-22a7bd); }
+  .key.vi { background:var(--v-24); color:var(--c-a48cf5); }
+
+  .caption { font-size:12.5px; color:var(--c-9aa7b4); line-height:1.6; }
+  .caption b { color:var(--c-c3ccd6); }
+
+  .sl { font:700 9.5px "IBM Plex Mono", monospace; fill:var(--c-8b96a3); }
+  .sn { font:700 11px "Pretendard Variable", sans-serif; }
+</style>
+</head>
+<body>
+  <h1>회전을 쓰는 네 기법 &mdash; <span class="cy">회전은 같고, 그다음이 다릅니다</span></h1>
+  <div class="sub">넷 다 값을 회전시켜 이상치를 눕힙니다. 갈리는 곳은 둘입니다 &mdash; <b>1) 어떤 회전을 쓸까</b>(QuaRot · SpinQuant), <b>2) 회전한 뒤 눈금을 어떻게 잡을까</b>(TurboQuant · PolarQuant).</div>
+
+  <div class="cols4">
+
+    <!-- 1. QuaRot -->
+    <div class="panel am">
+      <div>
+        <div class="phead">
+          <div class="yr">2024 · arXiv:2404.00456</div>
+          <h3 class="am">QuaRot</h3>
+          <div class="role">회전을 처음 실용화</div>
+        </div>
+        <div class="stage">
+          <svg width="264" height="250" viewBox="0 0 264 250">
+            <path d="M 20.0 196.0 L 20.0 195.1 L 23.5 194.7 L 27.0 194.3 L 30.5 193.7 L 34.0 192.9 L 37.5 191.9 L 41.0 190.7 L 44.5 189.1 L 48.0 187.2 L 51.5 184.9 L 55.0 182.1 L 58.5 178.8 L 62.0 174.9 L 65.5 170.3 L 69.0 165.1 L 72.5 159.2 L 76.0 152.6 L 79.5 145.4 L 83.0 137.5 L 86.5 129.0 L 90.0 120.1 L 93.5 110.8 L 97.0 101.4 L 100.5 92.0 L 104.0 82.7 L 107.5 73.9 L 111.0 65.7 L 114.5 58.3 L 118.0 52.0 L 121.5 46.9 L 125.0 43.1 L 128.5 40.8 L 132.0 40.0 L 135.5 40.8 L 139.0 43.1 L 142.5 46.9 L 146.0 52.0 L 149.5 58.3 L 153.0 65.7 L 156.5 73.9 L 160.0 82.7 L 163.5 92.0 L 167.0 101.4 L 170.5 110.8 L 174.0 120.1 L 177.5 129.0 L 181.0 137.5 L 184.5 145.4 L 188.0 152.6 L 191.5 159.2 L 195.0 165.1 L 198.5 170.3 L 202.0 174.9 L 205.5 178.8 L 209.0 182.1 L 212.5 184.9 L 216.0 187.2 L 219.5 189.1 L 223.0 190.7 L 226.5 191.9 L 230.0 192.9 L 233.5 193.7 L 237.0 194.3 L 240.5 194.7 L 244.0 195.1 L 244.0 196.0 Z" fill="var(--a-37)" stroke="var(--c-c47d15)" stroke-width="2"/>
+            <line x1="20" y1="196" x2="244" y2="196" stroke="var(--c-3d4650)" stroke-width="1.5"/>
+            <g stroke="var(--c-e0912a)" stroke-width="1.6"><line x1="33.6" y1="190.0" x2="33.6" y2="212.0"/><line x1="46.7" y1="190.0" x2="46.7" y2="212.0"/><line x1="59.8" y1="190.0" x2="59.8" y2="212.0"/><line x1="72.9" y1="190.0" x2="72.9" y2="212.0"/><line x1="86.1" y1="190.0" x2="86.1" y2="212.0"/><line x1="99.2" y1="190.0" x2="99.2" y2="212.0"/><line x1="112.3" y1="190.0" x2="112.3" y2="212.0"/><line x1="125.4" y1="190.0" x2="125.4" y2="212.0"/><line x1="138.6" y1="190.0" x2="138.6" y2="212.0"/><line x1="151.7" y1="190.0" x2="151.7" y2="212.0"/><line x1="164.8" y1="190.0" x2="164.8" y2="212.0"/><line x1="177.9" y1="190.0" x2="177.9" y2="212.0"/><line x1="191.1" y1="190.0" x2="191.1" y2="212.0"/><line x1="204.2" y1="190.0" x2="204.2" y2="212.0"/><line x1="217.3" y1="190.0" x2="217.3" y2="212.0"/><line x1="230.4" y1="190.0" x2="230.4" y2="212.0"/></g>
+            <text x="132" y="232" text-anchor="middle" class="sl">균일 눈금 16칸 &middot; 간격 일정</text>
+            <path d="M 34 56 L 34 186" stroke="var(--c-7d8896)" stroke-dasharray="2 2"/>
+            <text x="22" y="32" class="sl" fill="var(--c-7d8896)">값이 없는 꼬리에도</text>
+            <text x="22" y="46" class="sl" fill="var(--c-7d8896)">눈금은 똑같이 갑니다</text>
+          </svg>
+        </div>
+        <div class="key am">무작위 하다마드 + <b>균일 눈금</b></div>
+      </div>
+      <div class="caption">
+        회전으로 이상치를 눕히는 <b>발상 자체를 세운 논문</b>입니다. 다만 눈금은 등간격이라,
+        값이 몰린 가운데도 텅 빈 꼬리도 <b>똑같은 간격</b>을 씁니다.
+      </div>
+    </div>
+
+    <!-- 2. SpinQuant -->
+    <div class="panel am">
+      <div>
+        <div class="phead">
+          <div class="yr">2024 · Meta</div>
+          <h3 class="am">SpinQuant</h3>
+          <div class="role">회전 자체를 학습</div>
+        </div>
+        <div class="stage">
+          <svg width="264" height="250" viewBox="0 0 264 250">
+            <line x1="38" y1="196" x2="246" y2="196" stroke="var(--c-3d4650)" stroke-width="1.5"/>
+            <line x1="38" y1="26" x2="38" y2="196" stroke="var(--c-3d4650)" stroke-width="1.5"/>
+            <text x="30" y="32" text-anchor="end" class="sl">오차</text>
+            <text x="242" y="212" text-anchor="end" class="sl">학습 스텝</text>
+
+            <line x1="38" y1="56" x2="246" y2="56" stroke="var(--c-4d5661)" stroke-dasharray="3 3"/>
+            <path d="M 38 56 C 82 62 100 118 134 146 C 172 176 214 182 246 184"
+                  fill="none" stroke="var(--c-e0912a)" stroke-width="2.5"/>
+            <circle cx="38" cy="56" r="5" fill="var(--c-c47d15)"/>
+            <text x="48" y="48" class="sl" fill="var(--c-e0912a)">무작위 하다마드에서 출발</text>
+            <circle cx="246" cy="184" r="5" fill="var(--c-22a7bd)"/>
+            <text x="240" y="174" text-anchor="end" class="sl" fill="var(--c-22a7bd)">학습된 회전 R</text>
+            <text x="132" y="232" text-anchor="middle" class="sl">회전은 무수히 많습니다 &mdash; 그중 하나를 고릅니다</text>
+          </svg>
+        </div>
+        <div class="key am">회전 행렬 R을 <b>경사하강으로 탐색</b></div>
+      </div>
+      <div class="caption">
+        직교행렬이면 무엇이든 되므로 <b>고를 자유가 남습니다.</b> 그 자유를 캘리브레이션 데이터로
+        학습해 <b>오차가 가장 작은 회전</b>을 찾습니다.
+      </div>
+    </div>
+
+    <!-- 3. TurboQuant -->
+    <div class="panel cy">
+      <div>
+        <div class="phead">
+          <div class="yr">ICLR 2026 · arXiv:2504.19874</div>
+          <h3 class="cy">TurboQuant</h3>
+          <div class="role">눈금을 분포에 맞춤</div>
+        </div>
+        <div class="stage">
+          <svg width="264" height="250" viewBox="0 0 264 250">
+            <path d="M 20.0 196.0 L 20.0 195.1 L 23.5 194.7 L 27.0 194.3 L 30.5 193.7 L 34.0 192.9 L 37.5 191.9 L 41.0 190.7 L 44.5 189.1 L 48.0 187.2 L 51.5 184.9 L 55.0 182.1 L 58.5 178.8 L 62.0 174.9 L 65.5 170.3 L 69.0 165.1 L 72.5 159.2 L 76.0 152.6 L 79.5 145.4 L 83.0 137.5 L 86.5 129.0 L 90.0 120.1 L 93.5 110.8 L 97.0 101.4 L 100.5 92.0 L 104.0 82.7 L 107.5 73.9 L 111.0 65.7 L 114.5 58.3 L 118.0 52.0 L 121.5 46.9 L 125.0 43.1 L 128.5 40.8 L 132.0 40.0 L 135.5 40.8 L 139.0 43.1 L 142.5 46.9 L 146.0 52.0 L 149.5 58.3 L 153.0 65.7 L 156.5 73.9 L 160.0 82.7 L 163.5 92.0 L 167.0 101.4 L 170.5 110.8 L 174.0 120.1 L 177.5 129.0 L 181.0 137.5 L 184.5 145.4 L 188.0 152.6 L 191.5 159.2 L 195.0 165.1 L 198.5 170.3 L 202.0 174.9 L 205.5 178.8 L 209.0 182.1 L 212.5 184.9 L 216.0 187.2 L 219.5 189.1 L 223.0 190.7 L 226.5 191.9 L 230.0 192.9 L 233.5 193.7 L 237.0 194.3 L 240.5 194.7 L 244.0 195.1 L 244.0 196.0 Z" fill="var(--a-36)" stroke="var(--c-0e8fa3)" stroke-width="2"/>
+            <line x1="20" y1="196" x2="244" y2="196" stroke="var(--c-3d4650)" stroke-width="1.5"/>
+            <g stroke="var(--c-22a7bd)" stroke-width="1.6"><line x1="36.3" y1="190.0" x2="36.3" y2="212.0"/><line x1="59.6" y1="190.0" x2="59.6" y2="212.0"/><line x1="75.4" y1="190.0" x2="75.4" y2="212.0"/><line x1="88.0" y1="190.0" x2="88.0" y2="212.0"/><line x1="99.0" y1="190.0" x2="99.0" y2="212.0"/><line x1="109.0" y1="190.0" x2="109.0" y2="212.0"/><line x1="118.4" y1="190.0" x2="118.4" y2="212.0"/><line x1="127.5" y1="190.0" x2="127.5" y2="212.0"/><line x1="136.5" y1="190.0" x2="136.5" y2="212.0"/><line x1="145.6" y1="190.0" x2="145.6" y2="212.0"/><line x1="155.0" y1="190.0" x2="155.0" y2="212.0"/><line x1="165.0" y1="190.0" x2="165.0" y2="212.0"/><line x1="176.0" y1="190.0" x2="176.0" y2="212.0"/><line x1="188.6" y1="190.0" x2="188.6" y2="212.0"/><line x1="204.4" y1="190.0" x2="204.4" y2="212.0"/><line x1="227.7" y1="190.0" x2="227.7" y2="212.0"/></g>
+            <text x="132" y="232" text-anchor="middle" class="sl">로이드-맥스 16칸 &middot; <tspan fill="var(--c-22a7bd)">가운데가 촘촘</tspan></text>
+            <path d="M 118 168 L 132 180 L 146 168" fill="none" stroke="var(--c-22a7bd)" stroke-width="1.5"/>
+            <text x="132" y="160" text-anchor="middle" class="sl" fill="var(--c-22a7bd)">값이 몰린 곳에 눈금을 몰아줍니다</text>
+            <rect x="148" y="16" width="98" height="32" rx="6" fill="var(--v-24)" stroke="var(--c-a48cf5)"/>
+            <text x="197" y="30" text-anchor="middle" class="sl" fill="var(--c-a48cf5)">+ 1비트 QJL 잔차</text>
+            <text x="197" y="43" text-anchor="middle" class="sl" fill="var(--c-a48cf5)">내적 편향 제거</text>
+          </svg>
+        </div>
+        <div class="key cy">회전 뒤 분포를 <b>알기 때문에</b> 눈금을 미리 설계</div>
+      </div>
+      <div class="caption">
+        회전하면 좌표 분포가 <b>데이터와 무관하게 정해집니다.</b> 그 분포의 최적 눈금(로이드-맥스)을
+        미리 구해 두고, 남는 <b>편향은 1비트로 지웁니다.</b> 같은 16칸인데 오차가 <b>1.31배</b> 작습니다.
+      </div>
+    </div>
+
+    <!-- 4. PolarQuant -->
+    <div class="panel vi">
+      <div>
+        <div class="phead">
+          <div class="yr">2025~26 · arXiv:2502.02617</div>
+          <h3 class="vi">PolarQuant</h3>
+          <div class="role">좌표계를 바꿈</div>
+        </div>
+        <div class="stage">
+          <svg width="264" height="250" viewBox="0 0 264 250">
+            <circle cx="132" cy="116" r="70" fill="none" stroke="var(--c-2b333d)" stroke-width="1.5"/>
+            <g stroke="var(--c-3b4652)" stroke-width="0.8"><line x1="132" y1="116" x2="202.0" y2="116.0"/><line x1="132" y1="116" x2="196.7" y2="89.2"/><line x1="132" y1="116" x2="181.5" y2="66.5"/><line x1="132" y1="116" x2="158.8" y2="51.3"/><line x1="132" y1="116" x2="132.0" y2="46.0"/><line x1="132" y1="116" x2="105.2" y2="51.3"/><line x1="132" y1="116" x2="82.5" y2="66.5"/><line x1="132" y1="116" x2="67.3" y2="89.2"/><line x1="132" y1="116" x2="62.0" y2="116.0"/><line x1="132" y1="116" x2="67.3" y2="142.8"/><line x1="132" y1="116" x2="82.5" y2="165.5"/><line x1="132" y1="116" x2="105.2" y2="180.7"/><line x1="132" y1="116" x2="132.0" y2="186.0"/><line x1="132" y1="116" x2="158.8" y2="180.7"/><line x1="132" y1="116" x2="181.5" y2="165.5"/><line x1="132" y1="116" x2="196.7" y2="142.8"/></g>
+            <line x1="132" y1="116" x2="192.6" y2="80" stroke="var(--c-a48cf5)" stroke-width="2.5"/>
+            <circle cx="192.6" cy="80" r="5" fill="var(--c-a48cf5)"/>
+            <path d="M 160 116 A 28 28 0 0 0 155 100" fill="none" stroke="var(--c-a48cf5)" stroke-width="1.5"/>
+            <text x="166" y="108" class="sl" fill="var(--c-a48cf5)">&theta;</text>
+            <text x="198" y="70" class="sl" fill="var(--c-a48cf5)">&theta;만 양자화</text>
+            <text x="22" y="34" class="sl" fill="var(--c-6b7684)">r (크기)  &mdash;  저장하지 않습니다</text>
+            <line x1="22" y1="42" x2="132" y2="42" stroke="var(--c-3b4652)" stroke-width="1"/>
+            <text x="132" y="232" text-anchor="middle" class="sl">직교좌표 (x, y) &rarr; 극좌표 (r, &theta;)</text>
+          </svg>
+        </div>
+        <div class="key vi">블록마다 저장하던 <b>스케일을 0으로</b></div>
+      </div>
+      <div class="caption">
+        각도만 양자화하면 <b>블록 스케일(정규화 상수)을 저장할 필요가 없어집니다.</b> 4비트에서
+        이 메타데이터가 만만찮은 몫이었는데 <b>그 몫이 통째로 사라집니다.</b>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="foot">1·2번은 <b class="am">"어떤 회전을 쓸까"</b>, 3·4번은 <b class="cy">"회전한 값을 어떻게 담을까"</b> &mdash; 겹치는 것이 아니라 <b>포개어 쓰는 층입니다.</b></div>
+</body>
+</html>

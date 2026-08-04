@@ -89,7 +89,8 @@
      이름이 다른 것이 33개라(prices.html → memory_price_chain.webp) 손으로 적으면 틀립니다.
   4. README에 이미지를 넣고 캡처 두 번.
 
-파일 ↔ 그림 대응 (54장 — glm_bench·k3_bench·refusal_gate는 덱 전용, README 미편입 · 8장 다섯이 덱 미편입)
+파일 ↔ 그림 대응 (60장 — glm_bench·k3_bench·refusal_gate·quant_calib·rotation_absorb·
+                    rotation_family·quant_gain 일곱은 덱 전용, README 미편입 · 8장 다섯이 덱 미편입)
   shock.html             → assets/stock_shock.webp               1. Kimi K3는 어떻게 미국 증시를 흔들었나?
   capex.html             → assets/us_china_capex.webp            1.1 미국과 중국, 인프라는 8배 차이입니다
   bench.html             → assets/frontier_bench.webp            1.2 그런데 모델의 격차는 3.6점입니다
@@ -135,6 +136,10 @@
   quant_intro.html       → assets/quant_two_bills.webp            7. 양자화는 압축입니다 — 두 청구서에 함께
   formats.html           → assets/precision_formats.webp          7.1 정밀도 포맷 여섯과 가속 세대
   unimix.html            → assets/uniform_vs_mixed.webp           7.1 균일 정밀도 대 혼합 정밀도
+  tq_shock.html          → assets/turboquant_shock.webp          7.2 TurboQuant 발표와 메모리 증시 충격
+  rotation_absorb.html   → assets/rotation_absorb.webp           7.2 회전의 흡수 경계 (덱 전용)
+  rotation_family.html   → assets/rotation_family.webp           7.2 회전 계열 네 기법 (덱 전용)
+  quant_gain.html        → assets/quant_gain.webp                7.3 양자화가 듣는 세 병목 (덱 전용)
   hadamard.html          → assets/kv_quant_rotation.webp         7.2 KV 캐시 양자화
   parallel_axes.html     → assets/parallel_axes.webp             8.1 나누는 네 축
   pd_tradeoff.html       → assets/pd_tradeoff.webp               그런데 분리가 처리량을 올려 주는 건 아닙니다

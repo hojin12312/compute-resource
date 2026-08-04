@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=2a58053d">
+<style>
+  /* 회전의 흡수 경계 — 어디서 공짜이고 어디서 런타임 연산을 내는가.
+     덱 82번의 LaTeX 수식 슬라이드를 대체합니다(덱에는 MathJax가 없어 원문이 그대로 노출됐습니다).
+     수식은 이미지가 아니라 SVG 텍스트로 씁니다 — 폰트·색 변수가 그대로 먹고 라이트 테마도 따라옵니다.
+     시안 = 오프라인에 구워 둔 것(런타임 0) · 앰버 = 매 토큰 내는 값. 이 두 색만 구분하면 됩니다. */
+  body { padding-top:52px; }
+
+  .cols2 { display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-top:30px; align-items:stretch; }
+  .panel { border:1px solid var(--c-333d47); border-radius:12px; background:var(--c-161b22);
+           padding:20px 18px; display:flex; flex-direction:column; justify-content:space-between; }
+  .panel.cy { border-color:var(--c-2f6b78); }
+  .panel.am { border-color:var(--c-96590a); }
+
+  .phead { border-bottom:1px solid var(--c-2b333d); padding-bottom:10px; margin-bottom:14px; }
+  .phead .tag { font:700 11px "IBM Plex Mono", monospace; letter-spacing:.08em; text-transform:uppercase; }
+  .phead .tag.cy { color:var(--c-0e8fa3); }
+  .phead .tag.am { color:var(--c-c47d15); }
+  .phead h3 { font-size:19px; margin-top:5px; color:var(--c-e6edf3); }
+
+  .stage { background:var(--c-0d1117); border:1px solid var(--c-2b333d); border-radius:8px;
+           padding:10px; margin-bottom:12px; display:flex; justify-content:center; }
+
+  .eq { background:var(--c-161b22); border:1px solid var(--c-2b333d); border-radius:6px;
+        padding:11px 10px; margin-bottom:11px; text-align:center;
+        font:700 14px "IBM Plex Mono", monospace; color:var(--c-c3ccd6); line-height:1.65; }
+  .eq .cy { color:var(--c-0e8fa3); }
+  .eq .am { color:var(--c-c47d15); }
+  .eq .dim { color:var(--c-7d8896); font-weight:400; }
+  .eq sup { font-size:.72em; }
+
+  .caption { font-size:13px; color:var(--c-9aa7b4); line-height:1.6; }
+  .caption b { color:var(--c-c3ccd6); }
+
+  .bx  { font:700 13px "Pretendard Variable", sans-serif; fill:var(--c-e6edf3); }
+  .bxs { font:700 10.5px "IBM Plex Mono", monospace; fill:var(--c-8b96a3); }
+  .tagt{ font:700 10px "IBM Plex Mono", monospace; letter-spacing:.05em; }
+  .note{ font:700 11px "Pretendard Variable", sans-serif; }
+</style>
+</head>
+<body>
+  <h1>회전은 어디서 <span class="cy">공짜</span>이고 어디서 <span class="am">값을 치르나</span></h1>
+  <div class="sub">직교행렬끼리 만나면 <b>H H<sup>T</sup> = I</b>로 사라집니다. 그래서 <b>선형끼리 붙어 있으면 오프라인에 구워 둘 수 있고</b>, 비선형이 끼면 그 자리에서 다시 돌려야 합니다.</div>
+
+  <div class="cols2">
+
+    <!-- 왼쪽: 선형 구간 -->
+    <div class="panel cy">
+      <div>
+        <div class="phead">
+          <div class="tag cy">선형 &rarr; 선형 &middot; 오프라인 흡수</div>
+          <h3>가중치 쪽은 <span class="cy">런타임 연산 0</span>입니다</h3>
+        </div>
+        <div class="stage">
+          <svg width="576" height="252" viewBox="0 0 576 252">
+            <defs>
+              <marker id="ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 0 L 8 4 L 0 8 z" fill="var(--c-4d5661)"/>
+              </marker>
+            </defs>
+
+            <text x="16" y="16" class="tagt" fill="var(--c-7d8896)">오프라인 · 모델마다 한 번</text>
+            <line x1="16" y1="24" x2="560" y2="24" stroke="var(--c-2b333d)"/>
+
+            <!-- 오프라인: W에 회전을 미리 곱해 파일로 -->
+            <rect x="20" y="38" width="118" height="44" rx="6" fill="var(--c-1c222a)" stroke="var(--c-3d4650)"/>
+            <text x="79" y="59" text-anchor="middle" class="bx">원본 가중치</text>
+            <text x="79" y="74" text-anchor="middle" class="bxs">W₁  W₂  W₃</text>
+
+            <line x1="142" y1="60" x2="180" y2="60" stroke="var(--c-4d5661)" stroke-width="1.5" marker-end="url(#ar)"/>
+            <text x="161" y="52" text-anchor="middle" class="bxs">×H</text>
+
+            <rect x="186" y="38" width="150" height="44" rx="6" fill="var(--a-35)" stroke="var(--c-0e8fa3)"/>
+            <text x="261" y="59" text-anchor="middle" class="bx">회전 흡수된 가중치</text>
+            <text x="261" y="74" text-anchor="middle" class="bxs" fill="var(--c-22a7bd)">W₁H · H&#8288;ᵀW₂H · H&#8288;ᵀW₃</text>
+
+            <line x1="340" y1="60" x2="378" y2="60" stroke="var(--c-4d5661)" stroke-width="1.5" marker-end="url(#ar)"/>
+
+            <rect x="384" y="38" width="120" height="44" rx="6" fill="var(--c-1c222a)" stroke="var(--c-3d4650)"/>
+            <text x="444" y="59" text-anchor="middle" class="bx">체크포인트</text>
+            <text x="444" y="74" text-anchor="middle" class="bxs">safetensors</text>
+
+            <text x="16" y="112" class="tagt" fill="var(--c-7d8896)">런타임 · 매 토큰</text>
+            <line x1="16" y1="120" x2="560" y2="120" stroke="var(--c-2b333d)"/>
+
+            <!-- 런타임: 선형 3연속, 사이마다 H Hᵀ 상쇄 -->
+            <text x="24" y="163" class="bx" fill="var(--c-8b96a3)">X</text>
+            <line x1="38" y1="158" x2="66" y2="158" stroke="var(--c-4d5661)" stroke-width="1.5" marker-end="url(#ar)"/>
+
+            <rect x="72" y="136" width="128" height="44" rx="6" fill="var(--a-35)" stroke="var(--c-0e8fa3)"/>
+            <text x="136" y="153" text-anchor="middle" class="bx">Linear 1</text>
+            <text x="136" y="169" text-anchor="middle" class="bxs" fill="var(--c-22a7bd)">W₁H</text>
+
+            <line x1="204" y1="158" x2="236" y2="158" stroke="var(--c-4d5661)" stroke-width="1.5" marker-end="url(#ar)"/>
+
+            <rect x="242" y="136" width="128" height="44" rx="6" fill="var(--a-35)" stroke="var(--c-0e8fa3)"/>
+            <text x="306" y="153" text-anchor="middle" class="bx">Linear 2</text>
+            <text x="306" y="169" text-anchor="middle" class="bxs" fill="var(--c-22a7bd)">H&#8288;ᵀW₂H</text>
+
+            <line x1="374" y1="158" x2="406" y2="158" stroke="var(--c-4d5661)" stroke-width="1.5" marker-end="url(#ar)"/>
+
+            <rect x="412" y="136" width="128" height="44" rx="6" fill="var(--a-35)" stroke="var(--c-0e8fa3)"/>
+            <text x="476" y="153" text-anchor="middle" class="bx">Linear 3</text>
+            <text x="476" y="169" text-anchor="middle" class="bxs" fill="var(--c-22a7bd)">H&#8288;ᵀW₃</text>
+
+            <line x1="544" y1="158" x2="562" y2="158" stroke="var(--c-4d5661)" stroke-width="1.5"/>
+
+            <!-- 이음매에서 상쇄되는 것 표시 -->
+            <path d="M 220 186 L 220 200" stroke="var(--c-0e8fa3)" stroke-dasharray="2 2"/>
+            <path d="M 390 186 L 390 200" stroke="var(--c-0e8fa3)" stroke-dasharray="2 2"/>
+            <rect x="176" y="200" width="88" height="22" rx="11" fill="var(--a-36)" stroke="var(--c-0e8fa3)"/>
+            <text x="220" y="215" text-anchor="middle" class="tagt" fill="var(--c-22a7bd)">H H&#8288;ᵀ = I</text>
+            <rect x="346" y="200" width="88" height="22" rx="11" fill="var(--a-36)" stroke="var(--c-0e8fa3)"/>
+            <text x="390" y="215" text-anchor="middle" class="tagt" fill="var(--c-22a7bd)">H H&#8288;ᵀ = I</text>
+
+            <text x="288" y="242" text-anchor="middle" class="note" fill="var(--c-22a7bd)">이음매마다 회전이 서로 지워집니다 &mdash; 곱할 것이 남지 않습니다</text>
+          </svg>
+        </div>
+        <div class="eq">
+          Y = (X<span class="cy">H</span>)(<span class="cy">H<sup>T</sup></span>W) = X (<span class="cy">H H<sup>T</sup></span>) W = <b>X W</b>
+          <span class="dim">&nbsp;&nbsp;런타임 0</span>
+        </div>
+      </div>
+      <div class="caption">
+        회전을 <b>가중치에 미리 곱해</b> 파일로 배포합니다. 선형이 이어지는 구간은 이음매마다
+        <b>H H<sup>T</sup>가 단위행렬로 지워져</b>, 추론할 때 곱할 것이 하나도 남지 않습니다.
+      </div>
+    </div>
+
+    <!-- 오른쪽: 비선형 · KV캐시 -->
+    <div class="panel am">
+      <div>
+        <div class="phead">
+          <div class="tag am">비선형 &middot; KV캐시 &middot; 런타임 FHT</div>
+          <h3>여기서는 <span class="am">매 토큰 값을 치릅니다</span></h3>
+        </div>
+        <div class="stage">
+          <svg width="576" height="252" viewBox="0 0 576 252">
+            <defs>
+              <marker id="ar2" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 0 L 8 4 L 0 8 z" fill="var(--c-4d5661)"/>
+              </marker>
+            </defs>
+
+            <text x="16" y="16" class="tagt" fill="var(--c-7d8896)">경우 1 · 비선형 함수가 끼어들 때</text>
+            <line x1="16" y1="24" x2="560" y2="24" stroke="var(--c-2b333d)"/>
+
+            <rect x="20" y="38" width="104" height="44" rx="6" fill="var(--a-35)" stroke="var(--c-0e8fa3)"/>
+            <text x="72" y="65" text-anchor="middle" class="bx">Linear</text>
+
+            <line x1="128" y1="60" x2="152" y2="60" stroke="var(--c-4d5661)" stroke-width="1.5" marker-end="url(#ar2)"/>
+
+            <rect x="158" y="30" width="132" height="60" rx="6" fill="var(--a-37)" stroke="var(--c-c47d15)"/>
+            <text x="224" y="52" text-anchor="middle" class="bx">비선형</text>
+            <text x="224" y="68" text-anchor="middle" class="bxs" fill="var(--c-e0912a)">RMSNorm · SiLU</text>
+            <text x="224" y="81" text-anchor="middle" class="bxs" fill="var(--c-e0912a)">RoPE · Softmax</text>
+
+            <line x1="294" y1="60" x2="318" y2="60" stroke="var(--c-4d5661)" stroke-width="1.5" marker-end="url(#ar2)"/>
+
+            <rect x="324" y="38" width="104" height="44" rx="6" fill="var(--a-35)" stroke="var(--c-0e8fa3)"/>
+            <text x="376" y="65" text-anchor="middle" class="bx">Linear</text>
+
+            <rect x="440" y="38" width="120" height="44" rx="6" fill="var(--c-1c222a)" stroke="var(--c-c47d15)" stroke-dasharray="3 2"/>
+            <text x="500" y="58" text-anchor="middle" class="bxs" fill="var(--c-e0912a)">f(X H) &ne; f(X) H</text>
+            <text x="500" y="74" text-anchor="middle" class="bxs" fill="var(--c-8b96a3)">회전이 못 지나감</text>
+
+            <text x="16" y="118" class="tagt" fill="var(--c-7d8896)">경우 2 · KV캐시를 되펼칠 때</text>
+            <line x1="16" y1="126" x2="560" y2="126" stroke="var(--c-2b333d)"/>
+
+            <rect x="20" y="140" width="128" height="46" rx="6" fill="var(--c-1c222a)" stroke="var(--c-a48cf5)"/>
+            <text x="84" y="158" text-anchor="middle" class="bx">KV캐시</text>
+            <text x="84" y="174" text-anchor="middle" class="bxs" fill="var(--c-a48cf5)">회전된 4비트</text>
+
+            <line x1="152" y1="163" x2="180" y2="163" stroke="var(--c-4d5661)" stroke-width="1.5" marker-end="url(#ar2)"/>
+
+            <rect x="186" y="140" width="112" height="46" rx="6" fill="var(--a-37)" stroke="var(--c-c47d15)" stroke-width="2"/>
+            <text x="242" y="158" text-anchor="middle" class="bx">FHT</text>
+            <text x="242" y="174" text-anchor="middle" class="bxs" fill="var(--c-e0912a)">O(d log d)</text>
+
+            <line x1="302" y1="163" x2="330" y2="163" stroke="var(--c-4d5661)" stroke-width="1.5" marker-end="url(#ar2)"/>
+
+            <rect x="336" y="140" width="128" height="46" rx="6" fill="var(--a-35)" stroke="var(--c-0e8fa3)"/>
+            <text x="400" y="167" text-anchor="middle" class="bx">어텐션 연산</text>
+
+            <line x1="468" y1="163" x2="490" y2="163" stroke="var(--c-4d5661)" stroke-width="1.5"/>
+
+            <!-- 저울 -->
+            <line x1="16" y1="204" x2="560" y2="204" stroke="var(--c-2b333d)"/>
+            <rect x="20" y="214" width="256" height="28" rx="6" fill="var(--a-36)" stroke="var(--c-0e8fa3)"/>
+            <text x="148" y="232" text-anchor="middle" class="note" fill="var(--c-22a7bd)">얻는 것 &mdash; KV캐시 용량 1/4</text>
+            <text x="288" y="233" text-anchor="middle" class="bx" fill="var(--c-8b96a3)">↔</text>
+            <rect x="300" y="214" width="256" height="28" rx="6" fill="var(--a-37)" stroke="var(--c-c47d15)"/>
+            <text x="428" y="232" text-anchor="middle" class="note" fill="var(--c-e0912a)">내는 것 &mdash; 매 토큰 FHT 연산</text>
+          </svg>
+        </div>
+        <div class="eq">
+          f(X<span class="am">H</span>) <span class="am">&ne;</span> f(X)<span class="am">H</span>
+          <span class="dim">&nbsp;&nbsp;→ 그 자리에서 다시 돌립니다</span>
+        </div>
+      </div>
+      <div class="caption">
+        비선형 함수는 회전을 통과시키지 못하므로 <b>앞뒤에서 직접 돌려야</b> 하고, KV캐시는 읽을 때마다
+        <b>되펼치는 FHT</b>가 붙습니다. 그래서 이쪽은 공짜가 아니라 <b>용량과 연산을 맞바꾸는 저울</b>입니다.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="foot">QuaRot &middot; SpinQuant가 <b>W4A4KV4</b>를 돌리는 방식이 이 조합입니다 &mdash; <b class="cy">가중치는 오프라인에서 공짜로</b>, <b class="am">경계와 KV캐시는 런타임에 값을 냅니다.</b></div>
+</body>
+</html>

@@ -2,19 +2,34 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<link rel="stylesheet" href="base.css?v=6b2b16d2">
+<link rel="stylesheet" href="base.css?v=2a58053d">
 <style>
-  /* 78번(GGUF Q/K/I 세 계열)을 걷어낸 뒤 흐름 셋만 남아 캔버스가 비므로,
-     같은 정보량을 더 큰 판으로 펴서 여백을 채웁니다(2026-08-03). */
+  /* 세 카드의 산문 설명을 걷어내고 그 자리를 각 층의 작동 그림으로 채웠습니다
+     (2026-08-04, 호진님 지시 — "주제 이름과 예시는 유지하고 사이 설명 텍스트를 없앤다").
+     세 카드가 같은 시각 언어를 씁니다: 눈금이 들어 있는 같은 폭의 통(=그릇).
+       1층 정밀도 포맷 — 같은 값 구간에 눈금이 몇 개 들어가는가 (그릇의 해상도)
+       2층 보정 방법   — 눈금 수는 그대로 두고 위치만 값 쪽으로 옮겨 오차를 줄인다
+       3층 혼합 정밀도 — 자리마다 비트 수 자체가 달라진다 (준 곳과 회수한 곳)
+     반복되는 눈금·비트칸은 전부 SVG입니다. div 격자로 되돌리지 마세요 —
+     캡처 배율(zoom 1.395 × DPR 2)에서 칸마다 페인트 좌표가 갈립니다. */
   .flow { display:grid; grid-template-columns:repeat(3, 1fr); gap:24px;
-          align-items:stretch; margin-top:150px; }
-  .box { border:1px solid var(--c-333d47); border-radius:13px; background:var(--c-161b22); padding:42px 36px; }
+          align-items:stretch; margin-top:58px; }
+  .box { border:1px solid var(--c-333d47); border-radius:13px; background:var(--c-161b22); padding:36px 34px; }
   .tag { font:700 12.5px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-8b96a3); letter-spacing:.08em; }
   .box h2 { font-size:26px; margin-top:14px; }
-  .box p { color:var(--c-9aa7b4); font-size:15.5px; line-height:1.8; margin-top:20px; }
-  .chips { display:flex; flex-wrap:wrap; gap:9px; margin-top:30px; }
+  .viz { margin-top:26px; }
+  .viz svg { display:block; }
+  .chips { display:flex; flex-wrap:wrap; gap:9px; margin-top:26px; }
   .chip { padding:8px 12px; border-radius:6px; background:var(--c-2b333d); color:var(--c-c3ccd6);
           font:700 13.5px "IBM Plex Mono", "Pretendard Variable", monospace; }
+
+  /* SVG 안의 글자도 웹폰트로 못 박습니다 — 기본값에 맡기면 캡처하는 기계마다 달라집니다. */
+  .viz text { font-family:"Pretendard Variable", sans-serif; }
+  .viz .mn { font-family:"IBM Plex Mono", "Pretendard Variable", monospace; font-weight:700; }
+  .viz .lb { font-size:12.5px; font-weight:700; fill:var(--c-c3ccd6); }
+  .viz .num { font-size:12.5px; fill:var(--c-22a7bd); }
+  .viz .ax { font-size:11px; fill:var(--c-7d8896); }
+  .viz .note { font-size:11px; font-weight:700; fill:var(--c-e0912a); }
 </style>
 </head>
 <body>
@@ -25,25 +40,162 @@
     <div class="box">
       <div class="tag">숫자 그릇</div>
       <h2>정밀도 포맷</h2>
-      <p>숫자 하나를 몇 비트와 어떤 눈금으로 저장할지만 정합니다 &mdash;
-        <b>어느 값을 어떻게 줄일지는 다음 층의 일</b>입니다.</p>
+      <div class="viz"><svg id="v1" width="333" height="252" viewBox="0 0 333 252"></svg></div>
       <div class="chips"><span class="chip">BF16</span><span class="chip">FP8</span><span class="chip">FP4</span></div>
     </div>
     <div class="box">
       <div class="tag">오차 줄이기</div>
       <h2>보정 방법</h2>
-      <p>같은 비트 안에서 중요한 값의 오차를 더 작게 만듭니다 &mdash;
-        <b>AWQ</b>는 활성값이 큰 채널만 스케일로 보호하고, <b>AutoRound</b>는 블록별 라운딩 값 자체를 최적화합니다.</p>
+      <div class="viz"><svg id="v2" width="333" height="252" viewBox="0 0 333 252"></svg></div>
       <div class="chips"><span class="chip">AWQ</span><span class="chip">AutoRound</span><span class="chip">imatrix</span></div>
     </div>
     <div class="box">
       <div class="tag">예산 배분</div>
       <h2>혼합 정밀도</h2>
-      <p>민감한 텐서에는 비트를 더 주고, 둔감한 곳에서 회수해 목표 평균 BPW를 맞춥니다.</p>
+      <div class="viz"><svg id="v3" width="333" height="252" viewBox="0 0 333 252"></svg></div>
       <div class="chips"><span class="chip">Q4_K_M</span><span class="chip">EXL2</span><span class="chip">Dynamic 2.0</span></div>
     </div>
   </div>
-  <div class="foot">3층을 섞어 부르면 대화가 엉킵니다 &mdash; <b>&quot;FP4로 양자화했다&quot;</b>와
-    <b>&quot;Q4_K_M으로 양자화했다&quot;</b>는 다른 층의 말입니다.</div>
+  <div class="foot"><b>세 층은 골라 쓰는 것이 아니라 겹쳐 씁니다</b> &mdash; imatrix로 보정한
+    <b>Q4_K_M</b> 파일 하나에 4비트 포맷(1층) &middot; 중요도 보정(2층) &middot; 자리별 배분(3층)이 함께 들어 있습니다.</div>
+
+<script>
+var NS = 'http://www.w3.org/2000/svg';
+function el(tag, attr) {
+  var e = document.createElementNS(NS, tag);
+  for (var k in attr) e.setAttribute(k, attr[k]);
+  return e;
+}
+function tx(x, y, s, cls, anchor) {
+  var e = el('text', { x:x, y:y, 'class':cls });
+  if (anchor) e.setAttribute('text-anchor', anchor);
+  e.textContent = s;
+  return e;
+}
+function add(svg, nodes) { nodes.forEach(function (n) { svg.appendChild(n); }); }
+
+/* ── 1층: 정밀도 포맷 ─────────────────────────────────────────────────────
+   같은 값 구간(4옥타브)에 들어가는 눈금 수입니다. 부동소수점은 옥타브마다
+   2^(가수 비트) 칸으로 자르므로 BF16(가수 7) 128칸, FP8 E4M3(가수 3) 8칸,
+   FP4 E2M1(가수 1) 2칸 → 4옥타브에서 512 · 32 · 8이 됩니다.
+   BF16은 512칸을 그리면 캡처에서 뭉개지므로 통칸으로 두고 수치로 밝힙니다. */
+(function () {
+  var svg = document.getElementById('v1');
+  var rows = [
+    { bits:'16비트', n:512, fill:'var(--c-ord-1)', solid:true },
+    { bits:'8비트',  n:32,  fill:'var(--c-ord-2)' },
+    { bits:'4비트',  n:8,   fill:'var(--c-ord-3)' }
+  ];
+  rows.forEach(function (r, i) {
+    var y = i * 78;
+    add(svg, [
+      tx(0, y + 13, r.bits, 'lb mn'),
+      tx(333, y + 13, '눈금 ' + r.n.toLocaleString('en-US') + '개', 'num mn', 'end'),
+      el('rect', { x:0.5, y:y + 24, width:332, height:36, rx:6,
+                   fill:'var(--c-0d1117)', stroke:'var(--c-333d47)' })
+    ]);
+    if (r.solid) {
+      svg.appendChild(el('rect', { x:10, y:y + 31, width:313, height:22, rx:2, fill:r.fill }));
+    } else {
+      var pitch = 313 / r.n;
+      for (var k = 0; k < r.n; k++) {
+        svg.appendChild(el('rect', { x:(10 + pitch * (k + 0.5) - 1).toFixed(2), y:y + 31,
+                                     width:2, height:22, rx:1, fill:r.fill }));
+      }
+    }
+  });
+  svg.appendChild(tx(0, 246, '같은 값 구간을 몇 칸으로 자르는가', 'ax'));
+})();
+
+/* ── 2층: 보정 방법 ───────────────────────────────────────────────────────
+   눈금 개수(=비트 수)는 위아래 패널이 같습니다. 아래는 값이 몰린 쪽으로
+   눈금을 다시 놓아 같은 비트 안에서 반올림 오차만 줄인 모습입니다. */
+(function () {
+  var svg = document.getElementById('v2');
+  var dots = [30, 82, 137, 196, 300];
+  var panels = [
+    { label:'그대로 반올림', ticks:null },
+    { label:'보정 후', ticks:[18, 32, 48, 66, 84, 104, 126, 140, 168, 194, 240, 300] }
+  ];
+  panels.forEach(function (p, i) {
+    var y = i * 132, mid = y + 68;
+    var ticks = p.ticks;
+    if (!ticks) {                       // 위 패널은 눈금이 고르게 퍼져 있습니다
+      ticks = [];
+      for (var k = 0; k < 12; k++) ticks.push(12 + (309 / 11) * k);
+    }
+    add(svg, [
+      tx(0, y + 13, p.label, 'lb'),
+      tx(333, y + 13, '눈금 ' + ticks.length + '개', 'num mn', 'end'),
+      el('rect', { x:0.5, y:y + 24, width:332, height:88, rx:6,
+                   fill:'var(--c-0d1117)', stroke:'var(--c-333d47)' })
+    ]);
+    ticks.forEach(function (t) {
+      svg.appendChild(el('rect', { x:(t - 0.75).toFixed(2), y:y + 34, width:1.5, height:68,
+                                   rx:0.75, fill:'var(--c-3f4c58)' }));
+    });
+    var worst = 0, worstMid = 0;
+    dots.forEach(function (d) {
+      var near = ticks[0];
+      ticks.forEach(function (t) { if (Math.abs(t - d) < Math.abs(near - d)) near = t; });
+      var gap = Math.abs(near - d);
+      if (gap > worst) { worst = gap; worstMid = (near + d) / 2; }
+      if (gap > 1.5) {
+        svg.appendChild(el('rect', { x:Math.min(near, d).toFixed(2), y:mid - 1.5,
+                                     width:gap.toFixed(2), height:3, rx:1.5,
+                                     fill:'var(--c-c47d15)' }));
+      }
+      add(svg, [
+        el('circle', { cx:d, cy:mid, r:5.5, fill:'var(--c-0e8fa3)',
+                       stroke:'var(--c-0d1117)', 'stroke-width':2 })
+      ]);
+    });
+    svg.appendChild(tx(worstMid, mid - 12, i === 0 ? '오차' : '오차 ↓', 'note mn', 'middle'));
+  });
+})();
+
+/* ── 3층: 혼합 정밀도 ─────────────────────────────────────────────────────
+   칸 하나가 1비트입니다. 점선이 균일 4비트 기준선이고, 그 위로 올라간 칸이
+   더 준 비트, 점선 아래 빈 칸이 회수한 비트입니다. 비트 배분의 모양은
+   Q4_K_M(어텐션·출력 보호)과 Dynamic 2.0(전문가 FFN을 더 세게 누름)의
+   규칙을 옮긴 것이고 특정 텐서의 실측값이 아닙니다. */
+(function () {
+  var svg = document.getElementById('v3');
+  /* 점선 위로 준 비트와 점선 아래에서 회수한 비트가 **정확히 같습니다** —
+     6비트 두 자리(+2씩 = +4) 대 3비트 네 자리(−1씩 = −4). 합 44 / 11자리 = 평균 4비트.
+     이 균형이 3층의 요점이라 숫자를 맞춰 둡니다(2026-08-04 호진님 지적). */
+  var bits = [4, 6, 4, 3, 3, 4, 6, 3, 4, 3, 4];
+  var x0 = 30, gap = 4, w = (303 - gap * (bits.length - 1)) / bits.length;
+  var ch = 25, cg = 4, base = 218;
+  var split = 9;                        // 4비트 경계의 틈 — 점선이 지나갈 자리입니다
+  function cellY(k) { return base - (k + 1) * ch - k * cg - (k >= 4 ? split - cg : 0); }
+  var line4 = cellY(3) - split / 2;
+
+  [6, 4, 2].forEach(function (b) {
+    svg.appendChild(tx(22, cellY(b - 1) + 17, b + 'b', 'ax mn', 'end'));
+  });
+
+  bits.forEach(function (b, i) {
+    var x = x0 + i * (w + gap);
+    for (var k = 0; k < b; k++) {
+      svg.appendChild(el('rect', { x:x.toFixed(2), y:cellY(k), width:w.toFixed(2), height:ch, rx:2,
+                                   fill:k >= 4 ? 'var(--c-22a7bd)' : 'var(--c-2f6b78)' }));
+    }
+    for (var g = b; g < 4; g++) {       // 회수한 비트 — 빈 칸으로 남깁니다
+      svg.appendChild(el('rect', { x:(x + 0.5).toFixed(2), y:cellY(g) + 0.5,
+                                   width:(w - 1).toFixed(2), height:ch - 1, rx:2,
+                                   fill:'none', stroke:'var(--c-3f4c58)', 'stroke-dasharray':'3 3' }));
+    }
+    if (b > 4) svg.appendChild(tx(x + w / 2, cellY(b - 1) - 10, '+' + (b - 4), 'num mn', 'middle'));
+    if (b < 4) svg.appendChild(tx(x + w / 2, cellY(3) + 17, '−' + (4 - b), 'ax mn', 'middle'));
+  });
+
+  add(svg, [                            // 점선은 칸보다 나중에 그려야 위에 옵니다
+    el('line', { x1:26, y1:line4, x2:333, y2:line4,
+                 stroke:'var(--c-8b96a3)', 'stroke-width':1.2, 'stroke-dasharray':'5 4' }),
+    tx(0, 246, '점선 = 균일 4비트 · 위로 준 만큼 아래에서 회수합니다', 'ax')
+  ]);
+})();
+</script>
 </body>
 </html>

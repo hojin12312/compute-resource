@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<link rel="stylesheet" href="base.css?v=6b2b16d2">
+<link rel="stylesheet" href="base.css?v=2a58053d">
 <style>
   /* 균일 정밀도 대 혼합 정밀도 (2026-07-31 신설).
      같은 평균 비트에서 **배분만 다르다**는 것이 요점이라 두 막대그래프의
@@ -16,31 +16,29 @@
      캡션에 그렇게 밝힙니다. */
   body { padding-top:42px; }
 
-  .chart { position:relative; height:300px; margin-top:16px;
+  /* 오른쪽 GUTTER만큼은 막대를 비워 둡니다 — 평균선 라벨이 앉을 자리입니다.
+     라벨을 막대 위에 얹으면 값 라벨과 겹칩니다(2026-08-04 호진님 지적). */
+  .chart { position:relative; height:430px; margin-top:16px;
            border-bottom:1px solid var(--c-3d4650); }
-  .bars { position:absolute; left:0; right:0; bottom:0; display:flex; align-items:flex-end; gap:7px; }
+  .bars { position:absolute; left:0; right:70px; bottom:0; z-index:1;
+          display:flex; align-items:flex-end; gap:7px; }
   .col { flex:1 1 0; display:flex; flex-direction:column; align-items:center; }
   .col i { display:block; width:100%; border-radius:3px 3px 0 0; font-style:normal; }
-  .col b { margin-bottom:3px; font-size:10.5px; font-weight:700; color:var(--c-8b96a3); }
+  .col b { margin-bottom:6px; font-size:10.5px; font-weight:700; color:var(--c-8b96a3); }
   .col.hi b { color:var(--c-22a7bd); }
   .col.lo b { color:var(--c-e0912a); }
 
-  /* 평균선 — 두 패널에서 같은 높이입니다. 그게 이 그림의 전부입니다. */
-  .avg { position:absolute; left:0; right:0; height:0; border-top:1px dashed var(--c-c3ccd6); }
-  .avg em { position:absolute; right:0; top:-17px; font-style:normal; font-size:11px;
+  /* 평균선 — 두 패널에서 같은 높이입니다. 그게 이 그림의 전부입니다.
+     막대보다 **나중에**(z-index 2) 그려야 5·6비트 막대를 가로지르는 것이 보입니다.
+     높이는 JS가 막대 눈금과 똑같이 계산해 넣습니다 — 손으로 적으면 값 라벨을 뚫습니다. */
+  .avg { position:absolute; left:0; right:0; height:0; z-index:2;
+         border-top:1px dashed var(--c-c3ccd6); }
+  .avg em { position:absolute; right:0; top:-9px; font-style:normal; font-size:11px;
             font-weight:700; color:var(--c-c3ccd6); background:var(--c-0d1117); padding:0 5px; }
 
-  .xlab { display:flex; gap:7px; margin-top:7px; }
+  .xlab { display:flex; gap:7px; margin-top:7px; padding-right:70px; }
   .xlab span { flex:1 1 0; text-align:center; font-size:9.5px; color:var(--c-5d6773);
                line-height:1.25; }
-
-  .verdict { margin-top:20px; padding:16px 16px; border-radius:8px; font-size:12px;
-             color:var(--c-9aa7b4); line-height:1.6; }
-  .verdict.u { background:var(--c-161b22); border:1px solid var(--c-333d47); }
-  .verdict.m { background:var(--a-36); border:1px solid var(--c-17505c); }
-  .verdict b { color:var(--c-c3ccd6); font-weight:700; }
-  .verdict em { font-style:normal; display:block; font-size:11px; font-weight:700;
-                color:var(--c-8b96a3); margin-bottom:4px; }
 </style>
 </head>
 <body>
@@ -53,23 +51,17 @@
     <div class="panel" style="width:576px">
       <div class="ptitle">균일 정밀도</div>
       <div class="pdesc">모든 자리에 같은 비트 &middot; 정할 것이 없습니다</div>
-      <div class="chart"><div class="avg" style="bottom:192px"><em>평균 4.0</em></div>
-        <div class="bars" id="uni"></div></div>
+      <div class="chart"><div class="bars" id="uni"></div>
+        <div class="avg"><em>평균 4.0</em></div></div>
       <div class="xlab" id="uxl"></div>
-      <div class="verdict u"><em>장점</em>
-        만들기 쉽고 커널이 단순합니다. <b>어디가 민감한지 몰라도 됩니다.</b>
-        대신 민감한 자리도 둔감한 자리와 똑같이 눌립니다.</div>
     </div>
 
     <div class="panel" style="width:576px">
       <div class="ptitle">혼합 정밀도</div>
       <div class="pdesc">민감한 곳에 더 주고 <b style="color:var(--c-c3ccd6)">둔감한 곳에서 회수</b></div>
-      <div class="chart"><div class="avg" style="bottom:192px"><em>평균 4.0</em></div>
-        <div class="bars" id="mix"></div></div>
+      <div class="chart"><div class="bars" id="mix"></div>
+        <div class="avg"><em>평균 4.0</em></div></div>
       <div class="xlab" id="mxl"></div>
-      <div class="verdict m"><em>장점</em>
-        같은 용량에서 <b>품질이 올라갑니다.</b> 대신 <b>어디가 민감한지 미리 재 봐야</b> 하고,
-        그 탐색은 모델마다 한 번씩 오프라인으로 돌립니다.</div>
     </div>
 
   </div>
@@ -87,7 +79,7 @@ const T = [
   ['전문가\nFFN 2', 3], ['전문가\nFFN 3', 3], ['전문가\nFFN 4', 3], ['공유\nFFN', 4],
   ['어텐션\n후반', 4], ['전문가\n후반', 3], ['정규화\n계수', 4], ['출력층', 5],
 ];
-const MAXB = 6, H = 276;                 /* 6비트가 200px — 4비트가 133px, 평균선 141px 자리 */
+const MAXB = 6, H = 372;                 /* 6비트가 372px · 4비트가 248px = 평균선 자리 */
 function draw(host, xhost, bits) {
   let h = '', x = '';
   T.forEach(([name], i) => {
@@ -102,7 +94,9 @@ function draw(host, xhost, bits) {
 }
 draw(document.getElementById('uni'), document.getElementById('uxl'), () => 4);
 draw(document.getElementById('mix'), document.getElementById('mxl'), i => T[i][1]);
-/* 평균선 위치 확인용: 4 / 6 * 276 = 184px + 막대 아래 기준선 보정 8px = 192px */
+/* 평균선은 4비트 막대의 윗면과 같은 높이입니다 — 막대와 같은 눈금으로 계산해
+   넣습니다. 손으로 px를 적으면 값 라벨을 뚫습니다(옛 판이 8px 위에 있었습니다). */
+document.querySelectorAll('.avg').forEach(a => { a.style.bottom = (4 / MAXB * H) + 'px'; });
 </script>
 </body>
 </html>
