@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=2a58053d">
+<style>
+  /* 8.1 외부 통제의 세 영역. 2026-08-04 신설 — 덱의 3행 표를 그림으로.
+     옛 표는 하드웨어 · 모델 자체 · 소프트웨어를 나란한 세 행으로만 적어,
+     **왜 하필 이 셋인가**가 보이지 않았습니다. 셋은 임의의 목록이 아니라
+     **모델 한 장을 돌리는 데 필요한 스택의 세 겹**입니다. 그래서 표가 아니라
+     스택으로 세우고, 겹마다 자물쇠를 답니다.
+
+     순서를 표와 바꿨습니다 — 표는 하드웨어부터였지만 여기서는 위(사용자에 가까운 쪽)부터
+     모델 → 커널 → 하드웨어로 쌓습니다. 가운데 겹이 이 그림의 요점입니다:
+     칩과 모델은 누구나 떠올리지만 **그 사이의 커널**이 통제 목록에 오른 것은 덜 알려져 있고,
+     10.2(kernel_role)가 그 겹을 자세히 다룹니다.
+
+     왼쪽 세로 괄호는 "셋이 다 있어야 한 장이 돈다"는 뜻입니다 — 하나만 막혀도 멈춥니다. */
+  body { padding-top:46px; }
+
+  .stack { display:grid; grid-template-columns:46px 1fr; gap:18px; margin-top:24px; }
+
+  /* 세로 괄호 — 셋을 하나로 묶습니다. 높이를 슬래브에 맞춰야 하므로 SVG가 아니라
+     테두리로 그립니다(고정 높이 SVG는 슬래브보다 길게 삐져나왔습니다). */
+  .brace { position:relative; border:1.5px solid var(--c-333d47); border-right:0;
+           border-radius:7px 0 0 7px; }
+  .brace .lb { position:absolute; top:50%; left:50%;
+               transform:translate(-50%,-50%) rotate(-90deg); white-space:nowrap;
+               font-size:11px; color:var(--c-7d8896);
+               background:var(--c-0d1117); padding:5px 0; }
+
+  .slabs { display:flex; flex-direction:column; gap:14px; }
+  .slab { display:grid; grid-template-columns:236px 188px 1fr 96px; gap:22px; align-items:center;
+          border:1px solid var(--c-233039); border-left:3px solid var(--c-3f4c58);
+          border-radius:8px; background:var(--c-161b22); padding:30px 18px; }
+  .slab.k { border-left-color:var(--c-c47d15); background:var(--a-37); }
+
+  .lname { font-size:16px; font-weight:700; letter-spacing:-.01em; color:var(--c-e6edf3); }
+  .lname span { display:block; margin-top:3px; font-size:11px; font-weight:400; color:var(--c-7d8896); }
+  .slab.k .lname { color:var(--c-e0912a); }
+
+  .tgt { font-size:12.5px; font-weight:700; color:var(--c-c3ccd6); }
+  .tgt span { display:block; margin-top:3px; font-size:10.5px; font-weight:400; color:var(--c-7d8896); }
+
+  .what { font-size:12.5px; line-height:1.55; color:var(--c-9aa7b4); }
+  .what b { color:var(--c-c3ccd6); font-weight:700; }
+
+  .lock { display:flex; align-items:center; gap:7px; justify-content:flex-end;
+          font-size:10.5px; font-weight:700; color:var(--c-e0912a); }
+
+  /* 아래 띠 — 통제마다 짝이 되는 대응 */
+  .ans { margin-top:34px; padding-top:18px; border-top:1px solid var(--c-21262d); }
+  .ahead { font-size:13px; color:var(--c-9aa7b4); }
+  .ahead b { color:var(--c-c3ccd6); font-weight:700; }
+  .acards { display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; margin-top:12px; }
+  .ac { border:1px solid var(--c-17505c); border-radius:8px; background:var(--a-36);
+        padding:17px 16px 18px; }
+  .ac .k { font:700 10.5px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-3f6f7d); }
+  .ac h4 { font-size:13.5px; font-weight:700; color:var(--c-22a7bd); margin-top:5px; }
+  .ac p { font-size:11.5px; line-height:1.5; color:var(--c-8b96a3); margin-top:6px; }
+  .ac p b { color:var(--c-c3ccd6); font-weight:700; }
+</style>
+</head>
+<body>
+  <h1>통제는 <span class="am">세 겹</span>으로 걸립니다 &mdash; 칩 &middot; 커널 &middot; 모델</h1>
+  <div class="sub">셋은 따로 고른 목록이 아니라 <b style="color:var(--c-c3ccd6)">모델 한 장을 돌리는 데 필요한 스택의 세 겹</b>입니다.
+    하나만 막혀도 나머지가 멈춥니다.</div>
+
+  <div class="stack">
+    <div class="brace">
+      <div class="lb">셋이 다 있어야 한 장이 돕니다</div>
+    </div>
+
+    <div class="slabs">
+      <div class="slab">
+        <div class="lname">모델 가중치<span>스택의 맨 위 &middot; 사용자에 가장 가까운 겹</span></div>
+        <div class="tgt">가중치와 API 접근<span>무엇을 받을 수 있는가</span></div>
+        <div class="what">최신 프론티어 모델의 <b>해외 배포를 막고</b>, 국적을 기준으로 접근을 제한하는 지시가 나왔습니다.</div>
+        <div class="lock">
+          <svg width="13" height="15" viewBox="0 0 13 15"><path d="M3.5 6.5 V4.2 a3 3 0 0 1 6 0 V6.5" fill="none" stroke="var(--c-c47d15)" stroke-width="1.5"/><rect x="1" y="6.5" width="11" height="7.5" rx="1.6" fill="var(--a-37)" stroke="var(--c-c47d15)"/></svg>
+          통제 중
+        </div>
+      </div>
+
+      <div class="slab k">
+        <div class="lname">커널 &middot; 최적화 소프트웨어<span>가운데 겹 &middot; 칩을 실제로 쓰게 해 줍니다</span></div>
+        <div class="tgt">칩 최적화 코드<span>칩을 얼마나 꺼내 쓰는가</span></div>
+        <div class="what"><b>비표준 칩용 커널 개발</b>이 AI 세이프가드의 차단 항목에 올랐습니다 &mdash;
+          칩을 만들어도 <b>꺼내 쓸 코드</b>가 없으면 성능이 나오지 않기 때문입니다. 10.2에서 그 기제를 봅니다.</div>
+        <div class="lock">
+          <svg width="13" height="15" viewBox="0 0 13 15"><path d="M3.5 6.5 V4.2 a3 3 0 0 1 6 0 V6.5" fill="none" stroke="var(--c-c47d15)" stroke-width="1.5"/><rect x="1" y="6.5" width="11" height="7.5" rx="1.6" fill="var(--a-37)" stroke="var(--c-c47d15)"/></svg>
+          통제 중
+        </div>
+      </div>
+
+      <div class="slab">
+        <div class="lname">하드웨어<span>맨 아래 겹 &middot; 여기서 모든 것이 시작됩니다</span></div>
+        <div class="tgt">GPU 수출<span>몇 장을 살 수 있는가</span></div>
+        <div class="what">Blackwell 계열의 중국 수출이 차단됐고, <b>H20&middot;H200조차 건별 라이선스</b> 대상이 됐습니다.</div>
+        <div class="lock">
+          <svg width="13" height="15" viewBox="0 0 13 15"><path d="M3.5 6.5 V4.2 a3 3 0 0 1 6 0 V6.5" fill="none" stroke="var(--c-c47d15)" stroke-width="1.5"/><rect x="1" y="6.5" width="11" height="7.5" rx="1.6" fill="var(--a-37)" stroke="var(--c-c47d15)"/></svg>
+          통제 중
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ans">
+    <div class="ahead">겹마다 짝이 되는 대응이 있습니다 &mdash; <b>그래서 자립이 선택이 아니라 조건이 됩니다</b></div>
+    <div class="acards">
+      <div class="ac">
+        <div class="k">모델 겹</div>
+        <h4>독자 모델 학습</h4>
+        <p>받아 쓰는 대신 <b>직접 만든 가중치</b>를 갖습니다 &mdash; 9.2의 한국 모델들이 여기 있습니다.</p>
+      </div>
+      <div class="ac">
+        <div class="k">커널 겹</div>
+        <h4>자원 절감 기술</h4>
+        <p>같은 칩에서 더 뽑아냅니다 &mdash; <b>MoE &middot; 선형 어텐션 &middot; 저비트 양자화</b>가 6&middot;7장에서 나온 배경입니다.</p>
+      </div>
+      <div class="ac">
+        <div class="k">하드웨어 겹</div>
+        <h4>자국 GPU 확보</h4>
+        <p>살 수 있을 때 <b>장수를 확보</b>해 둡니다 &mdash; 다음 장이 그 장수 이야기입니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    "싸게, 그러나 뛰어나게"는 취향이 아니라 <b>제재 환경이 강제한 방향</b>이었습니다 &mdash; 6&middot;7장의 기법들이 태어난 자리입니다.
+  </div>
+</body>
+</html>

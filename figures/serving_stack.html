@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=2a58053d">
+<style>
+  /* 10.1 서빙 스택 구조. 2026-08-04 신설 — 덱의 6행 표를 그림으로.
+     옛 표는 1번 행이 하드웨어, 6번 행이 앱이라 **스택을 거꾸로** 그리고 있었습니다.
+     스택은 아래가 하드웨어입니다. 순서를 뒤집어 세우면 "같은 여섯 겹에 이름만 다르다"가
+     한눈에 보이고, 두 열이 그대로 1:1 대응표가 됩니다.
+
+     겹 둘에 색을 답니다.
+       5층(추론 엔진) — 이 장의 주제
+       2층(가속 드라이버·커널) — 10.2에서 다루는 겹이자 8.1에서 통제 대상으로 나온 겹
+     나머지 넷은 물러나 있어야 이 둘이 읽힙니다. 색을 더 늘리지 마세요. */
+  body { padding-top:46px; }
+
+  .head, .row { display:grid; grid-template-columns:296px 1fr 1fr; gap:20px; align-items:center; }
+  .head { margin-top:14px; padding-bottom:8px; border-bottom:1px solid var(--c-333d47); }
+  .hl { font:700 10.5px "IBM Plex Mono", "Pretendard Variable", monospace;
+        color:var(--c-8b96a3); letter-spacing:.07em; }
+  .hg { font-size:14.5px; font-weight:700; letter-spacing:-.01em; color:var(--c-c3ccd6); }
+  .hg span { margin-left:7px; font-size:10.5px; font-weight:400; color:var(--c-7d8896); }
+
+  .stack { display:flex; flex-direction:column-reverse; gap:6px; margin-top:10px; }
+
+  .row { padding:6px 0; }
+  .lay { display:flex; align-items:baseline; gap:11px; }
+  .num { font:700 12px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-5d6773); }
+  .lname { font-size:13.5px; font-weight:700; color:var(--c-c3ccd6); letter-spacing:-.01em; }
+  .lnote { display:block; margin-top:3px; font-size:10.5px; font-weight:400; color:var(--c-7d8896); }
+
+  .cell { border:1px solid var(--c-233039); background:var(--c-161b22); border-radius:7px;
+          padding:10px 15px; }
+  .cell .n { font-size:13.5px; font-weight:700; color:var(--c-c3ccd6); letter-spacing:-.01em; }
+  .cell .s { display:block; margin-top:3px; font-size:10.5px; font-weight:400; color:var(--c-7d8896); }
+
+  /* 강조하는 두 겹 */
+  .row.on .cell { border-color:var(--c-17505c); background:var(--a-36); }
+  .row.on .cell .n { color:var(--c-22a7bd); }
+  .row.on .lname { color:var(--c-22a7bd); }
+  .row.kn .cell { border-color:var(--c-4a3a1c); background:var(--a-37); }
+  .row.kn .cell .n { color:var(--c-e0912a); }
+  .row.kn .lname { color:var(--c-e0912a); }
+
+  .flag { display:inline-block; margin-left:8px; padding:2px 7px; border-radius:4px;
+          font-size:9.5px; font-weight:700; vertical-align:middle; }
+  .flag.cy { border:1px solid var(--c-17505c); color:var(--c-22a7bd); }
+  .flag.am { border:1px solid var(--c-4a3a1c); color:var(--c-e0912a); }
+</style>
+</head>
+<body>
+  <h1>같은 여섯 겹, <span class="cy">다른 이름</span></h1>
+  <div class="sub">애플 실리콘과 NVIDIA의 서빙 스택은 층마다 <b style="color:var(--c-c3ccd6)">1:1로 대응</b>합니다 &mdash;
+    쓰는 말이 다를 뿐 각 겹이 맡는 일은 같습니다. 아래가 하드웨어입니다.</div>
+
+  <div class="head">
+    <span class="hl">겹</span>
+    <div class="hg">애플 실리콘 <span>Apple Silicon</span></div>
+    <div class="hg">NVIDIA <span>DGX Spark &middot; 데이터센터</span></div>
+  </div>
+
+  <!-- column-reverse라 아래 것이 화면 위로 갑니다 — 소스는 1층부터 씁니다 -->
+  <div class="stack">
+
+    <div class="row">
+      <div class="lay"><span class="num">1</span><span><span class="lname">하드웨어 인프라</span>
+        <span class="lnote">연산이 실제로 일어나는 실리콘</span></span></div>
+      <div class="cell"><span class="n">Apple M2 / M3 / M4 Max &middot; Ultra</span><span class="s">통합 메모리</span></div>
+      <div class="cell"><span class="n">NVIDIA DGX Spark / Workstation</span><span class="s">HBM &middot; GDDR</span></div>
+    </div>
+
+    <div class="row kn">
+      <div class="lay"><span class="num">2</span><span><span class="lname">가속 드라이버 &middot; 커널</span>
+        <span class="lnote">칩을 실제로 꺼내 쓰는 최하단 코드 <span class="flag am">10.2 &middot; 8.1</span></span></span></div>
+      <div class="cell"><span class="n">Metal / Metal Performance Shaders</span><span class="s">애플 자체 커널 계층</span></div>
+      <div class="cell"><span class="n">CUDA / cuBLAS / CUTLASS</span><span class="s">사실상의 표준</span></div>
+    </div>
+
+    <div class="row">
+      <div class="lay"><span class="num">3</span><span><span class="lname">코어 연산 프레임워크</span>
+        <span class="lnote">텐서와 연산 그래프를 다루는 층</span></span></div>
+      <div class="cell"><span class="n">MLX</span><span class="s">애플 연산 프레임워크</span></div>
+      <div class="cell"><span class="n">PyTorch (CUDA) / TensorRT</span><span class="s">학습과 추론을 함께</span></div>
+    </div>
+
+    <div class="row">
+      <div class="lay"><span class="num">4</span><span><span class="lname">모델 최적화 라이브러리</span>
+        <span class="lnote">양자화된 가중치를 실제로 실행</span></span></div>
+      <div class="cell"><span class="n">mlx-lm</span><span class="s">MLX LLM 실행기</span></div>
+      <div class="cell"><span class="n">TensorRT-LLM</span><span class="s">커널 융합 &middot; 그래프 최적화</span></div>
+    </div>
+
+    <div class="row on">
+      <div class="lay"><span class="num">5</span><span><span class="lname">추론 엔진 &middot; 서빙 서버</span>
+        <span class="lnote">KV캐시와 배치를 관리 <span class="flag cy">이 장의 주제</span></span></span></div>
+      <div class="cell"><span class="n">oMLX / Ollama (MLX)</span><span class="s">로컬 서빙</span></div>
+      <div class="cell"><span class="n">NVIDIA NIM / vLLM / llama.cpp</span><span class="s">기업 서빙 &middot; 로컬</span></div>
+    </div>
+
+    <div class="row">
+      <div class="lay"><span class="num">6</span><span><span class="lname">앱 &middot; API</span>
+        <span class="lnote">사람과 에이전트가 닿는 곳</span></span></div>
+      <div class="cell"><span class="n">Local AI App / Agent API</span><span class="s">기기 안에서</span></div>
+      <div class="cell"><span class="n">ChatRTX / Enterprise Agent API</span><span class="s">사내 · 클라우드</span></div>
+    </div>
+
+  </div>
+
+  <div class="foot">
+    애플의 <b>MLX &rarr; mlx-lm &rarr; oMLX</b>에 그대로 대칭되는 것이 NVIDIA의 <b>CUDA &rarr; TensorRT-LLM &rarr; NIM &middot; llama.cpp</b>입니다.
+  </div>
+</body>
+</html>

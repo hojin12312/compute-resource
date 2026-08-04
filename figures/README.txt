@@ -89,9 +89,11 @@
      이름이 다른 것이 33개라(prices.html → memory_price_chain.webp) 손으로 적으면 틀립니다.
   4. README에 이미지를 넣고 캡처 두 번.
 
-파일 ↔ 그림 대응 (65장 — glm_bench·k3_bench·refusal_gate·quant_calib·rotation_absorb·
-                    rotation_family·quant_gain·kr_infra·kr_bench·sov_boundary·sov_personal·
-                    sov_stack 열둘은 덱 전용, README 미편입 · 8장 다섯이 덱 미편입)
+파일 ↔ 그림 대응 (72장 — glm_bench·k3_bench·refusal_gate·quant_calib·rotation_absorb·
+                    rotation_family·quant_gain·kv_when·kr_infra·kr_bench·sov_boundary·
+                    sov_personal·sov_stack·control_scope·gpu_gen·platform_cmp·engine_role·
+                    serving_stack·kernel_role 열아홉은 덱 전용, README 미편입 ·
+                    8장 다섯이 덱 미편입)
   shock.html             → assets/stock_shock.webp               1. Kimi K3는 어떻게 미국 증시를 흔들었나?
   capex.html             → assets/us_china_capex.webp            1.1 미국과 중국, 인프라는 8배 차이입니다
   bench.html             → assets/frontier_bench.webp            1.2 그런데 모델의 격차는 3.6점입니다
@@ -137,6 +139,7 @@
   quant_intro.html       → assets/quant_two_bills.webp            7. 양자화는 압축입니다 — 두 청구서에 함께
   formats.html           → assets/precision_formats.webp          7.1 정밀도 포맷 여섯과 가속 세대
   unimix.html            → assets/uniform_vs_mixed.webp           7.1 균일 정밀도 대 혼합 정밀도
+  kv_when.html           → assets/kv_when.webp                   7.2 KV캐시는 잴 틈이 없습니다 (덱 전용)
   tq_shock.html          → assets/turboquant_shock.webp          7.2 TurboQuant 발표와 메모리 증시 충격
   rotation_absorb.html   → assets/rotation_absorb.webp           7.2 회전의 흡수 경계 (덱 전용)
   rotation_family.html   → assets/rotation_family.webp           7.2 회전 계열 네 기법 (덱 전용)
@@ -147,6 +150,12 @@
   split_gain.html        → assets/split_gain.webp                8.2 담기는데도 나눕니다
   expert_parallel.html   → assets/expert_parallel.webp           8.3 MoE는 전문가로 나눕니다
   pd_split.html          → assets/pd_split.webp                  8.4 프리필과 디코딩을 다른 GPU로
+  control_scope.html     → assets/control_scope.webp             8.1 통제의 세 겹 — 칩·커널·모델 (덱 전용)
+  gpu_gen.html           → assets/gpu_gen.webp                   9. NVIDIA GPU 제품 히스토리 (덱 전용)
+  platform_cmp.html      → assets/platform_cmp.webp              9.1 단품 서버 대 랙 스케일 (덱 전용)
+  engine_role.html       → assets/engine_role.webp               10.1 추론 엔진이란 무엇인가 (덱 전용)
+  serving_stack.html     → assets/serving_stack.webp             10.1 애플·NVIDIA 서빙 스택 6겹 (덱 전용)
+  kernel_role.html       → assets/kernel_role.webp               10.2 커널과 메모리 왕복 (덱 전용)
   sovereign.html         → assets/ai_sovereignty.webp            9.1 국가 단위의 AI 소버린
   kr_infra.html          → assets/kr_infra.webp                  9.2 국가별 가속기 장수 비교 (덱 전용)
   kr_bench.html          → assets/kr_bench.webp                  9.2 한국 모델의 AAII 지수 위치 (덱 전용)

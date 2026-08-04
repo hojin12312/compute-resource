@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=2a58053d">
+<style>
+  /* 10.1 추론 엔진이란 무엇인가. 2026-08-04 신설 — 덱의 산문 카드 둘을 그림으로.
+     옛 슬라이드는 "추론 엔진의 역할"과 "프레임워크와의 차이"를 각각 불릿으로 적어
+     두 카드가 서로 무관해 보였습니다. 실제로는 **한 모델의 생애에서 앞뒤로 붙는 두
+     소프트웨어**이고, 그래서 위에 파이프라인 한 줄을 깔고 아래에서 부품을 견줍니다.
+
+     이 그림의 논지는 한 문장입니다 — **추론 엔진은 학습 부품을 버린 대신 서빙 부품을 얻었다.**
+     그래서 오른쪽 패널 맨 위 칸이 취소선 그은 회색 항목("역전파·옵티마이저 상태")이고,
+     그 아래 넷이 그 자리에 들어온 것들입니다. 이 대비가 그림의 전부이므로
+     **오른쪽 첫 칸을 살아 있는 항목으로 바꾸지 마세요.**
+
+     반복되는 작은 칸(KV 페이지·배치 슬롯·접두사 토큰)은 div가 아니라 SVG입니다. */
+  body { padding-top:46px; }
+
+  /* ── 위: 모델 한 벌의 생애 ─────────────────────────────────────────── */
+  .pipe { display:grid; grid-template-columns:1fr 44px 1fr 44px 1fr 44px 1fr;
+          align-items:center; margin-top:24px; }
+  .st { border:1px solid var(--c-233039); background:var(--c-161b22); border-radius:8px;
+        padding:13px 16px; }
+  .st.am { border-color:var(--c-4a3a1c); background:var(--a-37); }
+  .st.cy { border-color:var(--c-17505c); background:var(--a-36); }
+  .st .t { font-size:14px; font-weight:700; color:var(--c-c3ccd6); letter-spacing:-.01em; }
+  .st.am .t { color:var(--c-e0912a); } .st.cy .t { color:var(--c-22a7bd); }
+  .st .d { margin-top:4px; font-size:11px; color:var(--c-7d8896); }
+  .ar { display:flex; justify-content:center; }
+
+  /* ── 아래: 무엇을 갖고 있나 ────────────────────────────────────────── */
+  .cmp { display:grid; grid-template-columns:1fr 1fr; gap:26px; margin-top:26px; }
+  .pn { border:1px solid var(--c-233039); border-radius:10px; padding:16px 18px 14px; }
+  .pn.am { border-color:var(--c-4a3a1c); } .pn.cy { border-color:var(--c-17505c); }
+  .ph { display:flex; align-items:baseline; gap:9px; padding-bottom:11px;
+        border-bottom:1px solid var(--c-21262d); }
+  .ph .n { font-size:15px; font-weight:700; letter-spacing:-.01em; }
+  .pn.am .ph .n { color:var(--c-e0912a); } .pn.cy .ph .n { color:var(--c-22a7bd); }
+  .ph .s { font-size:11px; color:var(--c-7d8896); }
+
+  .it { display:grid; grid-template-columns:104px 1fr; gap:16px; align-items:center;
+        padding:24px 0; border-bottom:1px solid var(--c-1b2027); }
+  .it:last-child { border-bottom:0; }
+  .it .nm { font-size:13.5px; font-weight:700; color:var(--c-c3ccd6); }
+  .it .ds { margin-top:3px; font-size:11.5px; color:var(--c-8b96a3); line-height:1.5; }
+  .it svg { display:block; }
+
+  /* 버린 것 — 이 칸이 이 그림의 요점입니다 */
+  .it.gone .nm { color:var(--c-5d6773); text-decoration:line-through; }
+  .it.gone .ds { color:var(--c-5d6773); }
+  .it.gone .tag { display:inline-block; margin-left:7px; padding:2px 7px; border-radius:4px;
+                  font-size:9.5px; font-weight:700; text-decoration:none;
+                  border:1px solid var(--c-333d47); color:var(--c-6b7684); }
+
+  .g text { font-family:"Pretendard Variable", sans-serif; font-size:9px; fill:var(--c-7d8896); }
+  .g .mn { font-family:"IBM Plex Mono", "Pretendard Variable", monospace; font-weight:700; }
+</style>
+</head>
+<body>
+  <h1><span class="cy">추론 엔진</span>은 학습 부품을 버리고 서빙 부품을 얻은 소프트웨어입니다</h1>
+  <div class="sub">프레임워크가 가중치를 <b style="color:var(--c-c3ccd6)">만들고</b>, 추론 엔진이 그 가중치를 <b style="color:var(--c-c3ccd6)">돌립니다</b> &mdash; 목표가 다르니 부품이 다릅니다.</div>
+
+  <div class="pipe">
+    <div class="st am"><div class="t">프레임워크</div><div class="d">PyTorch &middot; JAX &middot; MLX</div></div>
+    <div class="ar">
+      <svg width="30" height="12" viewBox="0 0 30 12"><path d="M0 6 L22 6" stroke="var(--c-5d6773)" stroke-width="1.6"/><path d="M28 6 L20 1.5 L20 10.5 Z" fill="var(--c-5d6773)"/></svg>
+    </div>
+    <div class="st"><div class="t">체크포인트</div><div class="d">safetensors &middot; GGUF &mdash; 여기서 손이 바뀝니다</div></div>
+    <div class="ar">
+      <svg width="30" height="12" viewBox="0 0 30 12"><path d="M0 6 L22 6" stroke="var(--c-5d6773)" stroke-width="1.6"/><path d="M28 6 L20 1.5 L20 10.5 Z" fill="var(--c-5d6773)"/></svg>
+    </div>
+    <div class="st cy"><div class="t">추론 엔진</div><div class="d">vLLM &middot; SGLang &middot; TensorRT-LLM &middot; llama.cpp &middot; oMLX</div></div>
+    <div class="ar">
+      <svg width="30" height="12" viewBox="0 0 30 12"><path d="M0 6 L22 6" stroke="var(--c-5d6773)" stroke-width="1.6"/><path d="M28 6 L20 1.5 L20 10.5 Z" fill="var(--c-5d6773)"/></svg>
+    </div>
+    <div class="st"><div class="t">응답</div><div class="d">토큰 &middot; 초당 처리량 &middot; 첫 토큰 지연</div></div>
+  </div>
+
+  <div class="cmp">
+
+    <div class="pn am">
+      <div class="ph"><span class="n">프레임워크가 갖는 것</span><span class="s">가중치를 바꾸기 위한 부품</span></div>
+
+      <div class="it">
+        <svg class="g" width="104" height="40" viewBox="0 -3 104 40">
+          <rect x="2.5" y="6.5" width="30" height="15" rx="3" fill="var(--c-161b22)" stroke="var(--c-3f4c58)"/>
+          <rect x="70.5" y="6.5" width="30" height="15" rx="3" fill="var(--c-161b22)" stroke="var(--c-3f4c58)"/>
+          <path d="M34 14 L62 14" stroke="var(--c-5d6773)" stroke-width="1.4"/>
+          <path d="M68 14 L61 10.5 L61 17.5 Z" fill="var(--c-5d6773)"/>
+          <path d="M70 26 L42 26" stroke="var(--c-c47d15)" stroke-width="1.4"/>
+          <path d="M36 26 L43 22.5 L43 29.5 Z" fill="var(--c-c47d15)"/>
+          <text x="52" y="34" text-anchor="middle" fill="var(--c-e0912a)">역전파</text>
+        </svg>
+        <div><div class="nm">순전파 &middot; 역전파</div>
+          <div class="ds">손실을 거꾸로 흘려 <b>가중치를 고칠 방향</b>을 구합니다.</div></div>
+      </div>
+
+      <div class="it">
+        <svg class="g" width="104" height="40" viewBox="0 -3 104 40">
+          <rect x="2" y="4" width="28" height="11" rx="2" fill="var(--c-3d4650)"/>
+          <rect x="2" y="18" width="28" height="11" rx="2" fill="var(--c-c47d15)"/>
+          <rect x="34" y="18" width="28" height="11" rx="2" fill="var(--c-c47d15)"/>
+          <text x="34" y="13" class="mn" fill="var(--c-8b96a3)">가중치 1</text>
+          <text x="66" y="27" class="mn" fill="var(--c-e0912a)">+ 상태 2</text>
+        </svg>
+        <div><div class="nm">옵티마이저 상태</div>
+          <div class="ds">Adam은 파라미터마다 값 둘을 더 듭니다 &mdash; <b>메모리가 세 배</b>입니다.</div></div>
+      </div>
+
+      <div class="it">
+        <svg class="g" width="104" height="40" viewBox="0 -3 104 40">
+          <g fill="var(--c-3d4650)">
+            <rect x="2" y="6" width="20" height="9" rx="2"/><rect x="26" y="6" width="20" height="9" rx="2"/>
+            <rect x="50" y="6" width="20" height="9" rx="2"/><rect x="74" y="6" width="20" height="9" rx="2"/>
+          </g>
+          <path d="M12 19 L12 25 L84 25 L84 19" fill="none" stroke="var(--c-4d5661)" stroke-width="1.2"/>
+          <text x="48" y="34" text-anchor="middle">같은 데이터를 여러 번</text>
+        </svg>
+        <div><div class="nm">데이터 파이프라인</div>
+          <div class="ds">말뭉치를 에폭마다 다시 흘려보냅니다.</div></div>
+      </div>
+
+      <div class="it">
+        <svg class="g" width="104" height="40" viewBox="0 -3 104 40">
+          <rect x="2.5" y="4.5" width="99" height="25" rx="4" fill="none" stroke="var(--c-4a3a1c)" stroke-dasharray="4 3"/>
+          <text x="52" y="20" text-anchor="middle" class="mn" fill="var(--c-e0912a)">며칠 &middot; 몇 주</text>
+        </svg>
+        <div><div class="nm">시간 예산</div>
+          <div class="ds">한 번 오래 걸려도 됩니다 &mdash; 사람이 기다리지 않습니다.</div></div>
+      </div>
+    </div>
+
+    <div class="pn cy">
+      <div class="ph"><span class="n">추론 엔진이 갖는 것</span><span class="s">가중치를 그대로 두고 돌리기 위한 부품</span></div>
+
+      <div class="it gone">
+        <svg class="g" width="104" height="40" viewBox="0 -3 104 40">
+          <rect x="2.5" y="4.5" width="99" height="25" rx="4" fill="none" stroke="var(--c-333d47)" stroke-dasharray="4 3"/>
+          <line x1="14" y1="10" x2="90" y2="24" stroke="var(--c-4d5661)" stroke-width="1.4"/>
+        </svg>
+        <div><div class="nm">역전파 &middot; 옵티마이저</div>
+          <div class="ds">통째로 버렸습니다. 가중치를 안 고치니 필요가 없습니다.<span class="tag">버린 것</span></div></div>
+      </div>
+
+      <div class="it">
+        <svg class="g" width="104" height="40" viewBox="0 -3 104 40">
+          <g fill="var(--a-36)" stroke="var(--c-17505c)">
+            <rect x="2.5" y="3.5" width="18" height="12" rx="2"/><rect x="24.5" y="3.5" width="18" height="12" rx="2"/>
+            <rect x="46.5" y="3.5" width="18" height="12" rx="2"/>
+            <rect x="2.5" y="19.5" width="18" height="12" rx="2"/><rect x="24.5" y="19.5" width="18" height="12" rx="2"/>
+          </g>
+          <g fill="none" stroke="var(--c-333d47)" stroke-dasharray="3 2">
+            <rect x="68.5" y="3.5" width="18" height="12" rx="2"/>
+            <rect x="46.5" y="19.5" width="18" height="12" rx="2"/><rect x="68.5" y="19.5" width="18" height="12" rx="2"/>
+          </g>
+        </svg>
+        <div><div class="nm">PagedAttention</div>
+          <div class="ds">KV캐시를 <b>고정 크기 페이지</b>로 잘라 담아 파편화를 없앱니다.</div></div>
+      </div>
+
+      <div class="it">
+        <svg class="g" width="104" height="40" viewBox="0 -3 104 40">
+          <g fill="var(--c-0e8fa3)">
+            <rect x="2" y="3" width="46" height="8" rx="2"/><rect x="2" y="14" width="72" height="8" rx="2"/>
+            <rect x="2" y="25" width="30" height="8" rx="2"/>
+          </g>
+          <g fill="var(--a-36)" stroke="var(--c-17505c)">
+            <rect x="50.5" y="2.5" width="26" height="9" rx="2"/><rect x="34.5" y="24.5" width="34" height="9" rx="2"/>
+          </g>
+        </svg>
+        <div><div class="nm">연속 배치</div>
+          <div class="ds">한 요청이 끝나면 <b>그 자리에 다음 요청</b>을 넣습니다 &mdash; 배치를 기다리지 않습니다.</div></div>
+      </div>
+
+      <div class="it">
+        <svg class="g" width="104" height="40" viewBox="0 -3 104 40">
+          <rect x="2" y="4" width="44" height="10" rx="2" fill="var(--c-2f6b78)"/>
+          <rect x="48" y="4" width="26" height="10" rx="2" fill="var(--c-0e8fa3)"/>
+          <rect x="2" y="19" width="44" height="10" rx="2" fill="var(--c-2f6b78)"/>
+          <rect x="48" y="19" width="38" height="10" rx="2" fill="var(--c-0e8fa3)"/>
+          <text x="24" y="34" text-anchor="middle" fill="var(--c-3f6f7d)">공유 접두사</text>
+        </svg>
+        <div><div class="nm">프리픽스 캐시</div>
+          <div class="ds">같은 앞부분은 <b>한 번만 계산</b>합니다 &mdash; 5.3장의 캐시 히트가 여기서 일합니다.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    6&middot;7장이 <b>모델 쪽</b>에서 청구서를 깎았다면, 추론 엔진은 <b>서버 메모리와 처리량</b> 청구서를 깎습니다.
+  </div>
+</body>
+</html>

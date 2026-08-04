@@ -512,6 +512,28 @@ section.cover .corg {
   margin-top: 8px; font-size: 17px; line-height: 1.6; color: var(--dim); letter-spacing: -.01em;
 }
 
+/* ── 마무리 — 표지(1번)와 짝을 이루도록 같은 조판을 씁니다 ──────────────
+   옛 판은 가운데 정렬 + 큰 "감사합니다" + 이모지 카드였습니다. 덱의 어느 슬라이드와도
+   양식이 맞지 않아 마지막 장만 따로 노는 상태였습니다. 표지의 골격(워터마크 · 제목 ·
+   rule · 발표자)을 그대로 물려받으면 처음과 끝이 같은 문서가 됩니다. */
+section.cover.closing .ctag {
+  font-family: var(--mono); font-size: 15px; font-weight: 600;
+  letter-spacing: .2em; text-transform: uppercase; color: var(--cyan-t);
+  margin-bottom: 20px;
+}
+section.cover.closing .cclose {
+  margin-top: 30px; font-size: 23px; color: var(--muted);
+  letter-spacing: -.02em; line-height: 1.55; max-width: 720px;
+}
+section.cover.closing .cclose b { color: var(--fg); font-weight: 700; }
+/* 맺음말 — 발표 내용이 아니라 인사이므로 세로선을 대어 본문과 격을 나눕니다 */
+section.cover.closing .cwish {
+  margin-top: 26px; padding-left: 18px; border-left: 2px solid var(--line);
+  max-width: 720px; font-size: 17px; line-height: 1.7; color: var(--dim);
+}
+section.cover.closing .cwish b { font-weight: 700; }
+section.cover.closing .cby { margin-top: 36px; }
+
 /* ── 목차 — 전반부/후반부 두 열. 지금 어느 쪽에 있는지 강조합니다 ────────── */
 .tochalf { border-top: 2px solid var(--line); padding-top: 20px; }
 .tochalf.on { border-top-color: var(--cyan); }

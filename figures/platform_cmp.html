@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=2a58053d">
+<style>
+  /* 9.1 플랫폼 직접 비교. 2026-08-04 신설 — 덱의 `table.tight` 6열 5행을 그림으로.
+     옛 표의 진짜 논지가 셀 안 `<br>`에 묻혀 있었습니다: **제품 단위가 한 대에서
+     한 랙으로 바뀌었다.** 옛 표는 Blackwell 칸에 "단품 8-GPU / Grace 36 + Blackwell 72(랙)"을
+     두 줄로 적어 두어, 랙이 새로 생긴 층이라는 것이 보이지 않았습니다.
+
+     그래서 표를 **두 블록으로 갈랐습니다.**
+       위 = 단품 서버(8-GPU 노드) — 다섯 세대 전부 값이 있습니다
+       아래 = 랙 스케일(NVL72)    — 왼쪽 세 세대는 **칸이 비어 있습니다**
+     비어 있는 세 칸이 이 그림의 주장입니다. 채우지 마세요.
+
+     "특징 및 가속"(TE 세대) 행은 뺐습니다 — 바로 앞 장(gpu_gen)이 "칩으로 굳은 것"
+     열로 같은 내용을 이미 집니다. 옛 표의 Groq 3 LPU 언급도 NVIDIA 플랫폼 비교표의
+     항목이 아니라 발표자 노트로 내렸습니다.
+     수치는 옛 표에서 그대로 옮겼습니다(다른 세션 작업). */
+  body { padding-top:44px; }
+
+  .head, .r {
+    display:grid;
+    grid-template-columns:126px 158px 158px 158px 24px 246px 246px;
+    gap:16px; align-items:center;
+  }
+  .head { margin-top:16px; padding-bottom:8px; border-bottom:1px solid var(--c-333d47); }
+  .hg { font-size:13.5px; font-weight:700; color:var(--c-c3ccd6); letter-spacing:-.01em; }
+  .hg span { display:block; margin-top:2px; font-size:10px; font-weight:400; color:var(--c-7d8896); }
+  .hl { font:700 10.5px "IBM Plex Mono", "Pretendard Variable", monospace;
+        color:var(--c-8b96a3); letter-spacing:.07em; }
+
+  /* 블록 머리 — 두 층을 가르는 것이 이 그림의 전부입니다 */
+  .bh { display:flex; align-items:center; gap:12px; margin:22px 0 6px; }
+  .bh .t { font-size:12.5px; font-weight:700; color:var(--c-c3ccd6); }
+  .bh .d { font-size:11px; color:var(--c-7d8896); }
+  .bh .ln { flex:1; height:0; border-top:1px solid var(--c-233039); }
+
+  .r { padding:17px 0; border-bottom:1px solid var(--c-1b2027); }
+  .r:last-of-type { border-bottom:0; }
+  .lb { font-size:13px; font-weight:700; color:var(--c-9aa7b4); }
+  .v { font:500 14px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-c3ccd6); }
+  .v .p { font-family:"Pretendard Variable", sans-serif; font-size:11px; color:var(--c-6b7684);
+          margin-left:5px; }
+  .v.am { color:var(--c-e0912a); font-weight:700; }
+  .v.cy { color:var(--c-22a7bd); font-weight:700; }
+  .v.ko { font-family:"Pretendard Variable", sans-serif; font-size:13.5px; font-weight:700; }
+
+  /* 랙 층이 없던 세대 — 비어 있는 것이 뜻이라 회색 대시 하나만 둡니다 */
+  .none { font:400 14px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-3f4c58); }
+
+  /* 단품과 랙을 가르는 세로선. 헤더부터 마지막 행까지 한 줄로 섭니다. */
+  /* 세로선은 스페이서 칸(664~688)의 한가운데 676px에 섭니다. 꼬리표는 머리글 위
+     별도 띠(padding-top 26px)에 두어야 "B300 · GB200"을 덮지 않습니다. */
+  .stage { position:relative; padding-top:26px; }
+  .fence { position:absolute; top:20px; bottom:0; left:676px; width:0;
+           border-left:2px dashed var(--c-4a3a1c); }
+  .ftag { position:absolute; left:676px; top:0; transform:translateX(-50%);
+          background:var(--c-0d1117); padding:0 9px; white-space:nowrap;
+          font-size:11px; font-weight:700; color:var(--c-e0912a); }
+</style>
+</head>
+<body>
+  <h1>단위가 <span class="cy">한 대에서 한 랙으로</span> 바뀝니다</h1>
+  <div class="sub">V100부터 H200까지는 <b style="color:var(--c-c3ccd6)">단일 호스트 8-GPU</b>가 제품 단위였습니다.
+    Blackwell부터는 CPU와 GPU를 한 랙에 묶은 <b style="color:var(--c-c3ccd6)">NVL72</b>가 단위가 됩니다.</div>
+
+  <div class="stage">
+    <div class="fence"></div>
+    <div class="ftag">여기서부터 랙이 단위</div>
+
+    <div class="head">
+      <span class="hl">구분</span>
+      <div class="hg">V100<span>Volta</span></div>
+      <div class="hg">A100<span>Ampere</span></div>
+      <div class="hg">H200<span>Hopper</span></div>
+      <span></span>
+      <div class="hg">B300 &middot; GB200<span>Blackwell</span></div>
+      <div class="hg">R100 &middot; Vera Rubin<span>Rubin</span></div>
+    </div>
+
+    <div class="bh">
+      <span class="t">단품 서버</span><span class="d">8-GPU 노드 &middot; 가속기 한 장 기준</span><span class="ln"></span>
+    </div>
+
+    <div class="r">
+      <span class="lb">메모리 용량</span>
+      <span class="v">32GB<span class="p">HBM2</span></span>
+      <span class="v">80GB<span class="p">HBM2e</span></span>
+      <span class="v am">141GB<span class="p">HBM3e &middot; 100%</span></span>
+      <span></span>
+      <span class="v">288GB<span class="p">HBM3e &middot; 204%</span></span>
+      <span class="v cy">288GB<span class="p">HBM4</span></span>
+    </div>
+    <div class="r">
+      <span class="lb">메모리 대역폭</span>
+      <span class="v">0.9TB/s</span>
+      <span class="v">2.0TB/s</span>
+      <span class="v am">4.8TB/s<span class="p">100%</span></span>
+      <span></span>
+      <span class="v">8.0TB/s<span class="p">167%</span></span>
+      <span class="v cy">22TB/s<span class="p">458%</span></span>
+    </div>
+    <div class="r">
+      <span class="lb">NVLink 대역폭</span>
+      <span class="v">300GB/s</span>
+      <span class="v">600GB/s</span>
+      <span class="v">900GB/s</span>
+      <span></span>
+      <span class="v">1.8TB/s</span>
+      <span class="v cy ko">대역폭 확장</span>
+    </div>
+
+    <div class="bh">
+      <span class="t">랙 스케일</span><span class="d">NVL72 &middot; CPU와 GPU를 한 랙에</span><span class="ln"></span>
+    </div>
+
+    <div class="r">
+      <span class="lb">구성</span>
+      <span class="none">&mdash;</span><span class="none">&mdash;</span><span class="none">&mdash;</span>
+      <span></span>
+      <span class="v ko">Grace 36 + Blackwell 72</span>
+      <span class="v cy ko">Vera 36 + Rubin 72</span>
+    </div>
+    <div class="r">
+      <span class="lb">메모리 용량</span>
+      <span class="none">&mdash;</span><span class="none">&mdash;</span><span class="none">&mdash;</span>
+      <span></span>
+      <span class="v">13.8~20.7TB</span>
+      <span class="v cy">20.7TB<span class="p">HBM4</span></span>
+    </div>
+    <div class="r">
+      <span class="lb">메모리 대역폭</span>
+      <span class="none">&mdash;</span><span class="none">&mdash;</span><span class="none">&mdash;</span>
+      <span></span>
+      <span class="v">576TB/s</span>
+      <span class="v cy">1,580TB/s</span>
+    </div>
+    <div class="r">
+      <span class="lb">NVLink 대역폭</span>
+      <span class="none">&mdash;</span><span class="none">&mdash;</span><span class="none">&mdash;</span>
+      <span></span>
+      <span class="v">130TB/s</span>
+      <span class="v cy">260TB/s</span>
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>왼쪽 아래 세 칸이 비어 있는 것이 요점입니다</b> &mdash; 랙은 더 큰 서버가 아니라
+    <b>Blackwell에서 새로 생긴 층</b>이고, 8장의 병렬화가 걸치는 무대가 여기입니다.
+  </div>
+</body>
+</html>

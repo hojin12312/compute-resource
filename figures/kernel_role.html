@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=2a58053d">
+<style>
+  /* 10.2 최적화 커널의 역할. 2026-08-04 신설 — 덱의 산문 카드 둘을 그림으로.
+     옛 슬라이드는 "커널이란 최하단 코드"라고 정의만 적고 "비약적 속도 향상"이라고
+     결과만 적어, **무엇을 해서 빨라지는지**가 없었습니다. 그 기제를 그립니다.
+
+     기제는 연산량이 아니라 **메모리 왕복**입니다(FlashAttention의 IO-aware 논지).
+     같은 어텐션을 계산해도, 중간행렬 S와 P를 HBM에 썼다 다시 읽으면 왕복이 세 번이고,
+     타일을 SRAM에 올려 그 안에서 끝내면 왕복이 한 번입니다. 곱셈 횟수는 거의 같습니다.
+
+     그래서 두 보드가 **같은 두 층(SRAM 위 · HBM 아래)** 을 쓰고, 다른 것은 그 사이를
+     오가는 화살표의 수뿐입니다. 오른쪽 HBM의 가운데가 비어 있는 것이 요점입니다 —
+     중간행렬을 아예 쓰지 않습니다. 채우지 마세요. */
+  body { padding-top:46px; }
+
+  .stage { display:flex; gap:24px; margin-top:22px; }
+  .side { width:620px; }
+  .stitle { font-size:15px; font-weight:700; letter-spacing:-.01em; }
+  .side.a .stitle { color:var(--c-e0912a); } .side.b .stitle { color:var(--c-22a7bd); }
+  .sdesc { font-size:11.5px; color:var(--c-8b96a3); margin-top:3px; }
+  .cap { margin-top:11px; font-size:12.5px; line-height:1.5; color:var(--c-9aa7b4); }
+  .cap b { color:var(--c-c3ccd6); font-weight:700; }
+
+  .d text { font-family:"Pretendard Variable", sans-serif; font-size:11px; fill:var(--c-8b96a3); }
+  .d .mn { font-family:"IBM Plex Mono", "Pretendard Variable", monospace; font-weight:700; }
+  .d .lay { font-size:11px; font-weight:700; fill:var(--c-9aa7b4); }
+  .d .op  { font-size:11.5px; font-weight:700; fill:var(--c-c3ccd6); }
+  .d .am { fill:var(--c-e0912a); } .d .cy { fill:var(--c-22a7bd); }
+
+  /* 아래 띠 */
+  .band { display:grid; grid-template-columns:1fr 1fr 1.35fr; gap:20px; margin-top:20px; }
+  .bc { border:1px solid var(--c-233039); border-radius:8px; background:var(--c-161b22);
+        padding:13px 16px 14px; }
+  .bc .k { font:700 10.5px "IBM Plex Mono", "Pretendard Variable", monospace;
+           color:var(--c-7d8896); letter-spacing:.06em; }
+  .bc h4 { font-size:13.5px; font-weight:700; color:var(--c-c3ccd6); margin-top:5px; }
+  .bc p { font-size:11.5px; line-height:1.55; color:var(--c-8b96a3); margin-top:8px; }
+  .bc p b { color:var(--c-c3ccd6); font-weight:700; }
+  .pills { display:flex; gap:6px; flex-wrap:wrap; margin-top:9px; }
+  .pill { padding:4px 9px; border-radius:4px; font-size:10.5px; font-weight:700;
+          border:1px solid var(--c-333d47); color:var(--c-9aa7b4); }
+  .bc.warn { border-color:var(--c-4a3a1c); background:var(--a-37); }
+  .bc.warn .k { color:var(--c-96590a); }
+  .bc.warn p { color:var(--c-9aa7b4); }
+</style>
+</head>
+<body>
+  <h1><span class="am">커널</span>이 바꾸는 것은 연산량이 아니라 <span class="cy">메모리 왕복</span>입니다</h1>
+  <div class="sub">커널은 연산 장치에 <b style="color:var(--c-c3ccd6)">무엇을 어떤 순서로 읽고 계산할지</b> 지시하는 최하단 코드입니다.
+    같은 어텐션을 같은 칩에서 계산해도 이 순서 하나로 속도가 갈립니다.</div>
+
+  <div class="stage">
+
+    <div class="side a">
+      <div class="stitle">그대로 짜면</div>
+      <div class="sdesc">단계마다 중간 결과를 HBM에 썼다가 다시 읽습니다</div>
+      <svg class="d" width="620" height="278" viewBox="0 0 620 278">
+        <rect x="8.5" y="18.5" width="603" height="70" rx="7" fill="var(--c-161b22)" stroke="var(--c-333d47)"/>
+        <text x="20" y="34" class="lay">SRAM (온칩) &mdash; 작고 빠릅니다</text>
+        <rect x="8.5" y="188.5" width="603" height="80" rx="7" fill="var(--c-161b22)" stroke="var(--c-333d47)"/>
+        <text x="20" y="204" class="lay">HBM &mdash; 크고 느립니다</text>
+
+        <!-- SRAM 안에서 도는 세 단계 -->
+        <g fill="var(--c-1c222a)" stroke="var(--c-3f4c58)">
+          <rect x="82.5" y="46.5" width="96" height="30" rx="5"/>
+          <rect x="262.5" y="46.5" width="96" height="30" rx="5"/>
+          <rect x="442.5" y="46.5" width="96" height="30" rx="5"/>
+        </g>
+        <text x="130" y="66" class="op" text-anchor="middle">Q &times; K</text>
+        <text x="310" y="66" class="op" text-anchor="middle">softmax</text>
+        <text x="490" y="66" class="op" text-anchor="middle">P &times; V</text>
+
+        <!-- 왕복 세 번. 내려오는 화살표(읽기)와 올라가는 화살표(쓰기)가 짝입니다. -->
+        <g stroke="var(--c-5d6773)" stroke-width="1.6" fill="var(--c-5d6773)">
+          <path d="M96 188 L96 96"/><path d="M96 90 L92 99 L100 99 Z"/>
+          <path d="M276 188 L276 96"/><path d="M276 90 L272 99 L280 99 Z"/>
+          <path d="M456 188 L456 96"/><path d="M456 90 L452 99 L460 99 Z"/>
+        </g>
+        <g stroke="var(--c-c47d15)" stroke-width="1.6" fill="var(--c-c47d15)">
+          <path d="M164 82 L164 180"/><path d="M164 186 L160 177 L168 177 Z"/>
+          <path d="M344 82 L344 180"/><path d="M344 186 L340 177 L348 177 Z"/>
+          <path d="M524 82 L524 180"/><path d="M524 186 L520 177 L528 177 Z"/>
+        </g>
+        <text x="130" y="140" text-anchor="middle" class="mn">읽기 / 쓰기</text>
+        <text x="310" y="140" text-anchor="middle" class="mn">읽기 / 쓰기</text>
+        <text x="490" y="140" text-anchor="middle" class="mn">읽기 / 쓰기</text>
+
+        <!-- HBM에 남는 것들 — 중간행렬 둘이 앰버입니다 -->
+        <g>
+          <rect x="20.5" y="228.5" width="104" height="26" rx="4" fill="var(--c-233039)" stroke="var(--c-3f4c58)"/>
+          <text x="72" y="246" class="mn" text-anchor="middle" fill="var(--c-9aa7b4)">Q &middot; K &middot; V</text>
+
+          <rect x="200.5" y="228.5" width="104" height="26" rx="4" fill="var(--a-37)" stroke="var(--c-4a3a1c)"/>
+          <text x="252" y="246" class="mn am" text-anchor="middle">S &mdash; 중간행렬</text>
+
+          <rect x="380.5" y="228.5" width="104" height="26" rx="4" fill="var(--a-37)" stroke="var(--c-4a3a1c)"/>
+          <text x="432" y="246" class="mn am" text-anchor="middle">P &mdash; 중간행렬</text>
+
+          <rect x="520.5" y="228.5" width="72" height="26" rx="4" fill="var(--a-36)" stroke="var(--c-17505c)"/>
+          <text x="556" y="246" class="mn cy" text-anchor="middle">결과 O</text>
+        </g>
+      </svg>
+      <div class="cap"><b class="am">왕복 세 번.</b> 중간행렬 <b>S와 P</b>는 쓰자마자 다시 읽는데,
+        그 크기가 <b>토큰 수의 제곱</b>이라 오가는 양이 연산량보다 먼저 한계에 닿습니다.</div>
+    </div>
+
+    <div class="side b">
+      <div class="stitle">FlashAttention 커널</div>
+      <div class="sdesc">타일을 SRAM에 올려 두고 그 안에서 끝까지 계산합니다</div>
+      <svg class="d" width="620" height="278" viewBox="0 0 620 278">
+        <rect x="8.5" y="18.5" width="603" height="70" rx="7" fill="var(--c-161b22)" stroke="var(--c-333d47)"/>
+        <text x="20" y="34" class="lay">SRAM (온칩) &mdash; 작고 빠릅니다</text>
+        <rect x="8.5" y="188.5" width="603" height="80" rx="7" fill="var(--c-161b22)" stroke="var(--c-333d47)"/>
+        <text x="20" y="204" class="lay">HBM &mdash; 크고 느립니다</text>
+
+        <!-- 세 연산이 SRAM 안에서 이어집니다 — 밖으로 나가지 않습니다 -->
+        <rect x="112.5" y="44.5" width="396" height="34" rx="6" fill="var(--a-36)" stroke="var(--c-17505c)"/>
+        <text x="310" y="66" class="op cy" text-anchor="middle">Q &times; K &rarr; softmax &rarr; P &times; V &mdash; 타일 하나를 여기서 끝냅니다</text>
+        <path d="M 508 61 C 546 61, 546 30, 508 30" fill="none" stroke="var(--c-3f6f7d)"
+              stroke-width="1.4" stroke-dasharray="4 3"/>
+        <path d="M 502 30 L 511 26 L 511 34 Z" fill="var(--c-3f6f7d)"/>
+        <text x="560" y="40" class="cy" font-size="10">타일마다</text>
+
+        <!-- 왕복 한 번 -->
+        <g stroke="var(--c-5d6773)" stroke-width="1.8" fill="var(--c-5d6773)">
+          <path d="M92 188 L92 96"/><path d="M92 88 L87 99 L97 99 Z"/>
+        </g>
+        <g stroke="var(--c-0e8fa3)" stroke-width="1.8" fill="var(--c-0e8fa3)">
+          <path d="M528 82 L528 178"/><path d="M528 186 L523 175 L533 175 Z"/>
+        </g>
+        <text x="92" y="140" text-anchor="middle" class="mn">한 번 읽고</text>
+        <text x="528" y="140" text-anchor="middle" class="mn cy">한 번 씁니다</text>
+
+        <!-- 가운데가 비어 있는 것이 요점입니다 -->
+        <g>
+          <rect x="20.5" y="228.5" width="104" height="26" rx="4" fill="var(--c-233039)" stroke="var(--c-3f4c58)"/>
+          <text x="72" y="246" class="mn" text-anchor="middle" fill="var(--c-9aa7b4)">Q &middot; K &middot; V</text>
+
+          <rect x="180.5" y="228.5" width="288" height="26" rx="4" fill="none"
+                stroke="var(--c-333d47)" stroke-dasharray="5 4"/>
+          <text x="324" y="246" text-anchor="middle" font-size="10.5" fill="var(--c-6b7684)">중간행렬을 여기에 쓰지 않습니다</text>
+
+          <rect x="520.5" y="228.5" width="72" height="26" rx="4" fill="var(--a-36)" stroke="var(--c-17505c)"/>
+          <text x="556" y="246" class="mn cy" text-anchor="middle">결과 O</text>
+        </g>
+      </svg>
+      <div class="cap"><b class="cy">왕복 한 번.</b> 곱셈 횟수는 왼쪽과 거의 같습니다 &mdash;
+        <b>오간 양만 줄였는데</b> 그것이 실제 속도를 정합니다.</div>
+    </div>
+  </div>
+
+  <div class="band">
+    <div class="bc">
+      <div class="k">커널은 어디에 사는가</div>
+      <h4>칩마다 다른 언어로 씁니다</h4>
+      <div class="pills"><span class="pill">CUDA</span><span class="pill">Triton</span><span class="pill">Metal Performance Shaders</span></div>
+    </div>
+    <div class="bc">
+      <div class="k">이 문서에 나온 커널</div>
+      <h4>앞에서 이미 만났습니다</h4>
+      <div class="pills"><span class="pill">FlashAttention</span><span class="pill">PagedAttention</span></div>
+    </div>
+    <div class="bc warn">
+      <div class="k">그래서 소버린의 일부입니다</div>
+      <h4>칩을 만들어도 커널이 없으면 못 씁니다</h4>
+      <p>같은 실리콘에서 <b>제 성능의 30%도 못 내는</b> 일이 생깁니다. 독자 NPU를 만들려면
+        칩 설계만이 아니라 <b>커널 생태계까지 함께</b> 세워야 하고, 그래서 통제 대상 목록에도
+        <b>비표준 칩 커널 개발</b>이 들어갑니다.</p>
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>하드웨어 스펙과 실제 서빙 속도 사이에 커널이 있습니다</b> &mdash; 9장의 22TB/s를 실제로 꺼내 쓰는 것도 결국 이 코드입니다.
+  </div>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=2a58053d">
+<style>
+  /* 7.2 도입 — "KV캐시에는 빠른 양자화만 씁니다"를 산문 카드 둘에서 그림으로 옮긴 것.
+     논지의 축은 정확도가 아니라 **시각(時刻)**입니다. 그래서 화면 전체가 하나의 시간축이고,
+     가운데 세로 점선("요청 도착")이 그 축을 오프라인과 요청 경로로 가릅니다.
+
+       가중치  — 왼쪽이 꽉 차고 오른쪽이 빕니다 (탐색은 배포 전에 다 끝남)
+       KV캐시 — 왼쪽이 비고  오른쪽이 꽉 찹니다 (요청이 와야 생기고, 그때는 잴 틈이 없음)
+
+     이 좌우 반전이 그림의 결론이므로 **가중치 레인의 오른쪽 여백을 채우지 마세요.**
+     비어 있는 것이 뜻입니다.
+
+     색은 base.css 규칙 그대로 — 시안 = 이 장의 주인공(KV캐시) · 앰버 = 비싸다/불가능 ·
+     회색 = 이미 끝난 일(7.1의 가중치). 반복되는 작은 칸(토큰 셀·레이어 칸·비트 칸)은
+     div 격자가 아니라 SVG로 그립니다(캡처 배율에서 칸이 갈립니다). */
+  body { padding-top:50px; }
+  .sub b { color:var(--c-c3ccd6); font-weight:700; }
+
+  .stage { margin-top:24px; }
+
+  /* SVG 안의 글자도 웹폰트로 못 박습니다 — 기본값에 맡기면 캡처하는 기계마다 달라집니다. */
+  .d text { font-family:"Pretendard Variable", sans-serif; font-size:11.5px; fill:var(--c-8b96a3); }
+  .d .mn  { font-family:"IBM Plex Mono", "Pretendard Variable", monospace; font-weight:700; }
+  .d .hd  { font-size:12px; font-weight:700; fill:var(--c-c3ccd6); }
+  .d .mu  { font-size:11px; fill:var(--c-7d8896); }
+  .d .cy  { fill:var(--c-22a7bd); } .d .am { fill:var(--c-e0912a); }
+  .d .lname { font-size:15px; font-weight:700; fill:var(--c-c3ccd6); }
+  .d .lname.cy { fill:var(--c-22a7bd); }
+  .d .btit { font-size:12.5px; font-weight:700; fill:var(--c-c3ccd6); }
+  .d .bsub { font-size:10.5px; fill:var(--c-7d8896); }
+
+  /* 아래 띠 — 못 하는 것(위) 다음에 대신 하는 것(아래) */
+  .rules { margin-top:18px; }
+  .rhead { font-size:13.5px; color:var(--c-9aa7b4); }
+  .rhead b { color:var(--c-c3ccd6); font-weight:700; }
+  .rcards { display:grid; grid-template-columns:400px 400px 1fr; gap:20px; margin-top:11px; }
+  .rcard { border:1px solid var(--c-233039); border-radius:8px; background:var(--c-161b22);
+           padding:13px 16px 14px; }
+  .rcard .k { font:700 10.5px "IBM Plex Mono", "Pretendard Variable", monospace;
+              color:var(--c-7d8896); letter-spacing:.06em; }
+  .rcard h4 { font-size:14px; font-weight:700; color:var(--c-c3ccd6); margin-top:5px; letter-spacing:-.01em; }
+  .rcard p  { font-size:11.5px; line-height:1.55; color:var(--c-8b96a3); margin-top:9px; }
+  .rcard p b { color:var(--c-c3ccd6); font-weight:700; }
+  .rcard .mini { margin-top:10px; }
+  .rcard .flag { margin-top:8px; font-size:10.5px; color:var(--c-7d8896); }
+  code { font-family:"IBM Plex Mono", monospace; font-size:10.5px; color:var(--c-c3ccd6); }
+
+  .rcard.concl { border-color:var(--c-17505c); background:var(--a-36); }
+  .rcard.concl .k { color:var(--c-3f6f7d); }
+  .rcard.concl p { color:var(--c-9aa7b4); }
+  .pay { margin-top:11px; font-size:14px; font-weight:700; color:var(--c-22a7bd); }
+</style>
+</head>
+<body>
+  <h1>KV캐시는 <span class="cy">잴 틈이 없습니다</span> &mdash; 그래서 미리 정해 둡니다</h1>
+  <div class="sub">비트를 나누는 것 자체는 이미 합니다. 없는 것은 <b>데이터를 보고 배분을 찾을 기회</b>입니다.</div>
+
+  <div class="stage">
+    <svg class="d" width="1264" height="306" viewBox="0 0 1264 306">
+
+      <defs>
+        <marker id="ag" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L8 4 L0 8 z" fill="var(--c-5d6773)"/>
+        </marker>
+        <marker id="ac" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L8 4 L0 8 z" fill="var(--c-0e8fa3)"/>
+        </marker>
+        <marker id="aa" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L8 4 L0 8 z" fill="var(--c-c47d15)"/>
+        </marker>
+      </defs>
+
+      <!-- ── 시간축 머리말 ─────────────────────────────────────────────── -->
+      <text x="104" y="12" class="hd">배포 전 &middot; 오프라인 <tspan class="mu">&mdash; 시간을 얼마든지 씁니다</tspan></text>
+      <text x="1264" y="12" class="hd" text-anchor="end">요청 경로 안 &middot; 토큰마다 <tspan class="mu">&mdash; 예산은 마이크로초</tspan></text>
+
+      <!-- 요청이 도착하는 순간. 이 세로선이 그림의 주인공입니다. -->
+      <line x1="700" y1="26" x2="700" y2="306" stroke="var(--c-5d6773)" stroke-width="2" stroke-dasharray="6 5"/>
+      <rect x="645.5" y="0.5" width="109" height="21" rx="4" fill="var(--c-161b22)" stroke="var(--c-5d6773)"/>
+      <text x="700" y="15" class="hd" text-anchor="middle">요청 도착</text>
+
+      <!-- ── 레인 1 · 가중치 ───────────────────────────────────────────── -->
+      <text x="0" y="76" class="lname">가중치</text>
+      <text x="0" y="94" class="mu">7.1에서 본 것</text>
+
+      <!-- 되풀이해도 되는 탐색 — 배포 전이니까요 -->
+      <path d="M 462 56 C 462 38, 306 38, 306 56" fill="none" stroke="var(--c-5d6773)"
+            stroke-width="1.5" marker-end="url(#ag)"/>
+      <text x="384" y="34" text-anchor="middle" class="mu">될 때까지 되풀이</text>
+
+      <g fill="var(--c-161b22)" stroke="var(--c-333d47)">
+        <rect x="104.5" y="60.5" width="141" height="46" rx="6"/>
+        <rect x="286.5" y="60.5" width="195" height="46" rx="6"/>
+        <rect x="522.5" y="60.5" width="149" height="46" rx="6"/>
+      </g>
+      <text x="175" y="80" class="btit" text-anchor="middle">보정 데이터</text>
+      <text x="175" y="96" class="bsub" text-anchor="middle">문장 몇백 개</text>
+      <text x="384" y="80" class="btit" text-anchor="middle">자리별 민감도 측정</text>
+      <text x="384" y="96" class="bsub" text-anchor="middle">AWQ &middot; AutoRound &middot; imatrix</text>
+      <text x="597" y="80" class="btit" text-anchor="middle">배분표 확정</text>
+      <text x="597" y="96" class="bsub" text-anchor="middle">체크포인트에 굳힘</text>
+
+      <g stroke="var(--c-5d6773)" stroke-width="1.5" fill="none">
+        <path d="M 249 83 L 278 83" marker-end="url(#ag)"/>
+        <path d="M 485 83 L 514 83" marker-end="url(#ag)"/>
+        <path d="M 675 83 L 732 83" marker-end="url(#ag)"/>
+      </g>
+
+      <!-- 요청 경로에서는 할 일이 없습니다. 이 오른쪽 여백이 뜻입니다. -->
+      <rect x="740.5" y="60.5" width="213" height="46" rx="6" fill="var(--c-161b22)" stroke="var(--c-2b333d)"/>
+      <text x="847" y="80" class="btit" text-anchor="middle">표를 그대로 조회</text>
+      <text x="847" y="96" class="bsub" text-anchor="middle">요청 경로에서 재지 않습니다</text>
+      <text x="1264" y="88" class="mu" text-anchor="end">이 뒤로 가중치가 할 일은 없습니다</text>
+
+      <text x="104" y="128" class="mu">몇 시간이 걸려도 괜찮습니다 &mdash; 배포 전에 딱 한 번이니까요.</text>
+
+      <line x1="0" y1="146" x2="1264" y2="146" stroke="var(--c-21262d)"/>
+
+      <!-- ── 레인 2 · KV캐시 ───────────────────────────────────────────── -->
+      <text x="0" y="204" class="lname cy">KV캐시</text>
+      <text x="0" y="222" class="mu">대화마다 새로</text>
+
+      <!-- 왼쪽은 비어 있어야 합니다 — 잴 대상이 아직 존재하지 않습니다 -->
+      <rect x="104.5" y="172.5" width="567" height="76" rx="6" fill="none"
+            stroke="var(--c-4a3a1c)" stroke-width="1.5" stroke-dasharray="7 5"/>
+      <text x="388" y="216" class="hd am" text-anchor="middle" font-size="15">이 대화의 K &middot; V는 아직 없습니다</text>
+      <text x="104" y="268" class="mu">잴 대상이 없으니, 자리별 민감도를 데이터로 탐색하는 절차 자체가 성립하지 않습니다.</text>
+
+      <text x="744" y="166" class="hd">매 토큰 새 K &middot; V가 생깁니다</text>
+      <text x="744" y="197" class="mn cy" font-size="12">K</text>
+      <text x="744" y="227" class="mn cy" font-size="12">V</text>
+      <g fill="var(--a-36)" stroke="var(--c-17505c)">
+        <rect x="770.5" y="182.5" width="43" height="21" rx="3"/><rect x="822.5" y="182.5" width="43" height="21" rx="3"/>
+        <rect x="874.5" y="182.5" width="43" height="21" rx="3"/><rect x="926.5" y="182.5" width="43" height="21" rx="3"/>
+        <rect x="978.5" y="182.5" width="43" height="21" rx="3"/><rect x="1030.5" y="182.5" width="43" height="21" rx="3"/>
+        <rect x="1082.5" y="182.5" width="43" height="21" rx="3"/>
+        <rect x="770.5" y="212.5" width="43" height="21" rx="3"/><rect x="822.5" y="212.5" width="43" height="21" rx="3"/>
+        <rect x="874.5" y="212.5" width="43" height="21" rx="3"/><rect x="926.5" y="212.5" width="43" height="21" rx="3"/>
+        <rect x="978.5" y="212.5" width="43" height="21" rx="3"/><rect x="1030.5" y="212.5" width="43" height="21" rx="3"/>
+        <rect x="1082.5" y="212.5" width="43" height="21" rx="3"/>
+      </g>
+      <!-- 마지막 칸은 지금 생기는 중입니다 -->
+      <g fill="none" stroke="var(--c-0e8fa3)" stroke-width="1.5" stroke-dasharray="4 3">
+        <rect x="1134.5" y="182.5" width="43" height="21" rx="3"/>
+        <rect x="1134.5" y="212.5" width="43" height="21" rx="3"/>
+      </g>
+      <path d="M 1190 208 L 1214 208" stroke="var(--c-0e8fa3)" stroke-width="1.5" marker-end="url(#ac)"/>
+      <text x="1222" y="212" class="cy">계속</text>
+
+      <!-- 위 레인의 되풀이 호를 **같은 크기로** 뒤집어 놓습니다 — 나란히 놓아야
+           "저기서 되던 것이 여기서는 안 된다"가 형태로 읽힙니다. 폭을 넓히면
+           그냥 장식용 곡선처럼 보입니다(첫 판이 그랬습니다). -->
+      <path d="M 1052 250 C 1052 268, 896 268, 896 250" fill="none" stroke="var(--c-c47d15)"
+            stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#aa)"/>
+      <circle cx="974" cy="263" r="9.5" fill="var(--c-0d1117)" stroke="var(--c-c47d15)" stroke-width="1.5"/>
+      <g stroke="var(--c-e0912a)" stroke-width="1.6" stroke-linecap="round">
+        <line x1="970" y1="259" x2="978" y2="267"/><line x1="978" y1="259" x2="970" y2="267"/>
+      </g>
+      <text x="974" y="292" class="am" text-anchor="middle">같은 탐색을 매 토큰 &middot; 매 요청 되풀이하면, 아끼려던 것보다 비쌉니다</text>
+    </svg>
+  </div>
+
+  <!-- ── 대신 하는 것 ─────────────────────────────────────────────────── -->
+  <div class="rules">
+    <div class="rhead">대신 하는 것 &mdash; <b>요청 전에 이미 아는 기준</b>으로 미리 나눕니다</div>
+    <div class="rcards">
+
+      <div class="rcard">
+        <div class="k">기준 1 &middot; 레이어 종류</div>
+        <h4>슬라이딩 윈도우 레이어만 16비트로</h4>
+        <div class="mini">
+          <svg class="d" width="368" height="52" viewBox="0 0 368 52">
+            <g fill="none" stroke="var(--c-3f4c58)">
+              <rect x="0.5" y="2.5" width="17" height="27" rx="2"/><rect x="24.5" y="2.5" width="17" height="27" rx="2"/>
+              <rect x="48.5" y="2.5" width="17" height="27" rx="2"/><rect x="72.5" y="2.5" width="17" height="27" rx="2"/>
+              <rect x="96.5" y="2.5" width="17" height="27" rx="2"/>
+              <rect x="144.5" y="2.5" width="17" height="27" rx="2"/><rect x="168.5" y="2.5" width="17" height="27" rx="2"/>
+              <rect x="192.5" y="2.5" width="17" height="27" rx="2"/><rect x="216.5" y="2.5" width="17" height="27" rx="2"/>
+              <rect x="240.5" y="2.5" width="17" height="27" rx="2"/>
+            </g>
+            <g fill="var(--a-36)" stroke="var(--c-17505c)">
+              <rect x="120.5" y="2.5" width="17" height="27" rx="2"/><rect x="264.5" y="2.5" width="17" height="27" rx="2"/>
+            </g>
+            <rect x="0" y="40" width="10" height="10" rx="2" fill="none" stroke="var(--c-3f4c58)"/>
+            <text x="16" y="49" class="mu">16비트 그대로</text>
+            <rect x="104" y="40" width="10" height="10" rx="2" fill="var(--a-36)" stroke="var(--c-17505c)"/>
+            <text x="120" y="49" class="mu">FP8로 압축</text>
+          </svg>
+        </div>
+        <p>이유가 정확도가 아니라 <b>속도</b>입니다 &mdash; 그 레이어는 캐시가 창 길이로 묶여 있어 FP8 오버헤드를 절감으로 갚지 못합니다.</p>
+        <div class="flag">vLLM <code>--kv-cache-dtype-skip-layers</code></div>
+      </div>
+
+      <div class="rcard">
+        <div class="k">기준 2 &middot; K와 V</div>
+        <h4>K는 8비트, V는 4비트</h4>
+        <div class="mini">
+          <svg class="d" width="368" height="52" viewBox="0 0 368 52">
+            <text x="0" y="14" class="mn cy" font-size="11">K</text>
+            <g fill="var(--c-0e8fa3)">
+              <rect x="22" y="3" width="13" height="13" rx="2"/><rect x="39" y="3" width="13" height="13" rx="2"/>
+              <rect x="56" y="3" width="13" height="13" rx="2"/><rect x="73" y="3" width="13" height="13" rx="2"/>
+              <rect x="90" y="3" width="13" height="13" rx="2"/><rect x="107" y="3" width="13" height="13" rx="2"/>
+              <rect x="124" y="3" width="13" height="13" rx="2"/><rect x="141" y="3" width="13" height="13" rx="2"/>
+            </g>
+            <text x="170" y="14" class="hd">8비트</text>
+            <text x="0" y="38" class="mn cy" font-size="11">V</text>
+            <g fill="var(--c-0e8fa3)">
+              <rect x="22" y="27" width="13" height="13" rx="2"/><rect x="39" y="27" width="13" height="13" rx="2"/>
+              <rect x="56" y="27" width="13" height="13" rx="2"/><rect x="73" y="27" width="13" height="13" rx="2"/>
+            </g>
+            <text x="170" y="38" class="hd">4비트</text>
+          </svg>
+        </div>
+        <p>K가 더 민감하다고 알려져 흔히 쓰는 조합입니다. vLLM의 TurboQuant 변형에도 같은 <code>k8v4</code>가 있습니다.</p>
+        <div class="flag">llama.cpp <code>--cache-type-k</code> &middot; <code>--cache-type-v</code></div>
+      </div>
+
+      <div class="rcard concl">
+        <div class="k">그래서</div>
+        <h4>근거가 데이터가 아니라 <span class="cy">구조</span>입니다</h4>
+        <p>레이어 종류도 K와 V도 요청이 오기 전에 이미 정해져 있습니다. 요청이 도착하면 <b>재는 것이 아니라 정해진 규칙을 따를 뿐</b>이라, 요청 경로에 붙는 탐색이 없습니다.</p>
+        <div class="pay">탐색 비용 0</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="foot">
+    그래서 이쪽의 기준은 정확도가 아니라 <b>속도</b>입니다 &mdash; 이 벽을 정면으로 깬 것이 다음 장의 <b>TurboQuant</b>입니다.
+  </div>
+</body>
+</html>

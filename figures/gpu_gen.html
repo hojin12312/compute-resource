@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=2a58053d">
+<style>
+  /* NVIDIA 데이터센터 GPU 세대표. 2026-08-04 신설 —
+     덱에 있던 `table.tight` 아홉 행을 그림으로 옮긴 것입니다. 호진님이
+     "74번 표에 비하면 양식이 허접하다"고 지적해, **74번(formats.html)의 시각 언어를
+     그대로 가져왔습니다** — 같은 grid 행, 같은 헤어라인, 같은 알약 배지(.g/.g.on),
+     같은 이름+부제 조판.
+
+     옛 표와 달라진 것 셋입니다.
+       1. 마지막 열이 산문("2세대 TE (FP4 연산기 도입)")이 아니라 **알약 배지**입니다.
+          이 장의 논지가 "소프트웨어가 먼저 증명한 방식이 전용 연산기로 굳는다"이므로,
+          그 자리를 74번의 "네이티브 가속" 열과 같은 형식으로 맞췄습니다.
+       2. **출시된 세대와 예고된 세대를 갈라 놓았습니다.** 옛 표는 2028년 Feynman까지
+          같은 굵기로 섞여 있어 확정 스펙처럼 보였습니다.
+       3. 이 발표의 메모리 기준(H200 = 100% · B300 = 204%)을 행 틴트 + 오른쪽 꼬리표로
+          표시합니다. 옛 표는 `비고` 칸의 문장으로만 적혀 있었습니다.
+
+     수치는 옛 표에서 그대로 옮겼습니다(다른 세션 작업). Rubin의 22TB/s와 Feynman
+     항목은 README `[^rubin-verify]`·`[^gpu-roadmap-verify]`가 걸린 미확정 값이라
+     "예고" 구획에 두고 회색으로 물러나게 했습니다. */
+  body { padding-top:38px; }
+
+  .head, .fr {
+    display:grid;
+    grid-template-columns:168px 62px 104px 190px 96px 1fr;
+    gap:28px; align-items:center;
+  }
+  .head { margin-top:14px; padding-bottom:7px; border-bottom:1px solid var(--c-333d47);
+          font:700 10.5px "IBM Plex Mono", "Pretendard Variable", monospace;
+          color:var(--c-8b96a3); letter-spacing:.07em; }
+  .fr { padding:11px 0; border-bottom:1px solid var(--c-1b2027); }
+  .fr:last-of-type { border-bottom:0; }
+
+  /* 기준 행 — 표 안에서 두 행만 색을 답니다 */
+  .fr.ref { background:var(--a-37); }
+  .fr.refc { background:var(--a-36); }
+  .fr.ref, .fr.refc { margin:0 -12px; padding-left:12px; padding-right:12px;
+                      border-radius:5px; border-bottom-color:transparent; }
+
+  .nm { font-size:14.5px; font-weight:700; letter-spacing:-.01em; }
+  .nm span { display:block; margin-top:2px; font-size:10px; font-weight:400; color:var(--c-7d8896); }
+  .mn { font:500 12px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-9aa7b4); }
+
+  /* 메모리 — HBM 세대와 용량을 한 칸에. 막대는 두지 않습니다(다음 장이 막대입니다). */
+  .mem { display:flex; align-items:baseline; gap:8px; }
+  .hbm { font:700 10px "IBM Plex Mono", "Pretendard Variable", monospace;
+         color:var(--c-7d8896); letter-spacing:.04em; }
+  .cap { font-size:13px; font-weight:700; color:var(--c-c3ccd6); }
+
+  .gens { display:flex; gap:6px; flex-wrap:wrap; }
+  .g { flex:0 0 auto; padding:4px 9px; border-radius:4px; font-size:10.5px; font-weight:700;
+       border:1px solid var(--c-333d47); color:var(--c-5d6773); white-space:nowrap; }
+  .g.on { background:var(--a-36); border-color:var(--c-17505c); color:var(--c-22a7bd); }
+  .g.am { background:var(--a-37); border-color:var(--c-4a3a1c); color:var(--c-e0912a); }
+
+  .tag { font-size:10px; font-weight:700; }
+
+  /* 예고 구획 — 여기부터는 확정 스펙이 아닙니다 */
+  .split { display:flex; align-items:center; gap:12px; margin:9px 0 3px; }
+  .split .ln { flex:1; height:0; border-top:1px dashed var(--c-333d47); }
+  /* 문장이라 머리글(.head)의 자간을 쓰지 않습니다 — 한글에 자간을 주면 벌어져 보입니다 */
+  .split .lb { font-size:11px; font-weight:700; color:var(--c-6b7684); }
+  .fr.soon .nm, .fr.soon .cap { color:var(--c-8b96a3); }
+  .fr.soon .mn, .fr.soon .hbm { color:var(--c-5d6773); }
+</style>
+</head>
+<body>
+  <h1>NVIDIA 데이터센터 <span class="am">GPU 제품 히스토리</span></h1>
+  <div class="sub">세대마다 늘어난 것은 트랜지스터만이 아닙니다 &mdash;
+    <b style="color:var(--c-c3ccd6)">소프트웨어가 먼저 증명한 방식</b>이 맨 오른쪽 열에서 전용 연산기로 굳습니다.</div>
+
+  <div class="head">
+    <span>세대</span><span>시기</span><span>공정</span><span>메모리</span><span>대역폭</span><span>칩으로 굳은 것</span>
+  </div>
+
+  <div class="fr">
+    <div class="nm">V100<span>Volta</span></div>
+    <div class="mn">2017</div>
+    <div class="mn">TSMC 12nm</div>
+    <div class="mem"><span class="hbm">HBM2</span><span class="cap">32GB</span></div>
+    <div class="mn">0.9TB/s</div>
+    <div class="gens"><span class="g on">텐서코어 1세대 &middot; FP16</span><span class="g">첫 HBM 적용</span></div>
+  </div>
+
+  <div class="fr">
+    <div class="nm">A100<span>Ampere</span></div>
+    <div class="mn">2020</div>
+    <div class="mn">TSMC 7nm</div>
+    <div class="mem"><span class="hbm">HBM2e</span><span class="cap">80GB</span></div>
+    <div class="mn">2.0TB/s</div>
+    <div class="gens"><span class="g on">BF16 &middot; INT8 &middot; INT4</span><span class="g">데이터센터 기본 칩</span></div>
+  </div>
+
+  <div class="fr">
+    <div class="nm">H100<span>Hopper</span></div>
+    <div class="mn">2022</div>
+    <div class="mn">TSMC 4N</div>
+    <div class="mem"><span class="hbm">HBM3</span><span class="cap">80GB</span></div>
+    <div class="mn">3.35TB/s</div>
+    <div class="gens"><span class="g on">Transformer Engine 1세대 &middot; FP8</span></div>
+  </div>
+
+  <div class="fr ref">
+    <div class="nm">H200<span>Hopper 리프레시</span></div>
+    <div class="mn">2024</div>
+    <div class="mn">TSMC 4N</div>
+    <div class="mem"><span class="hbm">HBM3e</span><span class="cap">141GB</span></div>
+    <div class="mn">4.8TB/s</div>
+    <div class="gens"><span class="g am">이 발표의 메모리 기준 &middot; 100%</span></div>
+  </div>
+
+  <div class="fr">
+    <div class="nm">B200<span>Blackwell</span></div>
+    <div class="mn">2024</div>
+    <div class="mn">TSMC 4NP</div>
+    <div class="mem"><span class="hbm">HBM3e</span><span class="cap">192GB</span></div>
+    <div class="mn">8TB/s</div>
+    <div class="gens"><span class="g on">Transformer Engine 2세대 &middot; FP4</span></div>
+  </div>
+
+  <div class="fr refc">
+    <div class="nm">B300<span>Blackwell Ultra</span></div>
+    <div class="mn">2025</div>
+    <div class="mn">TSMC 4NP</div>
+    <div class="mem"><span class="hbm">HBM3e</span><span class="cap">288GB</span></div>
+    <div class="mn">8TB/s</div>
+    <div class="gens"><span class="g on">이 발표의 메모리 기준 &middot; 204%</span></div>
+  </div>
+
+  <div class="fr">
+    <div class="nm">Rubin R100<span>Vera Rubin</span></div>
+    <div class="mn">2026</div>
+    <div class="mn">TSMC N3</div>
+    <div class="mem"><span class="hbm">HBM4</span><span class="cap">288GB</span></div>
+    <div class="mn cy" style="font-weight:700">22TB/s</div>
+    <div class="gens"><span class="g on">Transformer Engine 3세대 &middot; 회전 가속</span><span class="g">Vera CPU</span></div>
+  </div>
+
+  <div class="split"><span class="lb">여기부터는 예고 &mdash; 확정 스펙이 아닙니다</span><span class="ln"></span></div>
+
+  <div class="fr soon">
+    <div class="nm">Rubin Ultra<span>테이프아웃 단계</span></div>
+    <div class="mn">2027</div>
+    <div class="mn">N3 refine</div>
+    <div class="mem"><span class="hbm">HBM4</span><span class="cap">확장</span></div>
+    <div class="mn">&mdash;</div>
+    <div class="gens"><span class="g">밀도 향상</span></div>
+  </div>
+
+  <div class="fr soon">
+    <div class="nm">Feynman<span>발표 자료 기준</span></div>
+    <div class="mn">2028</div>
+    <div class="mn">TSMC A16</div>
+    <div class="mem"><span class="hbm">커스텀 HBM</span><span class="cap">1TB+ 보고</span></div>
+    <div class="mn">&mdash;</div>
+    <div class="gens"><span class="g">3D 다이 스태킹</span><span class="g">광 NVLink</span></div>
+  </div>
+
+  <div class="foot">
+    <b>세대마다 새 연산기가 하나씩 늘었습니다</b> &mdash; FP16 &rarr; BF16&middot;INT8 &rarr; FP8 &rarr; FP4 &rarr; 회전.
+    6&middot;7장에서 본 기법이 그대로 실리콘이 된 순서입니다.
+  </div>
+</body>
+</html>

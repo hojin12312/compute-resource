@@ -4,35 +4,72 @@
 <meta charset="utf-8">
 <link rel="stylesheet" href="base.css?v=2a58053d">
 <style>
-  body { padding-top:70px; }
-  .chart { display:flex; align-items:flex-end; gap:0; height:330px; margin-top:26px; justify-content:space-around; }
-  .col { flex:1; max-width:150px; display:flex; flex-direction:column; align-items:center; }
-  .pair { display:flex; align-items:flex-end; gap:5px; }
-  .b { width:38px; border-radius:3px 3px 0 0; }
-  .vals { display:flex; gap:4px; margin-bottom:10px; }
-  .v { width:38px; text-align:center; font-size:12px; font-weight:700; line-height:1.25; }
-  .v span { display:block; font-size:10px; font-weight:400; color:var(--c-6b7684); margin-top:2px; }
-  .base { border-top:1px solid var(--c-21262d); display:flex; justify-content:space-around; }
-  .meta { flex:1; max-width:150px; text-align:center; padding-top:12px; }
-  .gen { font-size:14px; font-weight:700; color:var(--c-e6edf3); }
-  .yr { font-size:12px; color:var(--c-7d8896); margin-top:4px; }
-  .node { font-size:11.5px; color:var(--c-5d6773); margin-top:5px; }
+  /* 세대별 메모리 용량·대역폭의 변화. 2026-08-04 재작업 —
+     옛 판의 문제 셋을 고쳤습니다.
+       1. 세로를 못 썼습니다. 막대 영역이 268px뿐이라 위아래로 200px 넘게 비었고
+          (check.js가 foot 여백 120px으로 잡고 있었습니다) V100의 ×0.23은 10px 최소높이로
+          뭉개졌습니다. 막대 영역을 370px로 늘렸습니다.
+       2. 기준선이 없었습니다. "H200 = 1.00"이 범례 글자로만 있고 화면에는 없어서
+          배수를 눈으로 견줄 데가 없었습니다. 눈금선 넷을 깔고 ×1.00만 강조합니다.
+       3. 막대 위에 배수와 실측값이 두 줄로 떠 있어 짧은 막대에서는 라벨이 막대보다 컸고,
+          "3.35TB/s"가 "3.35TB/" + "s"로 끊겼습니다. 실측값은 아래 이름표로 내리고
+          막대 위에는 배수 하나만 남겼습니다(nowrap도 걸었습니다).
+     제목도 "로드맵"이 아니라 실제 내용(용량·대역폭 변화)으로 바꿨습니다 — 로드맵은
+     같은 장의 다른 슬라이드가 집니다. */
+  body { padding-top:52px; }
+
+  .plot { position:relative; height:400px; margin-top:26px; }
+
+  /* 눈금선 — 데이터보다 뒤로 물러나 있어야 합니다 */
+  .gl { position:absolute; left:0; right:0; height:0; border-top:1px solid var(--c-1c222a); }
+  .gl.ref { border-top:1px dashed var(--c-4a3a1c); }
+  .gt { position:absolute; right:0; font-size:11px; color:var(--c-5d6773);
+        transform:translateY(-50%); background:var(--c-0d1117); padding-left:8px; }
+  .gt.ref { color:var(--c-e0912a); font-weight:700; }
+
+  .callout { position:absolute; left:0; top:2px; }
+  .callout .ctag { font-size:11.5px; color:var(--c-7d8896); letter-spacing:.02em; }
+  .callout .cnum { margin-top:7px; font-size:21px; font-weight:800; letter-spacing:-.02em; }
+  .callout .cnum .sep { color:var(--c-3f4c58); font-weight:400; }
+
+  .chart { position:absolute; left:0; right:64px; bottom:0; height:400px;
+           display:flex; align-items:flex-end; justify-content:space-around; }
+  .col { flex:1; max-width:168px; display:flex; flex-direction:column; align-items:center; }
+  .vals { display:flex; gap:6px; margin-bottom:9px; }
+  .v { width:46px; text-align:center; font-size:12px; font-weight:700; white-space:nowrap; }
+  .pair { display:flex; align-items:flex-end; gap:6px; }
+  .b { width:46px; border-radius:4px 4px 0 0; }
+
+  .base { border-top:1px solid var(--c-2b333d); display:flex; justify-content:space-around;
+          margin-right:64px; }
+  .meta { flex:1; max-width:168px; text-align:center; padding-top:13px; }
+  .gen { font-size:15px; font-weight:700; color:var(--c-e6edf3); letter-spacing:-.01em; }
+  .yr { font-size:11.5px; color:var(--c-7d8896); margin-top:4px; white-space:nowrap; }
+  .abs { font-size:11.5px; font-weight:700; margin-top:6px; white-space:nowrap; }
+  .abs .sep { color:var(--c-4d5661); font-weight:400; }
 </style>
 </head>
 <body>
-  <h1>GPU 세대별 주요 로드맵</h1>
-  <div class="sub">Volta(V100)부터 Rubin까지 H200 (100% 기준) 메모리 용량 및 대역폭 상대 비교</div>
+  <h1>GPU 세대별 <span class="cy">메모리 용량과 대역폭</span> 변화</h1>
+  <div class="sub">단위가 다른 두 지표(GB &middot; TB/s)를 한 축에 놓기 위해 <b style="color:var(--c-c3ccd6)">H200을 1.00</b>으로 두고 배수로 그렸습니다.</div>
 
   <div class="legend">
     <div><span class="sw amber"></span>메모리 용량</div>
     <div><span class="sw cyan"></span>메모리 대역폭</div>
-    <div style="color:var(--c-7d8896)">막대 높이 = <b style="color:var(--c-c3ccd6)">H200 기준 배수 (H200 = 1.0x / 100%)</b></div>
   </div>
 
-  <div style="width:1150px; margin:0 auto;">
+  <div class="plot">
+    <div id="grid"></div>
+    <!-- 값이 시간순으로 커지는 자료라 왼쪽 위가 비어 있는 것이 정상입니다.
+         그 자리에 이 그림의 결론(9년치 배수)을 놓아 여백을 쓰게 했습니다.
+         ×4.00 눈금선(위에서 78px)보다 위에 두어야 겹치지 않습니다. -->
+    <div class="callout">
+      <div class="ctag">V100 &rarr; Rubin &middot; 9년</div>
+      <div class="cnum"><span class="am">용량 &times;9.0</span><span class="sep"> &middot; </span><span class="cy">대역폭 &times;24.4</span></div>
+    </div>
     <div class="chart" id="chart"></div>
-    <div class="base" id="base"></div>
   </div>
+  <div class="base" id="base"></div>
 
   <div class="foot">
     용량은 <b>3장의 청구서</b>를, 대역폭은 <b>5.2장의 병목</b>을 직접 건드립니다.
@@ -40,35 +77,52 @@
 
 <script>
 const D = [
-  { gen: 'V100',   yr: '2017', node: 'TSMC 12nm', mem: 32,  bw: 0.9 },
-  { gen: 'A100',   yr: '2020', node: 'TSMC 7nm',  mem: 80,  bw: 2.0 },
-  { gen: 'H100',   yr: '2022', node: 'TSMC 4N',   mem: 80,  bw: 3.35 },
-  { gen: 'H200',   yr: '2024', node: 'TSMC 4N',   mem: 141, bw: 4.8,  mark: 'am' },
-  { gen: 'B200',   yr: '2024', node: 'TSMC 4NP',  mem: 192, bw: 8 },
-  { gen: 'B300',   yr: '2025', node: 'TSMC 4NP',  mem: 288, bw: 8,    mark: 'cy' },
-  { gen: 'Rubin',  yr: '2026', node: 'TSMC N3',   mem: 288, bw: 22 },
+  { gen: 'V100',   yr: '2017 · TSMC 12nm', mem: 32,  bw: 0.9 },
+  { gen: 'A100',   yr: '2020 · TSMC 7nm',  mem: 80,  bw: 2.0 },
+  { gen: 'H100',   yr: '2022 · TSMC 4N',   mem: 80,  bw: 3.35 },
+  { gen: 'H200',   yr: '2024 · TSMC 4N',   mem: 141, bw: 4.8,  mark: 'am' },
+  { gen: 'B200',   yr: '2024 · TSMC 4NP',  mem: 192, bw: 8 },
+  { gen: 'B300',   yr: '2025 · TSMC 4NP',  mem: 288, bw: 8,    mark: 'cy' },
+  { gen: 'Rubin',  yr: '2026 · TSMC N3',   mem: 288, bw: 22 },
 ];
-const MEM0 = 141, BW0 = 4.8; // H200 100% 기준
-const MAX = 4.58, H = 268;
+const MEM0 = 141, BW0 = 4.8;   // H200 = 1.00
+const MAX = 4.6, H = 370;      // 막대 영역 370px, 위 30px은 배수 라벨 자리
+const px = v => Math.round(v / MAX * H);
+
+// 눈금선 — ×1.00(H200)만 강조하고 나머지는 물러나 있습니다
+const grid = document.getElementById('grid');
+[1, 2, 3, 4].forEach(t => {
+  const ref = t === 1;
+  const y = 400 - px(t);
+  grid.insertAdjacentHTML('beforeend',
+    '<div class="gl' + (ref ? ' ref' : '') + '" style="top:' + y + 'px"></div>' +
+    '<div class="gt' + (ref ? ' ref' : '') + '" style="top:' + y + 'px">' +
+      (ref ? 'H200 = ×1.00' : '×' + t.toFixed(2)) + '</div>');
+});
+
 const chart = document.getElementById('chart'), base = document.getElementById('base');
 D.forEach(d => {
   const mx = d.mem / MEM0, bx = d.bw / BW0;
   const col = document.createElement('div'); col.className = 'col';
   col.innerHTML =
     '<div class="vals">' +
-      '<div class="v am">×' + mx.toFixed(2) + '<span>' + d.mem + 'GB</span></div>' +
-      '<div class="v cy">×' + bx.toFixed(2) + '<span>' + d.bw + 'TB/s</span></div>' +
+      '<div class="v am">&times;' + mx.toFixed(2) + '</div>' +
+      '<div class="v cy">&times;' + bx.toFixed(2) + '</div>' +
     '</div>' +
     '<div class="pair">' +
-      '<div class="b amber" style="height:' + Math.max(10, Math.round(mx / MAX * H)) + 'px"></div>' +
-      '<div class="b cyan" style="height:' + Math.max(10, Math.round(bx / MAX * H)) + 'px"></div>' +
+      '<div class="b amber" style="height:' + px(mx) + 'px"></div>' +
+      '<div class="b cyan" style="height:' + px(bx) + 'px"></div>' +
     '</div>';
   chart.appendChild(col);
 
   const m = document.createElement('div'); m.className = 'meta';
-  const gcls = d.gen === 'H200' ? ' style="color:var(--c-e0912a)"' : d.mark === 'cy' ? ' style="color:var(--c-22a7bd)"' : '';
-  m.innerHTML = '<div class="gen"' + gcls + '>' + d.gen + (d.gen === 'H200' ? ' <span style="font-size:10px; color:var(--c-e0912a)">(100%)</span>' : '') + '</div>' +
-                '<div class="yr">' + d.yr + '</div><div class="node">' + d.node + '</div>';
+  const gcls = d.mark === 'am' ? ' style="color:var(--c-e0912a)"'
+             : d.mark === 'cy' ? ' style="color:var(--c-22a7bd)"' : '';
+  m.innerHTML =
+    '<div class="gen"' + gcls + '>' + d.gen + '</div>' +
+    '<div class="yr">' + d.yr + '</div>' +
+    '<div class="abs"><span class="am">' + d.mem + 'GB</span>' +
+      '<span class="sep"> &middot; </span><span class="cy">' + d.bw + 'TB/s</span></div>';
   base.appendChild(m);
 });
 </script>
