@@ -4,11 +4,15 @@
 <meta charset="utf-8">
 <link rel="stylesheet" href="base.css?v=2a58053d">
 <style>
-  .panels { gap:30px; margin-top:34px; }
+  .panels { gap:30px; margin-top:34px; align-items:stretch; }
   .panel { padding:19px 20px 16px; border:1px solid var(--c-333d47); border-radius:11px;
-           background:var(--c-161b22); }
+           background:var(--c-161b22); display:flex; flex-direction:column; }
+  /* 캡션은 패널 바닥에 붙입니다 — 셋의 아래끝이 한 줄로 맞고, 그만큼 foot 여백도 닫힙니다. */
+  .panel > .cap { margin-top:auto; padding-top:16px; }
 
-  .flow { display:flex; align-items:center; gap:9px; margin-top:16px; }
+  /* 패널을 세로로 맞추면(align-items:stretch) 짧은 패널에 빈자리가 생깁니다.
+     본문 블록에도 margin-bottom:auto를 줘서 캡션과 남는 공간을 나눠 갖게 했습니다. */
+  .flow { display:flex; align-items:center; gap:9px; margin:auto 0; }
   .tok { width:34px; height:62px; border-radius:5px; background:var(--c-2b333d);
          display:flex; align-items:center; justify-content:center;
          font:700 11px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-c3ccd6); }
@@ -20,14 +24,14 @@
           font:700 10.5px "IBM Plex Mono", "Pretendard Variable", monospace; }
   .ebox.dim { background:var(--c-3f4c58); color:var(--c-c3ccd6); }
 
-  .loads { display:flex; align-items:flex-end; gap:8px; height:200px; margin-top:24px; }
+  .loads { display:flex; align-items:flex-end; gap:8px; height:232px; margin-top:24px; }
   .lb { width:28px; border-radius:2px 2px 0 0; background:var(--c-0e8fa3); }
   .lb.hot { background:var(--c-c47d15); }
   .lb.dup { background:var(--c-8b6ff0); }
   .ltag { display:flex; gap:6px; margin-top:6px; }
   .ltag span { width:28px; font-size:9px; color:var(--c-7d8896); text-align:center; }
 
-  .scale { display:flex; gap:26px; margin-top:18px; }
+  .scale { display:flex; gap:26px; margin:auto 0; }
   .sc { }
   /* 점은 SVG로 그립니다(2026-08-03). 9px 점이 캡처 배율(zoom 1.395 × DPR 2 = 2.79)에서
      25.11 디바이스픽셀이라 크로미움이 박스마다 정수로 스냅해 점 크기가 갈렸습니다.
@@ -70,7 +74,7 @@
           <div class="tok" style="height:44px">결과</div>
         </div>
       </div>
-      <div class="cap" style="margin-top:20px; line-height:1.7">
+      <div class="cap" style="line-height:1.7">
         노드 안은 <b>NVLink 160GB/s</b>, 노드 사이는 <b>IB 50GB/s</b>로 <b class="am">3배 넘게</b>
         차이 납니다. 그래서 이 왕복이 <b>한 도메인 안에서 끝나야</b> 이득이 남습니다.
       </div>
@@ -80,18 +84,18 @@
       <div class="ptitle">쏠림과 중복 전문가</div>
       <div class="pdesc">가장 바쁜 장이 끝날 때까지 나머지가 기다립니다</div>
       <div class="loads">
-        <div class="lb" style="height:79px"></div>
         <div class="lb" style="height:92px"></div>
-        <div class="lb hot" style="height:193px"></div>
-        <div class="lb" style="height:72px"></div>
-        <div class="lb" style="height:86px"></div>
-        <div class="lb dup" style="height:97px"></div>
-        <div class="lb dup" style="height:97px"></div>
+        <div class="lb" style="height:107px"></div>
+        <div class="lb hot" style="height:224px"></div>
+        <div class="lb" style="height:84px"></div>
+        <div class="lb" style="height:100px"></div>
+        <div class="lb dup" style="height:113px"></div>
+        <div class="lb dup" style="height:113px"></div>
       </div>
       <div class="ltag">
         <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>3'</span><span>3''</span>
       </div>
-      <div class="cap" style="margin-top:14px; line-height:1.7">
+      <div class="cap" style="line-height:1.7">
         인기 전문가를 <b class="vi">복제해 여러 장에 함께</b> 두고 10분쯤 주기로 다시 배치합니다.
         품질 문제가 아니라 <b>처리량 문제</b>입니다.
       </div>
@@ -110,7 +114,7 @@
           <div class="sclabel">디코딩 · 40노드<b class="am">320장 · EP320</b></div>
         </div>
       </div>
-      <div class="cap" style="margin-top:14px; line-height:1.7">
+      <div class="cap" style="line-height:1.7">
         디코딩은 <b>장당 전문가 하나</b>입니다. 리포트가 EP를 고른 이유는 용량이 아니라
         <b>각 전문가에게 충분히 큰 배치를 주는 것</b>이었습니다.
       </div>
