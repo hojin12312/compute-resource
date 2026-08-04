@@ -19,6 +19,9 @@ scratch/
 # Master image files (kept locally — README references webp only)
 assets/*.jpg
 assets/*.png
+# 예외: recapture.js가 만드는 임시 png가 아니라 glm_bench.html이 참조하는 영구 자산입니다.
+# 이 예외가 없어 배포본에서 62번 슬라이드가 계속 404였습니다(2026-08-04 발견).
+!assets/bench_52.png
 
 # Playwright 캡처는 프로젝트 루트에 떨어집니다 (그림 재캡처·덱 검수 때 생김)
 /*.png
