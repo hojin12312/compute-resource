@@ -1,4 +1,4 @@
-/* 덱 98장 회귀 검사.
+/* 덱 101장 회귀 검사.
  *
  *   node slides/check.js            다크
  *   node slides/check.js --light    라이트

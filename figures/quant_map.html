@@ -6,19 +6,15 @@
 <style>
   /* 78번(GGUF Q/K/I 세 계열)을 걷어낸 뒤 흐름 셋만 남아 캔버스가 비므로,
      같은 정보량을 더 큰 판으로 펴서 여백을 채웁니다(2026-08-03). */
-  .flow { display:grid; grid-template-columns:1fr 60px 1fr 60px 1.2fr; gap:16px;
+  .flow { display:grid; grid-template-columns:repeat(3, 1fr); gap:24px;
           align-items:stretch; margin-top:150px; }
   .box { border:1px solid var(--c-333d47); border-radius:13px; background:var(--c-161b22); padding:42px 36px; }
-  .box.mix { border-color:var(--c-17505c); background:var(--c-0f2930); }
-  .arrow { display:flex; align-items:center; justify-content:center; color:var(--c-5d6773); font-size:36px; }
   .tag { font:700 12.5px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-8b96a3); letter-spacing:.08em; }
   .box h2 { font-size:26px; margin-top:14px; }
   .box p { color:var(--c-9aa7b4); font-size:15.5px; line-height:1.8; margin-top:20px; }
   .chips { display:flex; flex-wrap:wrap; gap:9px; margin-top:30px; }
   .chip { padding:8px 12px; border-radius:6px; background:var(--c-2b333d); color:var(--c-c3ccd6);
           font:700 13.5px "IBM Plex Mono", "Pretendard Variable", monospace; }
-  .chip.am { background:var(--c-c47d15); color:var(--c-0d1117); }
-  .chip.cy { background:var(--c-0e8fa3); color:var(--c-0d1117); }
 </style>
 </head>
 <body>
@@ -27,26 +23,24 @@
 
   <div class="flow">
     <div class="box">
-      <div class="tag">1 · 숫자 그릇</div>
+      <div class="tag">숫자 그릇</div>
       <h2>정밀도 포맷</h2>
       <p>숫자 하나를 몇 비트와 어떤 눈금으로 저장할지만 정합니다 &mdash;
         <b>어느 값을 어떻게 줄일지는 다음 층의 일</b>입니다.</p>
-      <div class="chips"><span class="chip">BF16</span><span class="chip">FP8</span><span class="chip am">FP4</span></div>
+      <div class="chips"><span class="chip">BF16</span><span class="chip">FP8</span><span class="chip">FP4</span></div>
     </div>
-    <div class="arrow">→</div>
     <div class="box">
-      <div class="tag">2 · 오차 줄이기</div>
+      <div class="tag">오차 줄이기</div>
       <h2>보정 방법</h2>
       <p>같은 비트 안에서 중요한 값의 오차를 더 작게 만듭니다 &mdash;
         <b>AWQ</b>는 활성값이 큰 채널만 스케일로 보호하고, <b>AutoRound</b>는 블록별 라운딩 값 자체를 최적화합니다.</p>
       <div class="chips"><span class="chip">AWQ</span><span class="chip">AutoRound</span><span class="chip">imatrix</span></div>
     </div>
-    <div class="arrow">→</div>
-    <div class="box mix">
-      <div class="tag">3 · 예산 배분</div>
-      <h2><span class="cy">혼합 정밀도</span></h2>
+    <div class="box">
+      <div class="tag">예산 배분</div>
+      <h2>혼합 정밀도</h2>
       <p>민감한 텐서에는 비트를 더 주고, 둔감한 곳에서 회수해 목표 평균 BPW를 맞춥니다.</p>
-      <div class="chips"><span class="chip cy">Q4_K_M</span><span class="chip cy">EXL2</span><span class="chip cy">Dynamic 2.0</span></div>
+      <div class="chips"><span class="chip">Q4_K_M</span><span class="chip">EXL2</span><span class="chip">Dynamic 2.0</span></div>
     </div>
   </div>
   <div class="foot">3층을 섞어 부르면 대화가 엉킵니다 &mdash; <b>&quot;FP4로 양자화했다&quot;</b>와

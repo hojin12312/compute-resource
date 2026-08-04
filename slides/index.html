@@ -1288,7 +1288,7 @@
 </section>
 
 <section class="fig" data-chapter="7. 양자화">
-  <img src="../assets/quantization_map.webp?v=20260803q" alt="모델 양자화 지도 — 양자화가 서로 다른 세 층(포맷·보정·배분)임을 화살표로 잇는 그림. 1층 정밀도 포맷(BF16·FP8·FP4)은 몇 비트로 담을지만 정하고 어느 값을 줄일지는 다음 층의 일이며, 2층 보정 방법은 AWQ(활성값이 큰 채널을 스케일로 보호)·AutoRound(블록별 라운딩 최적화)로 같은 비트 안에서 오차만 줄이고, 3층 예산 배분(Q4_K_M·EXL2·Dynamic 2.0)에서 처음으로 자리마다 비트 자체가 달라진다는 것을 보여준다. 하단에는 3층을 섞어 부르면 대화가 엉킨다는 경고가 있다">
+  <img src="../assets/quantization_map.webp?v=20260803q" alt="모델 양자화 지도 — 양자화가 서로 다른 세 층(포맷·보정·배분)임을 세 카드로 보여주는 그림. 1층 정밀도 포맷(BF16·FP8·FP4)은 몇 비트로 담을지만 정하고 어느 값을 줄일지는 다음 층의 일이며, 2층 보정 방법은 AWQ(활성값이 큰 채널을 스케일로 보호)·AutoRound(블록별 라운딩 최적화)로 같은 비트 안에서 오차만 줄이고, 3층 예산 배분(Q4_K_M·EXL2·Dynamic 2.0)에서 처음으로 자리마다 비트 자체가 달라진다는 것을 보여준다. 하단에는 3층을 섞어 부르면 대화가 엉킨다는 경고가 있다">
   <aside class="notes">
     <b>7장의 낱말 지도입니다 — 이 장 전체를 여기서 한 번에 세웁니다.</b> 이름이 많아 보이는
     이유는 같은 문제를 <b>서로 다른 높이(층)</b>에서 풀기 때문입니다. 1층 포맷은 그릇만
@@ -1351,6 +1351,15 @@
 </section>
 
 <section class="fig" data-chapter="7. 양자화">
+  <img src="../assets/quant_calib.webp?v=20260803q" alt="보정 방법 시각화 — AWQ(활성값이 튀는 채널의 가중치를 미리 확대해 4비트 눈금 뭉개짐 방지), AutoRound(경사하강법으로 올림/내림 반올림 방향 탐색), imatrix(실제 문장을 흘려보낸 중요도 성적표로 GGUF 양자화 보호). 세 기법 모두 오프라인에서 오차만 줄이므로 런타임 지연이 없음">
+  <aside class="notes">
+    <b>2층 보정(Calibration)의 핵심은 비트 수(그릇)를 늘리지 않고 오차만 줄이는 것입니다.</b>
+    AWQ는 활성값이 튀는 채널의 스케일을 미리 조작해 보호하고, AutoRound는 반올림 올림/내림 방향 자체를 경사하강법으로 탐색하며, imatrix는 어디가 중요한지 적어 둔 성적표입니다.
+    셋 다 <b>런타임 추론 속도를 갉아먹지 않는 오프라인 사전 처리 기법</b>임을 짚어 주세요.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="7. 양자화">
   <img src="../assets/uniform_vs_mixed.webp?v=20260803q" alt="균일 정밀도와 혼합 정밀도를 같은 평균 4비트에서 비교한 막대그래프 — 왼쪽은 열두 텐서 모두 4비트로 평평하고, 오른쪽은 임베딩과 어텐션과 출력층을 5~6비트로 올리고 MoE 전문가 FFN을 3비트로 내려 들쭉날쭉하지만 평균선 높이는 둘이 같다">
   <aside class="notes">
     <b>점선 높이가 두 패널에서 같습니다 — 용량이 같다는 뜻입니다.</b> 왼쪽은 모든 자리에 같은 비트,
@@ -1362,104 +1371,63 @@
 </section>
 
 <section data-chapter="7. 양자화">
-  <div class="eyebrow">7.1 · 가중치가 특별한 이유</div>
-  <h2>가중치는 <span class="cy">예측 가능</span>하니까 혼합이 됩니다</h2>
+  <div class="eyebrow">7.1 · 양자화 포맷 생태계</div>
+  <h2>실무를 지배하는 <span class="cy">4대 포맷 분류표</span></h2>
   <div class="body" style="margin-top:24px">
-    <div class="cols c3">
-      <div class="card cy-b">
-        <span class="k">조건 1 · 값이 고정입니다</span>
-        <h4>미리 재 볼 수 있습니다</h4>
-        <p>학습이 끝나면 가중치는 <b>변하지 않습니다.</b>
-          그래서 어느 텐서가 오차에 민감한지 <b>실제로 흘려보내 재 보고</b> 비트를 배분할 수 있습니다.</p>
-      </div>
-      <div class="card cy-b">
-        <span class="k">조건 2 · 한 번만 하면 됩니다</span>
-        <h4>만들어 두면 <b class="cy">저장이 끝</b>입니다</h4>
-        <p>탐색은 <b>모델마다 한 번, 오프라인</b>입니다.
-          그 결과물을 파일로 배포하면 받는 쪽은 올리기만 합니다 &mdash; 런타임 비용이 0입니다.</p>
-      </div>
-      <div class="card am-b">
-        <span class="k">단서 · 모델 크기</span>
-        <h4>작은 모델이 <b class="am">더 잘 부서집니다</b></h4>
-        <p>같은 4비트를 먹여도 큰 모델이 손실이 적다는 것이 널리 관찰됩니다.
-          앞단에서 흐트러진 분포를 <b>뒷단 레이어가 잡아 주는 여지</b>가 크다는 설명이 유력합니다.</p>
-      </div>
-    </div>
-    <div class="lead" style="margin-top:24px">그래서 <b>작은 모델은 균일 4비트로 밀지 말고</b> 비트를 더 주거나
-      FP8에서 멈추는 편이 낫고, 큰 모델은 같은 평균 비트에서 <b class="cy">혼합으로 더 눌러도</b> 버팁니다.</div>
+    <table class="mid">
+      <tr><th>포맷</th><th>주요 생태계 · 엔진</th><th>대표 양자화 기법</th><th>주요 대상 및 특성</th></tr>
+      <tr>
+        <td><b>safetensors</b></td>
+        <td>PyTorch · vLLM · SGLang · TRT-LLM</td>
+        <td>FP8 · AWQ · AutoRound · MXFP4</td>
+        <td><b>기업 프로덕션 서버</b> &middot; 멀티 GPU &middot; 초고속 VRAM 로딩(mmap)</td>
+      </tr>
+      <tr>
+        <td><b>GGUF</b></td>
+        <td>llama.cpp · Ollama · LM Studio</td>
+        <td>Dynamic 2.0 · Q4_K_M · IQ4_XS</td>
+        <td><b>개인 · 로컬 PC</b> &middot; 단일 바이너리 &middot; CPU/RAM 혼용(Offloading)</td>
+      </tr>
+      <tr>
+        <td><b>MLX</b></td>
+        <td>mlx-lm (Apple Silicon)</td>
+        <td>MLX 4-bit / 8-bit</td>
+        <td><b>맥북(M1~M5) 전용</b> &middot; 통합 메모리(RAM) 100% 직결 가속</td>
+      </tr>
+      <tr>
+        <td><b>EXL2</b></td>
+        <td>ExLlamaV2</td>
+        <td>소수점 BPW (3.5b, 4.25b 등)</td>
+        <td><b>NVIDIA GPU 전용</b> &middot; VRAM 맞춤형 소수점 양자화 &middot; 극상 디코딩 속도</td>
+      </tr>
+    </table>
   </div>
-  <div class="foot cy-l">앞 그림의 <b>들쭉날쭉한 막대</b>가 가능한 것은 이 두 조건 때문입니다 &mdash; KV캐시에는 둘 다 없습니다.</div>
+  <div class="foot">대규모 서버는 <b>safetensors</b>, 로컬 PC는 <b>GGUF</b>, 맥북은 <b>MLX</b>, 단일 GPU 속도전은 <b>EXL2</b>로 생태계가 갈립니다.</div>
   <aside class="notes">
-    <b>모델 크기와 양자화 내성은 경험 규칙으로 말해 주세요.</b> "큰 모델이 더 잘 버틴다"는
-    널리 관찰되는 것이지만, <b>이 문서가 1차 출처로 확인해 둔 항목은 아닙니다</b> — 뒷단이
-    잡아 준다는 설명도 가설 쪽입니다. 반례가 나올 수 있는 자리라 단정하지 마세요.
-    반대로 <b>K3처럼 처음부터 4비트로 학습하면</b> 이 규칙과 무관하게 품질을 지킬 수 있습니다.
+    <b>실무 양자화 포맷 생태계의 4대 분류입니다.</b>
+    기업 프로덕션 서버는 vLLM/SGLang과 safetensors(FP8/AWQ), 개인 로컬 PC는 Ollama/llama.cpp와 GGUF(Dynamic 2.0/Q4_K_M), 애플 실리콘 맥북은 MLX, 엔비디아 단일 GPU 속도전은 EXL2로 뚜렷하게 나뉩니다.
   </aside>
 </section>
 
 <section data-chapter="7. 양자화">
-  <div class="eyebrow">7.1 · 로컬에서 만나는 암호들</div>
-  <h2><span class="cy">Q4_K_M</span>과 <span class="vi">IQ4_XS</span>는 무엇이 다른가</h2>
-  <div class="body" style="margin-top:22px">
-    <table class="mid">
-      <tr><th>계열</th><th>이름</th><th>핵심 아이디어</th></tr>
-      <tr><td>레거시 Q-quants</td><td class="n">Q4_0 · Q8_0</td><td>블록 단위의 <b>균일한 정수 눈금</b></td></tr>
-      <tr class="hi"><td>K-quants</td><td class="n cy"><b>Q4_K_M</b></td><td><b>슈퍼블록 이중 스케일</b> + 텐서별 혼합 정밀도</td></tr>
-      <tr class="hi"><td>I-quants</td><td class="n vi"><b>IQ4_XS</b> · IQ3_XXS</td><td><b>비선형 코드북/격자</b>에서 패턴 번호를 저장 &mdash; 2~3비트까지</td></tr>
-    </table>
-    <div class="cols c2" style="margin-top:24px">
-      <div class="card">
-        <span class="k">여기에 얹히는 장치 하나</span>
-        <h4>중요도 행렬 · imatrix</h4>
-        <p>캘리브레이션 텍스트를 실제로 흘려보내 <b>어느 자리가 자주 세게 쓰이는지</b> 재둔 표입니다.
-          이름은 행렬이지만 저장되는 것은 1차원 배열이고, <b>I-quants 전용이 아닙니다.</b></p>
-      </div>
-      <div class="card">
-        <span class="k">개발자와 배포자가 다릅니다</span>
-        <h4>포맷은 llama.cpp, 파일은 Unsloth</h4>
-        <p>포맷과 커널은 <b>ikawrakow</b>가 만들고, 우리가 받아 쓰는 변환본은 대개
-          <b>Unsloth</b>가 올린 것입니다 &mdash; Dynamic 2.0이 그 결과물입니다.</p>
-      </div>
-    </div>
-  </div>
-  <div class="foot">여기까지가 <b>가중치</b> 이야기였습니다. 이제 <b class="am">매 요청마다 새로 생기는 쪽</b>으로 갑니다.</div>
-</section>
-
-<section class="fig" data-chapter="7.2 KV캐시 양자화">
-  <img src="../assets/kv_quant_rotation.webp?v=20260803q" alt="하다마드 회전 — 회전 전에는 이상치 몇 개가 눈금을 다 잡아먹어 나머지가 가운데 뭉치고, 회전 뒤에는 값이 고르게 퍼져 같은 4비트로도 구분되며 최대-최소 폭이 좁아지고 좌표가 예측 가능한 베타 분포를 따른다. 가중치·활성값·KV캐시 모두에 적용되고 대가는 입력에 회전 행렬을 곱하는 연산이다">
-  <aside class="notes">
-    <b>왼쪽이 문제, 오른쪽이 해법입니다.</b> 4비트는 눈금이 16칸뿐인데 이상치 하나가 멀리 튀면
-    그 사이가 다 빈 칸으로 낭비되고, 나머지 값들은 가운데 뭉쳐 <b>서로 구분되지 않습니다.</b>
-    <b>하다마드 회전</b>은 그 뾰족한 값을 여러 차원에 나눠 <b>최대−최소 폭을 좁힙니다.</b>
-    그리고 회전 뒤 좌표는 <b>예측 가능한 분포(베타)</b>를 따르므로 <b>데이터를 보지 않고도</b>
-    최적 눈금을 미리 설계할 수 있습니다 — 다음 두 장의 기법이 여기서 나옵니다.
-    <b>가중치·활성값·KV캐시 모두에 적용됩니다.</b>
-  </aside>
-</section>
-
-<section data-chapter="7.2 KV캐시 양자화">
-  <div class="eyebrow">7장 · 회전의 값과 대가</div>
-  <h2>품질에는 <span class="cy">유리</span>, 연산에는 <span class="am">불리</span>합니다</h2>
+  <div class="eyebrow">7.1 · GGUF 양자화 진화사</div>
+  <h2>GGUF <span class="cy">1세대부터 5세대까지</span> 한눈에 보기</h2>
   <div class="body" style="margin-top:24px">
-    <div class="cols c2">
-      <div class="card cy-b">
-        <span class="k">얻는 것</span>
-        <h4>같은 비트에서 품질</h4>
-        <p><b>QuaRot</b>은 회전을 곱해 이상치를 분산시킨 뒤 양자화해,
-          <b>가중치·활성값·KV캐시를 통째로 4비트</b>(W4A4KV4)까지 내려도 정확도 99% 이상을 유지한다고 보고합니다.</p>
-      </div>
-      <div class="card am-b">
-        <span class="k">내는 것</span>
-        <h4>행렬 곱 한 번이 붙습니다</h4>
-        <p>회전은 공짜가 아닙니다 &mdash; <b>쓸 때마다 입력에 회전 행렬을 곱해야</b> 합니다.<br><br>
-          <b>가중치</b>는 미리 돌려 저장하면 품질만 얻지만,
-          <b class="am">읽을 때마다 되펼치는 KV캐시</b>에서는 그 곱이 런타임에 남습니다.</p>
-      </div>
-    </div>
-    <div class="lead" style="margin-top:24px">그래서 회전은 <b>가중치 압축에서는 거의 순이득</b>이고,
-      KV캐시에서는 <b class="am">"메모리를 아끼려고 연산을 낸다"</b>는 저울질이 됩니다.</div>
+    <table class="mid">
+      <tr><th>세대</th><th>대표 포맷</th><th>핵심 혁신 및 특징</th></tr>
+      <tr><td><b>1세대 (Q-quants)</b></td><td class="n">Q4_0 · Q8_0</td><td>단순 32개 블록 단위의 <b>균일 정수 라운딩</b></td></tr>
+      <tr><td><b>2세대 (K-quants)</b></td><td class="n">Q4_K_M · Q5_K_M</td><td>256개 슈퍼블록 이중 스케일 + <b>고정 룰 혼합 정밀도</b></td></tr>
+      <tr><td><b>3세대 (I-quants)</b></td><td class="n">IQ4_XS · IQ3_XXS</td><td><b>비선형 코드북(패턴 번호)</b> + imatrix 중요도 프로파일 결합</td></tr>
+      <tr><td><b>4세대 (Dynamic 2.0 / MX)</b></td><td class="n cy"><b>Dynamic 2.0</b> · MXFP4</td><td><b>동적 텐서 민감도 자동 측정</b> + 블랙웰 마이크로스케일</td></tr>
+      <tr><td><b>5세대 (BitNet / DSA)</b></td><td class="n vi"><b>BitNet 1.58b</b> · DSA Joint</td><td><b>1.58비트 삼진법 (곱셈 소멸)</b> + 어텐션 인덱서 동시 양자화</td></tr>
+    </table>
   </div>
-  <div class="foot cy-l">이 저울질의 실제 눈금은 세 장 뒤 <b>엔진 실측</b>에서 봅니다.</div>
+  <div class="foot">현재 로컬 실무 추천 포맷은 <b class="cy">4세대(Dynamic 2.0 및 MXFP4)</b>이며, 곱셈 소멸 및 최첨단 아키텍처는 <b class="vi">5세대</b>가 선도합니다.</div>
+  <aside class="notes">
+    <b>GGUF 양자화 기술의 1세대부터 5세대까지의 진화표입니다.</b>
+    1세대 단순 정수 양자화에서 시작하여, 2세대 K-quants(슈퍼블록+고정 룰), 3세대 I-quants(비선형 코드북), 4세대 Dynamic 2.0(동적 민감도 측정 및 MXFP4), 5세대 BitNet/DSA(삼진법 및 인덱서 동시 양자화)로 이어집니다.
+    여기까지가 가중치 양자화 이야기이며, 다음 장부터는 매 요청마다 새로 생기는 KV캐시 양자화로 넘어갑니다.
+  </aside>
 </section>
 
 <section data-chapter="7.2 KV캐시 양자화">
@@ -1481,15 +1449,98 @@
           같은 탐색을 <b>매 요청·매 토큰</b>에 하면 아끼려던 것보다 비용이 큽니다 &mdash; 사실상 성립하지 않습니다.</p>
       </div>
     </div>
-    <div class="lead" style="margin-top:24px">그래서 이쪽에서 쓸 수 있는 것은 <b class="cy">전체에 같은 비트</b>를 주고
-      <b>눈금을 잘 잡는 일</b>뿐입니다 &mdash; 축·블록 단위 스케일, 그리고 방금 본 <b class="cy">회전</b>.
-      다음 두 장이 그 눈금을 설계하는 방법입니다.</div>
+    <div class="lead" style="margin-top:24px">그래서 이쪽에서 쓸 수 있는 것은 <b class="cy">전체에 같은 비트</b>를 주고 <b>눈금을 잘 잡는 일</b>뿐입니다.
+      그리고 이 KV캐시 양자화의 한계를 깨뜨려 <b>2026년 3월 증시를 흔든 주인공</b>이 구글의 <b class="cy">TurboQuant</b>입니다.</div>
   </div>
-  <div class="foot">단순 per-tensor INT4는 이상치 채널 때문에 <b class="am">4비트 이하에서 급격히 무너집니다</b> &mdash; 그래서 회전이 먼저 옵니다.</div>
+  <div class="foot">단순 per-tensor INT4는 이상치 채널 때문에 <b class="am">4비트 이하에서 급격히 무너집니다</b> &mdash; 그래서 회전이 필요합니다.</div>
   <aside class="notes">
     <b>"균일"의 범위를 정확히 말해 주세요.</b> 채널·토큰 축이나 블록 단위로 스케일을 따로 두는 것은
     실시간에 할 수 있는 일이라 널리 씁니다. 못 하는 것은 <b>레이어마다 비트 수를 다르게 배분하는
     탐색</b>입니다. "혼합 정밀도가 자리잡지 못했다"는 그 뜻입니다.
+  </aside>
+</section>
+
+<section data-chapter="7.2 KV캐시 양자화">
+  <div class="eyebrow">2026. 03. 24 · Google Research</div>
+  <h2>Google, <span class="cy">TurboQuant</span> 발표와 증시 파장</h2>
+  <div class="body">
+    <div class="cols c2u">
+      <div>
+        <table class="mid">
+          <tr><td>압축 대상</td><td class="n am"><b>KV 캐시 (Key-Value Cache)</b></td></tr>
+          <tr class="hi"><td>메모리 절감</td><td class="n">용량 <b>6배 절감 (6x)</b> &middot; 오차 0%급</td></tr>
+          <tr><td>연산 가속</td><td class="n">Attention 연산 <b>최대 8배 가속</b></td></tr>
+          <tr><td>핵심 메커니즘</td><td class="n">Hadamard 회전 + Lloyd-Max 눈금</td></tr>
+        </table>
+      </div>
+      <div class="card am-b">
+        <span class="k">1,000억 달러 패닉</span>
+        <p>월가가 "HBM 칩 구매 1/6 폭락"으로 오해,<br>
+          <b>SK하이닉스&middot;삼성&middot;마이크론 130조 원 폭락</b> 쇼크 발생.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">1장의 Kimi K3처럼 "효율이 자본의 신화를 흔든" 두 번째 2026년 증시 쇼크였습니다.</div>
+  <aside class="notes">
+    <b>2026년 3월 24일 구글이 TurboQuant를 발표했을 때 발생한 메모리 반도체 증시 충격입니다.</b>
+    구글이 KV 캐시 메모리 6배 절감을 발표하자 월가가 "HBM/VRAM 칩 수요가 1/6로 줄어든다"고 단세포적으로 오해하여 48시간 만에 글로벌 메모리 시총 1,000억 달러(약 130조 원)가 증발했습니다.
+    이후 "추론 단가가 내려가 AI 에이전트 서비스 폭발로 메모리 총수요는 오히려 증가한다(제번스의 역설)"는 해명이 퍼지며 주가가 복귀되었습니다.
+  </aside>
+</section>
+
+<section class="fig" data-chapter="7.2 KV캐시 양자화">
+  <img src="../assets/kv_quant_rotation.webp?v=20260803q" alt="하다마드 회전 — 회전 전에는 이상치 몇 개가 눈금을 다 잡아먹어 나머지가 가운데 뭉치고, 회전 뒤에는 값이 고르게 퍼져 같은 4비트로도 구분되며 최대-최소 폭이 좁아지고 좌표가 예측 가능한 베타 분포를 따른다. 가중치·활성값·KV캐시 모두에 적용되고 대가는 입력에 회전 행렬을 곱하는 연산이다">
+  <aside class="notes">
+    <b>왼쪽이 문제, 오른쪽이 해법입니다.</b> 4비트는 눈금이 16칸뿐인데 이상치 하나가 멀리 튀면
+    그 사이가 다 빈 칸으로 낭비되고, 나머지 값들은 가운데 뭉쳐 <b>서로 구분되지 않습니다.</b>
+    <b>하다마드 회전</b>은 그 뾰족한 값을 여러 차원에 나눠 <b>최대−최소 폭을 좁힙니다.</b>
+    그리고 회전 뒤 좌표는 <b>예측 가능한 분포(베타)</b>를 따르므로 <b>데이터를 보지 않고도</b>
+    최적 눈금을 미리 설계할 수 있습니다 — 다음 두 장의 기법이 여기서 나옵니다.
+    <b>가중치·활성값·KV캐시 모두에 적용됩니다.</b>
+  </aside>
+</section>
+
+<section class="fig" data-chapter="7.2 KV캐시 양자화">
+  <img src="../assets/rotation_geometry.webp?v=20260803q" alt="회전의 기하학적 원리 — 2차원 회전에서는 [10, 0]이 [7.07, 7.07]로 피크가 떨어지며 1D 사영은 양 끝단이 솟구치는 아크사인 분포를 띠고, 3차원 회전에서는 [5.77, 5.77, 5.77]로 떨어지며 사영 분포가 완벽히 평평한 균등 분포가 되고, 128차원 고차원에서는 푸앵카레 정리에 의해 양 끝단이 0이 되며 0 근처로 강력하게 집적되는 정규분포(표준편차 0.883)가 완성되어 4비트 양자화 오차가 소멸합니다.">
+  <aside class="notes">
+    <b>회전의 차원별 기하학적 원리와 수식적 배경입니다.</b>
+    2차원 회전에서는 두 축이 피크 10을 7.07로 나눠 가지나 1D 사영은 아크사인 U자 분포를 띠고,
+    3차원 회전에서는 피크 5.77과 함께 구면 적분에 의해 평평한 균등 분포가 되며,
+    128차원 고차원 공간에서는 푸앵카레 정리에 의해 수치가 0 근처(&plusmn;2.65 이내 99.7%)로 강력하게 몰리는 정규분포(가우스)로 수렴하여 4비트 양자화 눈금 오차가 지워집니다.
+  </aside>
+</section>
+
+<section data-chapter="7.2 KV캐시 양자화">
+  <div class="eyebrow">7.2 · 회전의 수학 수식과 흡수 경계</div>
+  <h2>가중치는 <span class="cy">오프라인 100% 흡수</span>, 비선형·KV캐시는 <span class="am">런타임 연산</span>이 남습니다</h2>
+  <div class="body" style="margin-top:18px">
+    <!-- Math formula box -->
+    <div style="background:var(--c-0d1117); border:1px solid var(--c-2b333d); border-radius:8px; padding:12px 18px; font:700 14px 'IBM Plex Mono', monospace; text-align:center; color:var(--c-c3ccd6); margin-bottom:16px;">
+      \(\text{선형 구간: } Y = \underbrace{(X H)}_{\text{입력 회전}} \cdot \underbrace{(H^T W)}_{\text{가중치 역회전}} = X (H H^T) W = \mathbf{X W} \quad \text{(오프라인 100% 흡수)}\)
+    </div>
+    <div class="cols c2">
+      <div class="card cy-b">
+        <span class="k">선형 레이어 구간 &middot; Hᵀ W 오프라인 흡수</span>
+        <h4>가중치는 런타임 연산 0</h4>
+        <p>가중치 $W$에는 오프라인에서 역회전 $H^T$를 곱한 $\tilde{W} = H^T W$를 양자화해 파일에 저장합니다.
+          선형 레이어끼리 연결된 구간은 $H H^T = I$로 상쇄되어 <b>추가 연산 비용이 전혀 없습니다.</b></p>
+      </div>
+      <div class="card am-b">
+        <span class="k">비선형 &middot; KV캐시 경계 &middot; X H 및 Hᵀ</span>
+        <h4>비선형 함수와 RoPE가 흡수를 차단</h4>
+        <p><b>SiLU, RMSNorm, RoPE, Softmax</b> 등 비선형 구간은 $f(X H) \neq f(X) H$이므로 회전이 흡수되지 않고 막힙니다.
+          따라서 <b>비선형 함수 앞뒤 및 KV캐시 역양자화 시</b> 런타임 FHT 연산 대가가 반드시 남습니다.</p>
+      </div>
+    </div>
+    <div class="lead" style="margin-top:18px">정리하면 <b>연속 선형 가중치는 오프라인 흡수로 100% 순이득</b>이지만,
+      <b>비선형 함수 경계와 KV캐시 되펼치기</b>에서는 <b class="am">"메모리를 아끼려고 런타임 FHT 연산을 낸다"</b>는 저울질이 됩니다.</div>
+  </div>
+  <div class="foot cy-l">QuaRot / SpinQuant는 이 선형 오프라인 흡수와 비선형 경계 FHT 연산을 조합해 W4A4KV4 모델을 구동합니다.</div>
+  <aside class="notes">
+    <b>회전 연산의 수학적 수식과 오프라인 흡수 경계의 엄밀한 설명입니다.</b>
+    선형 레이어 구간(Y = (XH) * (H^T W) = X W)에서는 가중치 W에 미리 역회전 H^T를 곱해 오프라인으로 융합(Absorb)하므로 런타임 추가 연산이 0입니다.
+    그러나 RMSNorm, SiLU, RoPE, Softmax 같은 비선형 구간에서는 f(XH) != f(X)H 이므로 회전 행렬이 통과하지 못하고 막힙니다.
+    따라서 비선형 함수 앞뒤 및 KV캐시를 읽어 들여 역양자화할 때 런타임 Fast Hadamard Transform(FHT) 연산을 실행하는 대가를 치르게 됩니다.
   </aside>
 </section>
 
@@ -1557,37 +1608,33 @@
 </section>
 
 <section data-chapter="7.2 KV캐시 양자화">
-  <div class="eyebrow">그런데 논문 수치와 엔진 실측이 갈립니다</div>
-  <h2>vLLM이 얹어 재보니 <span class="cy">FP8이 여전히 기본값</span>이었습니다</h2>
-  <div class="body" style="margin-top:22px">
+  <div class="eyebrow">7.2 · 생태계별 지원 현황표</div>
+  <h2>3대 엔진의 <span class="cy">가중치 &middot; KV캐시 양자화 지원</span></h2>
+  <div class="body" style="margin-top:20px">
     <table class="mid">
-      <tr><th></th><th>같은 메모리에 <b>담기는</b> KV캐시</th><th>처리량</th><th>품질</th></tr>
-      <tr><td>BF16 <span class="gr">압축 안 함 · 기준</span></td><td class="n">1배</td><td class="n">100%</td><td>원본</td></tr>
-      <tr class="hi"><td><b>FP8</b></td><td class="n cy"><b>2배</b></td><td class="n cy"><b>100% — 손실 없음</b></td><td>거의 무손실</td></tr>
-      <tr class="hi-am"><td>TurboQuant 4비트</td><td class="n am"><b>3.4배</b></td><td class="n am"><b>73%</b></td><td>과제에 따라 하락</td></tr>
-      <tr class="hi-am"><td>TurboQuant 3비트</td><td class="n am">3.4배보다 더</td><td class="n am"><b>66%</b></td><td>긴 컨텍스트에서 크게 하락</td></tr>
+      <tr><th>구분</th><th>vLLM (데이터센터 서버)</th><th>llama.cpp (로컬 PC)</th><th>Apple MLX (맥북)</th></tr>
+      <tr>
+        <td><b>가중치 (Weight)</b></td>
+        <td><b>FP8 · AWQ · SpinQuant · NVFP4</b><br><span class="n">(Marlin/Cutlass INT4 &amp; FP4)</span></td>
+        <td><b>Q4_K_M · IQ4_XS · Dynamic 2.0</b><br><span class="n">(GGUF 오프라인 회전 흡수)</span></td>
+        <td><b>MLX 4-bit / 8-bit</b><br><span class="n">(hadamard 원시연산자 지원)</span></td>
+      </tr>
+      <tr class="hi">
+        <td><b class="cy">KV 캐시 (KV Cache)</b></td>
+        <td><b class="cy">FP8 (실무 표준)</b> &middot; INT8/4 &middot; 회전 4비트<br><span class="n">(fused_hadamard FHT 커널)</span></td>
+        <td><b>Q8_0 · Q4_0 · FP8</b><br><span class="n">(--ctk q8_0 &amp; FWHT PR #21038)</span></td>
+        <td><b>4-bit / 8-bit · PolarQuant</b><br><span class="n">(quantized_kv_cache &amp; Metal)</span></td>
+      </tr>
     </table>
-    <div class="cols c2" style="margin-top:24px">
-      <div class="card am-b">
-        <span class="k">왜 오히려 느려지나</span>
-        <p>양자화해 넣은 KV는 <b>쓸 때마다 원래 값으로 되펼쳐야</b> 합니다.
-          읽을 바이트는 줄었는데 그 대신 <b class="am">계산이 붙습니다.</b></p>
-      </div>
-      <div class="card cy-b">
-        <span class="k">그래서 결론</span>
-        <p>KV 양자화는 <b>공짜로 빨라지는 기술이 아니라</b>
-          <b class="cy">메모리가 정말 모자랄 때 속도를 내주고 동시 사용자를 사는</b> 카드입니다.</p>
-      </div>
-    </div>
   </div>
-  <div class="foot">두 번째 열은 <b>클수록</b> 좋고 세 번째 열은 <b>100%가 기준</b>입니다 &mdash; 73%는 토큰이 그만큼 느리게 나온다는 뜻입니다.</div>
+  <div class="foot">대규모 서버(vLLM)는 <b>FP8 KV캐시</b>가 실무 표준이며, 로컬(llama.cpp/MLX)은 <b>Q-quants 및 4비트 회전</b>이 자리잡았습니다.</div>
   <aside class="notes">
-    <b>이 장이 이 문서의 원칙을 보여주는 자리입니다</b> — 논문 주장과 엔진 실측을 같은 지표처럼
-    섞지 않는다는 것. 앞의 3.5비트·4.2배는 논문 값이고 이 표는 vLLM이 직접 통합해 잰 값입니다.
-    vLLM의 결론 문장은 <b>"FP8이 여전히 기본값으로 최선"</b>입니다 — 2배를 공짜로 주니까요.
-    4장의 저울질이 여기서도 그대로 반복됩니다.
+    <b>3대 서빙 엔진별 가중치 및 KV캐시 양자화 지원 현황 대조표입니다.</b>
+    서버용 vLLM은 FP8 KV캐시를 실무 기본값으로 쓰며 FHT 회전 커널로 4비트 KV캐시를 지원하고, llama.cpp는 --ctk q8_0/q4_0 및 FWHT PR을 통한 가속을, 애플 MLX는 quantized_kv_cache 및 hadamard 원시연산자를 제공합니다.
   </aside>
 </section>
+
+
 
 <section data-chapter="7.3 이득">
   <div class="eyebrow">7.3 그래서 뭐가 좋나요</div>

@@ -60,21 +60,21 @@
   <div class="fr">
     <div class="nm">BF16<span>원본 배포 정밀도</span></div>
     <div style="display:flex"><div class="bits" id="bf16"></div><div class="blk">16비트</div></div>
-    <div class="sc">텐서/채널 단위 &middot; <b>레인지가 넓습니다</b></div>
+    <div class="sc"><b>스케일 불필요</b> (자체 지수부) &middot; 레인지가 넓습니다</div>
     <div class="gens"><span class="g on">암페어</span><span class="g on">호퍼</span><span class="g on">블랙웰</span></div>
   </div>
 
   <div class="fr">
     <div class="nm">FP16<span>같은 16비트, 다른 배분</span></div>
     <div style="display:flex"><div class="bits" id="fp16"></div><div class="blk">16비트</div></div>
-    <div class="sc">텐서/채널 단위 &middot; <b>정밀도가 높습니다</b></div>
+    <div class="sc"><b>스케일 불필요</b> (자체 지수부) &middot; 정밀도가 높습니다</div>
     <div class="gens"><span class="g on">암페어</span><span class="g on">호퍼</span><span class="g on">블랙웰</span></div>
   </div>
 
   <div class="fr">
     <div class="nm">INT8<span>전통적 8비트 정수 양자화</span></div>
     <div style="display:flex"><div class="bits" id="int8"></div><div class="blk">8비트 &middot; 절반</div></div>
-    <div class="sc"><b>텐서/채널/블록</b> 스케일 &middot; 정수 연산 기반</div>
+    <div class="sc"><b>채널/블록</b> 스케일 &middot; 정수 연산 기반</div>
     <div class="gens"><span class="g on">암페어</span><span class="g on">호퍼</span><span class="g on">블랙웰</span></div>
   </div>
 
@@ -88,7 +88,7 @@
   <div class="fr">
     <div class="nm">FP8<span>E4M3 · 이 문서의 표준</span></div>
     <div style="display:flex"><div class="bits" id="fp8"></div><div class="blk">8비트 &middot; 절반</div></div>
-    <div class="sc"><b>텐서 단위</b> 스케일 &middot; 대부분 무손실급</div>
+    <div class="sc"><b>텐서 단위</b> 스케일 &middot; 호퍼 TE 표준 (무손실급)</div>
     <div class="gens"><span class="g">암페어</span><span class="g on">호퍼</span><span class="g on">블랙웰</span></div>
   </div>
 
