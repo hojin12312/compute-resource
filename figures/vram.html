@@ -9,54 +9,61 @@
   /* flex-shrink:0 필수 — 없으면 긴 막대 행만 눌려 0선과 막대 비율이 함께 틀어집니다 */
   .bar { display:flex; align-items:center; gap:11px; margin-top:2px; }
   .bar > * { flex-shrink:0; }
-  .blab { flex:0 0 190px; text-align:right; font-size:12px; color:var(--c-c3ccd6); line-height:1.2; }
+  .blab { flex:0 0 150px; text-align:right; font-size:12px; color:var(--c-c3ccd6); line-height:1.2; }
   .blab span { display:block; font-size:9px; line-height:1.1; color:var(--c-7d8896); }
   .zero { flex:0 0 2px; background:var(--c-3d4650); height:21px; }
   .track { flex:0 0 auto; position:relative; height:21px; }
-  .bval { flex:0 0 auto; font-size:12.5px; white-space:nowrap; color:var(--c-8b96a3); }
+  .bval { flex:0 0 auto; font-size:12.5px; white-space:nowrap; color:var(--c-8b96a3); line-height:1.25; }
   .bval b { color:var(--c-e0912a); font-weight:700; font-size:13.5px; }
+  .bval b.cyv { color:var(--c-22a7bd); }
+  /* 8비트였다면 얼마였는지 — 점선 막대와 짝이 되는 회색 한 줄 */
+  .bval em { display:block; font-style:normal; font-size:10px; color:var(--c-7d8896); }
 
-  /* 막대를 H200 한 장(HBM 141GB)씩 칸으로 끊습니다.
+  /* 막대를 GPU 한 장씩 칸으로 끊습니다 — 위 차트는 H200 141GB, 아래는 B300 288GB.
+
+     **두 차트의 칸 픽셀 크기가 같습니다**(2026-08-05 변경). 그래서 위아래가 똑같이
+     여덟 칸 = 460px이고, 담는 용량만 1,128GB와 2,304GB로 다릅니다. 예전에는 아래
+     차트가 0~3TB 절대 배율이라 위와 배율이 어긋났고, 그걸 알리려고 두 차트에
+     세로 점선(배율 대조선)을 그었습니다. **그 점선은 걷어냈습니다** — 호진님 지시
+     ("취소선 삭제"). 지금은 축 라벨만 보면 배율 차이가 읽힙니다.
+
+     **옅은 칸 여덟은 언제나 그립니다 = 노드 한 대의 가용 용량.** 71번 슬라이드
+     (k3.html)의 양식을 가져온 것입니다 — 쓰는 만큼만 진하게 채우고 남는 자리를
+     옅게 남깁니다. 그래서 "27GB는 한 장도 못 채운다"와 "753GB는 여섯 장째에서
+     멈춘다"가 같은 자로 읽힙니다. **채움은 가로 방향입니다**(호진님 지시).
 
      **척도는 칸이고, 칸 사이의 틈은 용량 계산에 넣지 않습니다**(2026-07-31 변경).
-     즉 칸 하나의 좌우 너비가 정확히 141GB이고, 마지막 조각의 너비가 정확히 나머지
-     용량입니다. 틈 3px은 용량이 아니므로 막대 전체 길이는 값 + (경계 수 × 3px)이 됩니다.
+     즉 칸 하나의 좌우 너비가 정확히 그 GPU 한 장의 용량이고, 마지막 조각의 너비가
+     정확히 나머지 용량입니다. 틈 3px은 용량이 아닙니다.
 
      그전에는 반대였습니다 — 막대 전체 길이를 값에 비례시키고 틈을 칸의 오른쪽에서
      떼어냈습니다. 그러면 마지막 칸만 틈을 떼지 않아 3px 넓어지고, 나머지가 아주 작은
-     모델(MiniMax M3 428 = 141×3 + 5, Qwen3.8 Max 2,400 = 141×17 + 3)에서는 그 조각을
-     앞 칸에 붙여 칸 하나가 더 길어 보였습니다. 호진님이 이 어긋남을 지적했습니다.
-     칸을 척도로 삼으면 붙일 필요가 없어집니다 — 428GB는 세 칸을 꽉 채우고 5GB만큼
-     넘치므로 **"H200 3장으로는 안 된다"가 눈에 그대로 보입니다.**
-
-     가로축 배율은 틈까지 포함해 끝이 제자리에 오도록 정했습니다 —
-     A차트 1,128GB = 8칸 + 틈 7 = 540px(칸 64.875px), B차트 3TB = 21.28칸 + 틈 21 = 540px
-     (칸 22.419px). 그래서 축 라벨과 배율 대조선의 위치는 그대로 유지됩니다.
+     모델(MiniMax M3 428 = 141×3 + 5)에서는 그 조각을 앞 칸에 붙여 칸 하나가 더 길어
+     보였습니다. 호진님이 이 어긋남을 지적했습니다. 칸을 척도로 삼으면 붙일 필요가
+     없어집니다 — 428GB는 세 칸을 꽉 채우고 5GB만큼 넘칩니다.
 
      칸을 배경 그라디언트가 아니라 실제 요소로 그리는 이유는 그대로입니다 — 칸 폭이
      정수가 아니어서 그라디언트로는 경계마다 안티에일리어싱이 달라 틈이 들쭉날쭉해
      보였습니다. 시작점을 정수로 맞추고 틈을 다음 칸 시작점에서 3px 떼어내므로
      **모든 틈이 정확히 3px**이고, 칸 폭만 반올림으로 1px 오갑니다. */
   .track i { position:absolute; top:0; height:21px; border-radius:3px; font-style:normal; }
+  /* 가용(빈) 칸 — 채움과 같은 색을 옅게 깝니다. 회색을 따로 쓰면 "다른 것이 들어 있다"로
+     읽혀서, 71번처럼 같은 색의 농도 차이로 둡니다. opacity는 색 리터럴이 아니라
+     check.js도 통과합니다. */
+  .track i.slot { opacity:.24; }
+  /* 8비트였다면 여기까지 — 채운 끝에서 이어지는 회색 점선 상자.
+     노드(옅은 칸 여덟)를 넘기면 그대로 밖으로 삐져나가고, 그게 "안 들어간다"입니다. */
+  .track i.ghost { border:1px dashed var(--c-8b96a3); box-sizing:border-box; }
 
-  .axis { display:flex; margin-top:5px; padding-left:214px; font-size:11px; color:var(--c-5d6773); }
+  .axis { display:flex; margin-top:5px; padding-left:174px; font-size:11px; color:var(--c-5d6773); }
   .axis span { flex:0 0 auto; }
+  .axis b { color:var(--c-8b96a3); font-weight:700; }
 
   .grp { margin-top:12px; }
   .gtitle { font-size:13.5px; font-weight:700; letter-spacing:-.01em; }
   .gdesc { font-size:11.5px; color:var(--c-8b96a3); margin-top:2px; margin-bottom:5px; }
-
-  /* 위 구간의 오른쪽 끝이 아래 구간의 어디인지 — 배율이 다르다는 표시.
-     같은 x를 두 차트에 다 그어야 "같은 지점"이라는 게 읽힙니다.
-
-     ⚠️ 검정 점선은 다크 테마에서 배경색(#0d1117)과 같아 **막대 밖에서 사라집니다.**
-     위 차트의 1,128GB 자리에는 막대가 닿지 않으므로 선이 통째로 안 보입니다.
-     그래서 밝은 점선을 씁니다 — 라이트 테마에서는 lightmap이 이 색을 near-black
-     (#c3ccd6 → #29323c)으로 바꾸므로, 종이 위에서는 실제로 검정 점선이 됩니다. */
-  .mark { position:relative; height:0; }
-  .mark i { position:absolute; width:0; border-left:1px dashed var(--c-c3ccd6); font-style:normal; }
-  .mark em { position:absolute; font-style:normal;
-             font-size:10.5px; color:var(--c-8b96a3); white-space:nowrap; transform:translateX(-50%); }
+  .gnote { margin-top:7px; padding-left:174px; font-size:10.5px; color:var(--c-7d8896); }
+  .gnote b { color:var(--c-9aa7b4); font-weight:700; }
 
   .eqbox { border:1px solid var(--c-21262d); border-radius:7px; padding:14px 0; text-align:center;
            font-size:19px; font-weight:700; color:var(--c-e6edf3); letter-spacing:-.01em; line-height:1.5; }
@@ -67,8 +74,6 @@
   .mrow:last-child { border-bottom:0; }
   .mlab { flex:1 1 auto; min-width:0; }
   .mrow b { flex:0 0 36px; text-align:right; font-size:15px; font-weight:700; color:var(--c-e0912a); }
-  .mrow.base { color:var(--c-c3ccd6); }
-  .mrow.base b { color:var(--c-22a7bd); }
   .mrow span { font-size:10.5px; color:var(--c-7d8896); display:block; }
 
   /* 라벨과 배수 사이에 남던 빈자리(186~245px)에 막대를 넣어 2·1·0.5·0.3을
@@ -80,6 +85,17 @@
      놓입니다 — 두 줄짜리 라벨의 가운데로 내려가지 않습니다. */
   .mtrack { flex:0 0 120px; height:7px; border-radius:2px; }
   .mtrack i { display:block; height:7px; border-radius:2px; }
+  /* 두 그룹에 해당하지 않는 정밀도(BF16·극한)는 중립색으로 물러납니다.
+     이 패널이 왼쪽 두 차트의 범례를 겸하므로 색이 어긋나면 안 됩니다 —
+     ×1.0(FP8) = 위 차트의 앰버, ×0.5(FP4) = 아래 차트의 시안. */
+  .mtrack i.mu { background:var(--c-6b7684); }
+  .mrow.mute, .mrow.mute b { color:var(--c-7d8896); }
+  .mrow.on { color:var(--c-c3ccd6); }
+  .mrow.on.am b { color:var(--c-e0912a); }
+  .mrow.on.cy b { color:var(--c-22a7bd); }
+  .tie { font-weight:700; }
+  .tie.am { color:var(--c-e0912a); }
+  .tie.cy { color:var(--c-22a7bd); }
 
   .ex { margin-top:15px; border-left:2px solid var(--c-0e8fa3); padding-left:15px;
         font-size:12px; color:var(--c-8b96a3); line-height:1.75; }
@@ -88,33 +104,24 @@
 </head>
 <body>
   <h1>파라미터 수가 <span class="cy">곧 GB</span>입니다</h1>
-  <div class="sub">표준 서빙(FP8 &mdash; 파라미터 하나 = 1바이트) 기준 이론값입니다. 2026년 모델 15개 전부 실제 값이고, 파라미터 수 오름차순입니다.</div>
+  <div class="sub">8비트면 파라미터 하나가 1바이트라 <b style="color:var(--c-c3ccd6)">파라미터 수가 그대로 GB</b>입니다. 2026년 모델 15개 전부 실제 값이고, <b style="color:var(--c-c3ccd6)">가중치가 어느 노드 한 대에 들어가느냐</b>로 갈랐습니다.</div>
 
   <div class="panels" style="margin-top:14px; gap:50px">
     <div class="panel" style="width:872px">
 
       <div class="grp" style="margin-top:0">
-        <div class="gtitle">수십 &sim; 수백 GB급</div>
-        <div class="gdesc">가로축 0 &sim; <b style="color:var(--c-c3ccd6)">1,128GB &mdash; H200 8장 한 노드</b>가 오른쪽 끝입니다 &middot; 칸 하나 = H200 한 장(141GB)</div>
+        <div class="gtitle"><span class="am">8비트 그대로</span> &mdash; H200 8장 한 노드에 들어갑니다</div>
+        <div class="gdesc">옅은 칸 여덟이 <b style="color:var(--c-c3ccd6)">노드 전체 1,128GB</b>이고 진한 부분이 가중치가 쓰는 자리입니다 &middot; 칸 하나 = H200 한 장(141GB)</div>
         <div id="a"></div>
-        <div class="axis"><span style="width:133px">0</span><span style="width:136px">282GB</span><span style="width:135px">564GB</span><span style="width:136px">846GB</span><span>1,128GB</span></div>
-        <!-- 8번째 칸과 9번째 칸 사이 틈의 정중앙. 막대 원점 214 + 틈 540~543의 중앙 541.5
-             = 755.5이고, 1px 선의 중앙을 거기 두려면 왼쪽 끝이 755px입니다.
-             (이 차트는 8칸에서 축이 끝나 9번째 칸은 가상입니다 — 칸 간격 67.875px로 외삽) -->
-        <div class="mark"><i style="left:755px; top:-340px; height:326px"></i></div>
+        <div class="axis"><span style="width:113px">0</span><span style="width:116px">282GB</span><span style="width:116px">564GB</span><span style="width:115px">846GB</span><span><b>1,128GB</b></span></div>
       </div>
 
       <div class="grp">
-        <div class="gtitle">테라바이트급</div>
-        <div class="gdesc">가로축 0 &sim; 3TB &mdash; 위 그래프와 <b style="color:var(--c-c3ccd6)">배율이 다릅니다</b>(약 2.7배 축소)</div>
+        <div class="gtitle"><span class="cy">4비트로 내려야</span> &mdash; B300 8장 한 노드에 들어갑니다</div>
+        <div class="gdesc">8비트로는 위 노드에 못 들어가는 셋입니다 &middot; <b style="color:var(--c-c3ccd6)">칸 크기는 위와 같고 담는 용량이 다릅니다</b> &mdash; 칸 하나 = B300 한 장(288GB) &middot; 노드 전체 2,304GB &middot; 회색 점선은 <b style="color:var(--c-c3ccd6)">8비트였다면</b>의 길이</div>
         <div id="b"></div>
-        <div class="axis"><span style="width:180px">0</span><span style="width:180px">1TB</span><span style="width:180px">2TB</span><span>3TB</span></div>
-        <!-- 여기도 8번째 칸(끝 414)과 9번째 칸(시작 417) 사이 틈의 정중앙 415.5입니다.
-             선은 1px이라 왼쪽 끝 415, 라벨은 translateX(-50%)라 중앙값 그대로 415.5. -->
-        <div class="mark">
-          <i style="left:415px; top:-117px; height:152px"></i>
-          <em style="left:415.5px; top:41px">위 그래프의 오른쪽 끝 &mdash; H200 8장(1,128GB)</em>
-        </div>
+        <div class="axis"><span style="width:113px">0</span><span style="width:116px">576GB</span><span style="width:116px">1,152GB</span><span style="width:115px">1,728GB</span><span><b>2,304GB</b></span></div>
+        <div class="gnote">이 셋은 <b>이론값</b>입니다 &mdash; K3의 배포 원본(MXFP4)은 실측 <b>1,560.9GB</b>로, 혼합 정밀도라 이론값보다 큽니다.</div>
       </div>
 
     </div>
@@ -125,16 +132,16 @@
       <div class="eqbox" style="margin-top:10px">1B &rarr; <b>1GB</b><br>1T &rarr; <b>1TB</b></div>
 
       <div class="ptitle" style="margin-top:24px">정밀도를 바꾸면 곱하기</div>
-      <div class="pdesc">위 막대에 그대로 곱하면 됩니다</div>
+      <div class="pdesc">두 그룹을 가른 것이 이 배수입니다 &mdash; 색도 왼쪽 차트와 같습니다</div>
 
-      <div class="mrow"><div class="mlab">원본 <span>BF16 &middot; 2바이트</span></div>
-        <div class="mtrack gray"><i class="amber" style="width:120px"></i></div><b>&times;2.0</b></div>
-      <div class="mrow base"><div class="mlab">표준 <span>FP8 &middot; 1바이트 &middot; 위 막대의 기준</span></div>
-        <div class="mtrack gray"><i class="cyan" style="width:60px"></i></div><b>&times;1.0</b></div>
-      <div class="mrow"><div class="mlab">품질 한계 <span>FP4 &middot; 0.5바이트</span></div>
-        <div class="mtrack gray"><i class="amber" style="width:30px"></i></div><b>&times;0.5</b></div>
-      <div class="mrow"><div class="mlab">극한 압축 <span>2&sim;3비트대 &middot; 손실 있음</span></div>
-        <div class="mtrack gray"><i class="amber" style="width:18px"></i></div><b>&times;0.3</b></div>
+      <div class="mrow mute"><div class="mlab">원본 <span>BF16 &middot; 2바이트</span></div>
+        <div class="mtrack gray"><i class="mu" style="width:120px"></i></div><b>&times;2.0</b></div>
+      <div class="mrow on am"><div class="mlab">표준 <span>FP8 &middot; 1바이트 &middot; <b class="tie am">위 그룹</b>의 기준</span></div>
+        <div class="mtrack gray"><i class="amber" style="width:60px"></i></div><b>&times;1.0</b></div>
+      <div class="mrow on cy"><div class="mlab">품질 한계 <span>FP4 &middot; 0.5바이트 &middot; <b class="tie cy">아래 그룹</b>의 기준</span></div>
+        <div class="mtrack gray"><i class="cyan" style="width:30px"></i></div><b>&times;0.5</b></div>
+      <div class="mrow mute"><div class="mlab">극한 압축 <span>2&sim;3비트대 &middot; 손실 있음</span></div>
+        <div class="mtrack gray"><i class="mu" style="width:18px"></i></div><b>&times;0.3</b></div>
 
       <div class="ex">
         예) <b>GLM-5.2 753B</b><br>
@@ -145,12 +152,14 @@
   </div>
 
   <div class="foot">
-    아키텍처가 아무리 영리해도 이 비례는 못 피합니다. 바꿀 수 있는 건 <b>파라미터 하나에 몇 비트를 쓰느냐</b>뿐입니다.
+    아키텍처가 아무리 영리해도 이 비례는 못 피합니다. 바꿀 수 있는 건 <b>파라미터 하나에 몇 비트를 쓰느냐</b>와 <b>어느 노드에 올리느냐</b>뿐입니다.
   </div>
 
 <script>
-/* 값은 전부 실제 총 파라미터 수 — README 3장 표와 같은 출처 */
-const A = [   // 0~1,128GB(= H200 8장) 구간, 540px = 1128GB → 칸 하나 67.5px
+/* 값은 전부 실제 총 파라미터 수 — README 3장 표와 같은 출처.
+   v = 그 그룹의 정밀도로 올렸을 때의 GB. A는 8비트라 파라미터 수 그대로이고,
+   B는 4비트라 절반입니다. g = "8비트였다면"의 GB(B에만 있습니다). */
+const A = [   // 8비트 · H200 8장 한 노드(1,128GB) 안
   { n:'Qwen3.6 27B',        s:'Alibaba · 중국',     v:27,   t:'27B → 27GB' },
   { n:'Gemma 4 31B',        s:'Google · 미국',      v:31,   t:'31B → 31GB' },
   { n:'Laguna S 2.1',       s:'Poolside · 미국',    v:118,  t:'118B → 118GB' },
@@ -164,36 +173,59 @@ const A = [   // 0~1,128GB(= H200 8장) 구간, 540px = 1128GB → 칸 하나 67
   { n:'K-EXAONE 2.0',       s:'LG AI연구원 · 한국',  v:750,  t:'750B → 750GB' },
   { n:'GLM-5.2',            s:'Zhipu AI · 중국',    v:753,  t:'753B → 753GB', on:true },
 ];
-const B = [   // 0~3TB 구간, 540px = 3000GB
-  { n:'DeepSeek V4 Pro',    s:'DeepSeek · 중국',    v:1600, t:'1.6T → 1.6TB' },
-  { n:'Qwen3.8 Max',        s:'Alibaba · 중국',     v:2400, t:'2.4T → 2.4TB' },
-  { n:'Kimi K3',            s:'Moonshot AI · 중국', v:2800, t:'2.8T → 2.8TB' },
+const B = [   // 4비트 · B300 8장 한 노드(2,304GB) 안 — g는 8비트였을 때
+  { n:'DeepSeek V4 Pro',    s:'DeepSeek · 중국',    v:800,  g:1600, t:'1.6T → 800GB',   gt:'8비트면 1.6TB' },
+  { n:'Qwen3.8 Max',        s:'Alibaba · 중국',     v:1200, g:2400, t:'2.4T → 1.2TB',   gt:'8비트면 2.4TB' },
+  { n:'Kimi K3',            s:'Moonshot AI · 중국', v:1400, g:2800, t:'2.8T → 1.4TB',   gt:'8비트면 2.8TB', on:true },
 ];
-/* 141 = H200 한 장의 HBM3e 용량(GB). README [^memory-calc]와 같은 값입니다. */
-const H200 = 141;
+/* GPU 한 장의 HBM 용량(GB). README [^memory-calc]와 같은 값입니다. */
+const H200 = 141, B300 = 288;
 const GAP = 3;                     /* 칸 사이 틈(px) — 용량이 아니므로 척도에 넣지 않습니다 */
 const MIN_TAIL = 2;                /* 나머지 조각의 최소 폭 — 0.5px은 화면에서 사라집니다 */
-function draw(list, host, pxPerB) {
-  const seg = H200 * pxPerB;       /* 칸 하나 = 141GB를 이 차트의 배율로 환산한 픽셀 */
-  const pitch = seg + GAP;         /* 칸 시작점 간격 = 칸 + 틈 */
-  list.forEach(d => {
-    const full = Math.floor(d.v / H200);      /* 꽉 찬 H200 장수 */
-    const rem  = d.v - full * H200;           /* 마지막 칸에 들어가는 나머지 용량 */
+const SLOTS = 8;                   /* 노드 한 대 = GPU 8장 */
+const NODE_W = 460;                /* 노드 한 대의 픽셀 폭 — 두 차트가 같습니다 */
+const SEG = (NODE_W - (SLOTS - 1) * GAP) / SLOTS;   /* 칸 하나 = 54.875px */
+const PITCH = SEG + GAP;
 
-    /* 칸의 시작점은 정수로 반올림하고, 틈은 다음 시작점에서 3px 떼어냅니다.
-       그래서 틈은 언제나 정확히 3px이고 칸 폭만 1px 오갑니다. */
-    const box = [];
-    for (let i = 0; i < full; i++) {
-      const s = Math.round(i * pitch);
-      box.push([s, Math.round((i + 1) * pitch) - GAP - s]);
+/* 칸 하나의 좌우 위치. 시작점을 정수로 반올림하고 틈은 다음 시작점에서 떼어내므로
+   틈은 언제나 정확히 3px이고 칸 폭만 반올림으로 1px 오갑니다. */
+const cellBox = i => {
+  const s = Math.round(i * PITCH);
+  return [s, Math.round((i + 1) * PITCH) - GAP - s];
+};
+
+/* 값 v(GB)를 칸으로 끊어 [시작, 폭] 목록으로. cell = 칸 하나가 담는 GB */
+function boxes(v, cell) {
+  const pxPerB = SEG / cell;
+  const full = Math.floor(v / cell);
+  const rem = v - full * cell;
+  const out = [];
+  for (let i = 0; i < full; i++) out.push(cellBox(i));
+  if (rem > 0) out.push([Math.round(full * PITCH), Math.max(rem * pxPerB, MIN_TAIL)]);
+  return out;
+}
+const rightEdge = box => box.length ? box[box.length - 1][0] + box[box.length - 1][1] : 0;
+
+function draw(list, host, cell, fill) {
+  list.forEach(d => {
+    /* 가용 = 노드 한 대. 언제나 여덟 칸을 옅게 깔고 그 위를 채웁니다. */
+    let cells = '';
+    for (let i = 0; i < SLOTS; i++) {
+      const c = cellBox(i);
+      cells += '<i class="' + fill + ' slot" style="left:' + c[0] + 'px; width:' + c[1] + 'px"></i>';
     }
-    if (rem > 0) {
-      const s = Math.round(full * pitch);
-      box.push([s, Math.max(rem * pxPerB, MIN_TAIL)]);
+    const used = boxes(d.v, cell);
+    cells += used.map(c =>
+      '<i class="' + fill + '" style="left:' + c[0] + 'px; width:' + c[1] + 'px"></i>').join('');
+
+    /* 8비트였다면 여기까지 — 채운 끝에서 이어지는 점선. 노드를 넘기면 그대로 밖으로. */
+    let W = NODE_W;
+    if (d.g) {
+      const gEnd = rightEdge(boxes(d.g, cell));
+      const gs = rightEdge(used) + GAP;
+      cells += '<i class="ghost" style="left:' + gs + 'px; width:' + (gEnd - gs) + 'px"></i>';
+      W = Math.max(W, gEnd);
     }
-    const W = box[box.length - 1][0] + box[box.length - 1][1];   /* 막대 오른쪽 끝 */
-    const cells = box.map(c =>
-      '<i class="amber" style="left:' + c[0] + 'px; width:' + c[1] + 'px"></i>').join('');
 
     const row = document.createElement('div'); row.className = 'bar';
     row.innerHTML =
@@ -201,14 +233,15 @@ function draw(list, host, pxPerB) {
         d.n + '<span>' + d.s + '</span></div>' +
       '<div class="zero"></div>' +
       '<div class="track" style="width:' + W + 'px">' + cells + '</div>' +
-      '<div class="bval">' + d.t.replace(/→ (.+)$/, '→ <b>$1</b>') + '</div>';
+      '<div class="bval">' +
+        d.t.replace(/→ (.+)$/, '→ <b' + (fill === 'cyan' ? ' class="cyv"' : '') + '>$1</b>') +
+        (d.gt ? '<em>' + d.gt + '</em>' : '') +
+      '</div>';
     host.appendChild(row);
   });
 }
-/* 배율은 틈까지 포함해 축 끝이 540px에 오도록 정합니다.
-   A: 1,128GB = 8칸 + 틈 7 → 8칸 = 519px      B: 3,000GB = 21.28칸 + 틈 21 → 477px */
-draw(A, document.getElementById('a'), 519 / 1128);
-draw(B, document.getElementById('b'), 477 / 3000);
+draw(A, document.getElementById('a'), H200, 'amber');
+draw(B, document.getElementById('b'), B300, 'cyan');
 </script>
 </body>
 </html>

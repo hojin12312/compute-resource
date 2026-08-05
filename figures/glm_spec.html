@@ -46,6 +46,19 @@
   .wtrack i { display:block; height:100%; }
   .wtrack i.bf { background:var(--c-3f6f7d); }
   .wtrack i.fp { background:var(--c-0e8fa3); }
+  .wtrack i.kv { background:var(--c-8b6ff0); }
+
+  /* 61번(v4_spec)·18번(vram.html)과 같은 양식 (2026-08-05) —
+     **옅은 칸 여덟을 언제나 깔고** 그 위를 가로로 채웁니다. 옅은 칸이 곧 H200 8장
+     한 노드(1,128GB)이고 칸 하나가 141GB입니다. 이 카드는 원래도 분모가 노드였으므로
+     바뀐 것은 "가용 자리를 눈에 보이게 깐 것"뿐입니다.
+
+     **옅은 칸은 중립 회색입니다** — 이 트랙에 시안(가중치)·보라(KV)가 이미 있어서,
+     채움색을 옅게 깔면 "안 쓴 자리 = 가중치 자리"로 읽힙니다.
+     **채움은 가로** — 칸이 가로로 길기 때문입니다(칸의 긴 축으로 채운다). */
+  .wtrack .slot { position:absolute; top:0; height:100%;
+                  border-radius:3px; overflow:hidden; background:var(--c-233039); }
+  .wtrack .slot i { position:absolute; top:0; height:100%; }
   .h200 { display:none; }
 
   .tiles { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:18px; }
@@ -104,10 +117,10 @@
       <div class="pdesc">가중치는 배포된 safetensors 실측, 나머지는 <span class="mono">config.json</span>&middot;공식 가격표</div>
 
       <div class="wcap"><span>가중치를 올리는 데</span>
-        <span><b>칸 하나 = H200 한 장(141GB)</b> &middot; 트랙 전체 = <b>8장 한 노드 1,128GB</b></span></div>
+        <span>옅은 칸 여덟 = <b>H200 8장 한 노드(1,128GB)</b> &middot; 칸 하나 = 141GB</span></div>
       <div class="wrow">
         <div class="whead"><span>FP8로 내려 서빙</span><span><b class="cyv">753.0</b> GB <span style="color:var(--c-a48cf5); font-size:11px">(+46.5 GiB KV)</span></span></div>
-        <div class="wtrack" id="glm-fp8-track"><span class="h200"></span></div>
+        <div class="wtrack" id="glm-fp8-track"></div>
       </div>
 
       <div class="tiles">
@@ -126,7 +139,8 @@
           <span>입력 <b>$1.40</b> &middot; 캐시 히트 <b>$0.26</b> &middot; 출력 <b>$4.40</b>
             &mdash; 히트가 입력가의 18.6%</span></div>
         <div class="line"><span>최소 하드웨어</span>
-          <span>FP8 기준 <b>H200 6장</b> &middot; <b>B300 3장</b> &mdash; 한 노드(8장) 안에 들어갑니다</span></div>
+          <span><b>용량으로는</b> FP8 기준 H200 <b>6장</b> &middot; B300 <b>3장</b> &mdash;
+            사는 단위인 <b>한 노드(8장)</b> 안에 들어갑니다</span></div>
         <div class="line"><span>그 밖</span>
           <span>MTP 초안 <b>1층</b> &middot; 라이선스 <b>MIT</b> &mdash; 지역 제한 없음</span></div>
       </div>
@@ -196,44 +210,44 @@ for (const [name, sub, us, them, who, win] of rows) {
   host.appendChild(d);
 }
 
-/* 18번 슬라이드(vram.html) 스타일: H200 1장(141GB) 단위 독립 블록 조각 + 1M KV캐시(시안) 렌더링 */
-const H200 = 141, TOTAL_H200_GB = 1128, GAP_GLM = 3;
-const glmTrack = document.getElementById('glm-fp8-track');
-const TRACK_W_GLM = glmTrack.clientWidth || 410;
-const pxPerGB_GLM = (TRACK_W_GLM - 7 * GAP_GLM) / TOTAL_H200_GB;
-const pitch_GLM = H200 * pxPerGB_GLM + GAP_GLM;
+/* 가중치 트랙 — 61번(v4_spec)·18번(vram.html)과 같은 규칙입니다.
+     · 옅은 칸 여덟을 언제나 깔고(= H200 8장 한 노드 1,128GB) 그 위를 가로로 채웁니다.
+     · 칸이 척도이고 틈 3px은 용량이 아닙니다 — 칸 = (트랙폭 − 7×3) / 8.
+     · 채움은 가중치(시안) → KV(보라) 순이고, **칸 경계에서 잘라** 그립니다.
+       안 자르면 색면이 이음매를 무시하고 흘러 "칸 = GPU 한 장"이 읽히지 않습니다.
+
+   ⚠️ KV 46.5는 **GiB**이고 가중치 753.0은 **10진 GB**라 한 트랙에 두 단위가 섞여 있습니다.
+   화면 차이는 1.5px뿐이라 그대로 두었지만, 문서 전체의 GB/GiB 정리(2026-08-05 발견,
+   H200의 "141GB"가 실은 140.40 GiB)와 함께 손봐야 합니다. */
+const H200 = 141, SLOTS_GLM = 8, GAP_GLM = 3;
 
 function renderH200Blocks(vWeight, vKV) {
-  const full = Math.floor(vWeight / H200);
-  const rem = vWeight - full * H200;
-  let currentStart = 0;
+  const c = document.getElementById('glm-fp8-track');
+  const W = c.clientWidth || 410;
+  const seg = (W - (SLOTS_GLM - 1) * GAP_GLM) / SLOTS_GLM;
+  const pitch = seg + GAP_GLM;
+  const pxGB = seg / H200;
+  const segs = [
+    { k: 'fp', from: 0,       to: vWeight },
+    { k: 'kv', from: vWeight, to: vWeight + vKV },
+  ];
 
-  for (let i = 0; i < full; i++) {
-    const s = Math.round(i * pitch_GLM);
-    const w = Math.round((i + 1) * pitch_GLM) - GAP_GLM - s;
-    const block = document.createElement('i');
-    block.className = 'fp';
-    block.style.cssText = `position:absolute; top:0; height:100%; left:${s}px; width:${w}px; z-index:1; border-radius:2px;`;
-    glmTrack.appendChild(block);
-    currentStart = s + w;
+  let html = '';
+  for (let i = 0; i < SLOTS_GLM; i++) {
+    const x = Math.round(i * pitch);
+    const w = Math.round((i + 1) * pitch) - GAP_GLM - x;
+    const cs = i * H200, ce = (i + 1) * H200;
+    let inner = '';
+    segs.forEach(sg => {
+      const a = Math.max(sg.from, cs), b = Math.min(sg.to, ce);
+      if (b <= a) return;
+      const l = a <= cs ? 0 : (a - cs) * pxGB;
+      const r = b >= ce ? w : (b - cs) * pxGB;
+      inner += '<i class="' + sg.k + '" style="left:' + l + 'px; width:' + (r - l) + 'px"></i>';
+    });
+    html += '<span class="slot" style="left:' + x + 'px; width:' + w + 'px">' + inner + '</span>';
   }
-  if (rem > 0) {
-    const s = Math.round(full * pitch_GLM);
-    const w = Math.max(Math.round(rem * pxPerGB_GLM), 2);
-    const block = document.createElement('i');
-    block.className = 'fp';
-    block.style.cssText = `position:absolute; top:0; height:100%; left:${s}px; width:${w}px; z-index:1; border-radius:2px;`;
-    glmTrack.appendChild(block);
-    currentStart = s + w;
-  }
-  if (vKV > 0) {
-    const kvStart = currentStart + 2;
-    const kvWidth = Math.max(Math.round(vKV * pxPerGB_GLM), 3);
-    const kvBlock = document.createElement('i');
-    kvBlock.className = 'fp';
-    kvBlock.style.cssText = `position:absolute; top:0; height:100%; left:${kvStart}px; width:${kvWidth}px; z-index:1; border-radius:2px; background:var(--c-8b6ff0);`;
-    glmTrack.appendChild(kvBlock);
-  }
+  c.innerHTML = html;
 }
 renderH200Blocks(753.0, 46.5);
 </script>

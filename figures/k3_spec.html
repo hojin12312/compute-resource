@@ -52,6 +52,18 @@
   .wtrack i { display:block; height:100%; }
   .wtrack i.fp4 { background:var(--c-0e8fa3); }
   .wtrack i.fp8 { background:var(--c-c47d15); }
+  .wtrack i.kv  { background:var(--c-8b6ff0); }
+
+  /* 61·63번(v4_spec·glm_spec)과 같은 양식 (2026-08-05) — **옅은 칸을 언제나 깔고**
+     그 위를 가로로 채웁니다. 옅은 칸이 곧 그 줄이 실제로 사는 노드입니다
+     (위 줄 B300 8칸 = 2,304GB · 아래 줄 H200 32칸 = 4,512GB).
+     이 카드의 논지가 "칸은 용량, 장은 노드"라서 옅은 칸이 바로 그 노드입니다 —
+     6칸을 쓰는데 8칸을 사고, 20칸을 쓰는데 32칸을 삽니다.
+
+     **옅은 칸은 중립 회색**(시안·앰버·보라가 이미 있어서), **채움은 가로**(칸이 가로로 김). */
+  .wtrack .slot { position:absolute; top:0; height:100%;
+                  border-radius:3px; overflow:hidden; background:var(--c-233039); }
+  .wtrack .slot i { position:absolute; top:0; height:100%; }
 
   .tiles { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
   .tile { padding:7px 11px; border-radius:7px; background:var(--c-1b2027);
@@ -103,7 +115,7 @@
       <div class="pdesc">가중치는 배포된 safetensors 실측, 나머지는 공식 모델 카드&middot;가격표</div>
 
       <div class="wcap"><span>가중치를 올리는 데</span>
-        <span>칸 하나 = <b>그 줄의 GPU 한 장</b> &middot; 트랙 전체 = <b>실제로 사는 노드 용량</b></span></div>
+        <span>옅은 칸 = <b>실제로 사는 노드</b> &middot; 칸 하나 = <b>그 줄의 GPU 한 장</b></span></div>
       <div class="wrow">
         <div class="whead"><span>MXFP4 &mdash; 배포 원본 &middot; 칸 = B300 288GB &middot; 8장 노드</span>
           <span><b class="cyv">1,560.9</b> GB <span style="color:var(--c-8b6ff0); font-size:11px">(+13.5GiB KV &middot; 1명)</span> &middot; 6칸 &rarr; <b>8장</b></span></div>
@@ -207,46 +219,41 @@ for (const [name, sub, us, them, who, win] of rows) {
   host.appendChild(d);
 }
 
-/* 59·61번(v4_spec·glm_spec)과 같은 GPU 1장 단위 독립 블록 조각 렌더링.
-   K3는 두 트랙이 서로 다른 GPU·용량을 쓰므로(B300 8장 노드 vs H200 32장 노드),
-   V4의 renderB300Blocks를 GPU 크기·트랙 총량을 인자로 받게 일반화했습니다. */
+/* 61·63번(v4_spec·glm_spec)과 같은 규칙입니다 — 옅은 칸을 깔고 그 위를 가로로 채웁니다.
+   K3는 두 줄이 서로 다른 GPU·노드를 쓰므로(B300 8장 노드 vs H200 32장 노드)
+   GPU 크기와 노드 총량을 인자로 받습니다.
+
+   ⚠️ KV 13.5는 **GiB**이고 가중치는 **10진 GB**라 한 트랙에 두 단위가 섞여 있습니다.
+   화면 차이가 1px 미만이라 그대로 두었지만, 문서 전체의 GB/GiB 정리와 함께 손봐야 합니다. */
 const GAP_K3 = 3;
 function renderK3Blocks(gpuSize, totalCapGB, vWeight, vKV, containerId, weightClass) {
-  const container = document.getElementById(containerId);
-  const trackW = container.clientWidth || 410;
-  const slots = totalCapGB / gpuSize;
-  const pxPerGB = (trackW - (slots - 1) * GAP_K3) / totalCapGB;
-  const pitch = gpuSize * pxPerGB + GAP_K3;
+  const c = document.getElementById(containerId);
+  const W = c.clientWidth || 410;
+  const slots = Math.round(totalCapGB / gpuSize);
+  const seg = (W - (slots - 1) * GAP_K3) / slots;
+  const pitch = seg + GAP_K3;
+  const pxGB = seg / gpuSize;
+  const segs = [
+    { k: weightClass, from: 0,       to: vWeight },
+    { k: 'kv',        from: vWeight, to: vWeight + vKV },
+  ];
 
-  const full = Math.floor(vWeight / gpuSize);
-  const rem = vWeight - full * gpuSize;
-  let currentStart = 0;
-
-  for (let i = 0; i < full; i++) {
-    const s = Math.round(i * pitch);
-    const w = Math.round((i + 1) * pitch) - GAP_K3 - s;
-    const block = document.createElement('i');
-    block.className = weightClass;
-    block.style.cssText = `position:absolute; top:0; height:100%; left:${s}px; width:${w}px; z-index:1; border-radius:2px;`;
-    container.appendChild(block);
-    currentStart = s + w;
+  let html = '';
+  for (let i = 0; i < slots; i++) {
+    const x = Math.round(i * pitch);
+    const w = Math.round((i + 1) * pitch) - GAP_K3 - x;
+    const cs = i * gpuSize, ce = (i + 1) * gpuSize;
+    let inner = '';
+    segs.forEach(sg => {
+      const a = Math.max(sg.from, cs), b = Math.min(sg.to, ce);
+      if (b <= a) return;
+      const l = a <= cs ? 0 : (a - cs) * pxGB;
+      const r = b >= ce ? w : (b - cs) * pxGB;
+      inner += '<i class="' + sg.k + '" style="left:' + l + 'px; width:' + (r - l) + 'px"></i>';
+    });
+    html += '<span class="slot" style="left:' + x + 'px; width:' + w + 'px">' + inner + '</span>';
   }
-  if (rem > 0) {
-    const s = Math.round(full * pitch);
-    const w = Math.max(Math.round(rem * pxPerGB), 2);
-    const block = document.createElement('i');
-    block.className = weightClass;
-    block.style.cssText = `position:absolute; top:0; height:100%; left:${s}px; width:${w}px; z-index:1; border-radius:2px;`;
-    container.appendChild(block);
-    currentStart = s + w;
-  }
-  if (vKV > 0) {
-    const kvStart = currentStart + 2;
-    const kvWidth = Math.max(Math.round(vKV * pxPerGB), 3);
-    const kvBlock = document.createElement('i');
-    kvBlock.style.cssText = `position:absolute; top:0; height:100%; left:${kvStart}px; width:${kvWidth}px; z-index:1; border-radius:2px; background:var(--c-8b6ff0);`;
-    container.appendChild(kvBlock);
-  }
+  c.innerHTML = html;
 }
 /* B300: 8장 노드(2,304GB) · H200: 32장 노드(4,512GB) — [^memory-calc]의 노드 단위 기준.
    KV는 1인·1M·FP8 = 13.5GiB(kv_lora_rank 512 + qk_rope_head_dim 64 = 576원소 × Gated MLA 24층). */

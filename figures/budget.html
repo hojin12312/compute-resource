@@ -7,25 +7,54 @@
   body { padding-top:44px; }
 
   /* 노드 전체를 한 줄로 놓습니다 — 1,264px(본문 폭 전체) = 1,128GB.
-     세 몫의 px는 값에서 그대로 계산한 것이고 합이 1,264px입니다.
-       가중치 753GB → 1264 × 753/1128 = 843.7px
-       KV캐시 311GB → 348.5px      여유 64GB → 71.8px
+
+     **가로 막대를 GPU 여덟 장으로 끊습니다**(2026-08-05 변경, 호진님 지시).
+     18번(vram.html)·71번(k3.html)과 같은 양식입니다 — 칸 하나 = H200 한 장(141GB)이고
+     칸 사이 틈 3px은 용량이 아닙니다. 그래서 칸 = 155.375px, 8칸 + 틈 7 = 1,264px입니다.
+     오른쪽 세로 막대는 이미 "GPU 한 장"이라 그대로 둡니다.
+
+     ⚠️ **칸은 용량 몫이지 자리 배치가 아닙니다.** TP8은 가중치·KV캐시·활성값을 셋 다
+     여덟 장에 똑같이 나누므로, 가중치가 앞 다섯 장 반에 몰려 있는 것이 아닙니다.
+     이 그림이 그렇게 읽히면 오른쪽 세로 막대와 정면으로 어긋나므로 막대 아래에
+     그 단서를 한 줄 박아 뒀습니다. 지우지 마세요.
+
+     세 몫의 경계(GB): 가중치 0~753 · KV캐시 753~1,064 · 여유 1,064~1,128.
 
      면 위 글자는 hit_chart.html과 같은 규칙입니다 — 앰버·시안 면에는 --c-0d1117,
      회색 면에는 --c-8b96a3. 새 잉크를 만들지 않았습니다.
      **다만 면 위에는 19px 굵은 글자만 둡니다.** 라이트 테마에서 이 조합의 대비가
      앰버 3.60 · 시안 4.00이라 작은 글자에는 모자랍니다(큰 굵은 글자 기준 3:1은 충족).
-     설명·근거는 전부 배경 위(왼쪽 패널)로 내렸습니다. */
+     설명·근거는 전부 배경 위(왼쪽 패널)로 내렸습니다.
+     **글자는 칸보다 위 층에 그립니다** — 칸 안에 넣으면 3px 틈이 글자를 잘라
+     "가중치 753GB"가 두 토막이 납니다. 지금은 틈이 글자 뒤로 지나갑니다. */
   .total { margin-top:26px; }
   .tcap { display:flex; justify-content:space-between; align-items:baseline;
           font-size:12px; color:var(--c-7d8896); margin-bottom:9px; }
   .tcap b { font-size:13px; color:var(--c-c3ccd6); font-weight:700; }
-  .bar { display:flex; height:78px; border-radius:5px; overflow:hidden; }
-  .seg { display:flex; align-items:center; padding-left:16px;
-         font-size:19px; font-weight:700; letter-spacing:-.01em; }
-  .seg.wt { width:843.7px; background:var(--c-c47d15); color:var(--c-0d1117); }
-  .seg.kv { width:348.5px; background:var(--c-0e8fa3); color:var(--c-0d1117); }
-  .seg.rs { width:71.8px;  background:var(--c-2b333d); color:var(--c-8b96a3); padding-left:12px; }
+  .bar { position:relative; height:78px; width:1264px; }
+  /* 칸 하나 = GPU 한 장. 안에서 세 몫이 갈리므로 모서리는 칸이 깎습니다. */
+  .cell { position:absolute; top:0; height:78px; border-radius:5px; overflow:hidden; }
+  .cell i { position:absolute; top:0; height:78px; }
+  .cell i.wt { background:var(--c-c47d15); }
+  .cell i.kv { background:var(--c-0e8fa3); }
+  .cell i.rs { background:var(--c-2b333d); }
+  /* 글자는 칸보다 위 층입니다. 그런데 **글자만 위에 올리면 부족합니다** — 3px 틈이
+     글자 사이 공백에 떨어지면 어두운 세로선이 숫자를 가르고 지나갑니다
+     (실제로 "66.8%"가 "6|6.8%"로 보였습니다). 그래서 글자 뒤에 **같은 색 판**을 깔아
+     그 구간의 이음매만 메웁니다. 판 색은 반드시 그 몫의 면 색과 같아야 합니다.
+
+     **판은 글자 줄높이만큼만** 둡니다(78px 전체가 아니라 28px). 전체 높이로 깔면
+     이음매가 통째로 메워져 **앞 두 칸이 한 칸처럼 넓어 보입니다** — 여덟 장이라는
+     읽기가 깨집니다. 28px이면 이음매가 판 위아래로 남아 칸 경계가 그대로 읽히고,
+     글자 구간만 다리처럼 이어집니다. */
+  .lb { position:absolute; top:25px; height:28px; display:flex; align-items:center;
+        font-size:19px; font-weight:700; letter-spacing:-.01em; white-space:nowrap;
+        padding:0 9px; }
+  .lb.wt { background:var(--c-c47d15); color:var(--c-0d1117); }
+  .lb.kv { background:var(--c-0e8fa3); color:var(--c-0d1117); }
+  .lb.rs { background:var(--c-2b333d); color:var(--c-8b96a3); }
+  .tnote { margin-top:9px; font-size:11px; color:var(--c-7d8896); }
+  .tnote b { color:var(--c-9aa7b4); font-weight:700; }
 
   /* 세 몫의 근거 */
   .brow { display:flex; align-items:baseline; gap:11px; padding:12px 0;
@@ -70,13 +99,10 @@
   <div class="sub">H200 8장 한 노드(1,128GB)에 GLM-5.2를 FP8로 올린 기준입니다. 남는 자리를 나누는 방식은 SGLang 공식 메모리 모델을 따랐습니다 &mdash; 총량 = 가중치 + KV캐시 풀 + CUDA 그래프 + 활성값.</div>
 
   <div class="total">
-    <div class="tcap"><span><b>노드 전체 1,128GB</b> &middot; H200 141GB × 8장</span>
+    <div class="tcap"><span><b>노드 전체 1,128GB</b> &middot; 칸 하나 = H200 한 장(141GB) × 8장</span>
       <span>활성값 몫을 공식 권고치인 GPU당 8GB로 잡고, 남는 전부를 KV캐시에 준 경우입니다</span></div>
-    <div class="bar">
-      <div class="seg wt">가중치 753GB &middot; 66.8%</div>
-      <div class="seg kv">KV캐시 311GB &middot; 27.6%</div>
-      <div class="seg rs">64GB</div>
-    </div>
+    <div class="bar" id="bar"></div>
+    <div class="tnote">칸은 <b>용량 몫</b>이지 자리 배치가 아닙니다 &mdash; TP8은 셋을 여덟 장에 <b>똑같이</b> 나눕니다(아래 가운데 세로 막대).</div>
   </div>
 
   <div class="panels" style="margin-top:34px; gap:44px">
@@ -140,5 +166,57 @@
     가중치는 한 번 올리면 그대로지만 <b>KV캐시는 사람마다 새로 듭니다.</b>
     같은 노드에서 몇 명을 받을 수 있느냐가 여기서 정해집니다 &mdash; 두 번째 청구서입니다.
   </div>
+
+<script>
+/* 가로 막대를 GPU 여덟 장으로 끊습니다 — 18번(vram.html)과 같은 규칙입니다.
+   칸이 척도이고 틈은 용량이 아니므로, 칸 = (1264 − 7×3) / 8 = 155.375px 입니다. */
+const CELL_GB = 141;                 /* H200 한 장 */
+const SLOTS   = 8;
+const TOTAL_W = 1264;
+const GAP     = 3;
+const CELL_W  = (TOTAL_W - (SLOTS - 1) * GAP) / SLOTS;
+const PITCH   = CELL_W + GAP;
+const PXGB    = CELL_W / CELL_GB;
+
+/* 세 몫의 GB 경계. 합이 1,128GB입니다. */
+const SEGS = [
+  { k:'wt', from:0,    to:753,  lab:'가중치 753GB · 66.8%', pad:16 },
+  { k:'kv', from:753,  to:1064, lab:'KV캐시 311GB · 27.6%', pad:16 },
+  { k:'rs', from:1064, to:1128, lab:'64GB',                 pad:12 },
+];
+
+const cellBox = i => {
+  const s = Math.round(i * PITCH);
+  return [s, Math.round((i + 1) * PITCH) - GAP - s];
+};
+/* GB 값의 픽셀 좌표 — 칸 경계를 지날 때 틈만큼 건너뜁니다 */
+function xAt(v) {
+  const full = Math.min(SLOTS - 1, Math.floor(v / CELL_GB));
+  return Math.round(full * PITCH) + (v - full * CELL_GB) * PXGB;
+}
+
+const bar = document.getElementById('bar');
+let html = '';
+for (let i = 0; i < SLOTS; i++) {
+  const [x, w] = cellBox(i);
+  const cs = i * CELL_GB, ce = (i + 1) * CELL_GB;
+  let inner = '';
+  SEGS.forEach(s => {
+    const a = Math.max(s.from, cs), b = Math.min(s.to, ce);
+    if (b <= a) return;
+    /* 칸을 통째로 덮는 몫은 칸 폭에 딱 맞춥니다 — 반올림으로 1px이 비지 않게 */
+    const l = a <= cs ? 0 : (a - cs) * PXGB;
+    const r = b >= ce ? w : (b - cs) * PXGB;
+    inner += '<i class="' + s.k + '" style="left:' + l + 'px; width:' + (r - l) + 'px"></i>';
+  });
+  html += '<div class="cell" style="left:' + x + 'px; width:' + w + 'px">' + inner + '</div>';
+}
+/* 글자는 칸보다 위 층 — 틈이 글자를 자르지 않도록 */
+SEGS.forEach(s => {
+  /* 판에 좌우 9px 여백이 있으므로 그만큼 당겨야 글자 시작점이 그대로입니다 */
+  html += '<div class="lb ' + s.k + '" style="left:' + (xAt(s.from) + s.pad - 9) + 'px">' + s.lab + '</div>';
+});
+bar.innerHTML = html;
+</script>
 </body>
 </html>

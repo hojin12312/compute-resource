@@ -52,6 +52,28 @@
   .track i.w { background:var(--c-c47d15); }   /* 가중치 = 용량 청구서 */
   .track i.k { background:var(--c-0e8fa3); }   /* KV캐시 = 시키는 값 */
   .track i.c { background:var(--c-8b6ff0); }   /* 단가 = 돈 */
+
+  /* 가중치 트랙만 71번(k3.html)·18번(vram.html)의 양식을 씁니다 (2026-08-05).
+     **옅은 칸 여덟을 언제나 깔고** 그 위를 채웁니다 — 옅은 칸이 곧 B300 8장 한 노드
+     (2,304GB)이고, 칸 하나가 288GB입니다.
+
+     **분모를 4장이 아니라 8장으로 둔 이유**: B300은 8장 단위로 사므로 "4장"은 용량
+     표현이지 구매 단위가 아닙니다. 71번이 K3에서 "용량으로는 20장이지만 노드가
+     8·16·32장 단위라 32장"이라고 짚는 논리를 여기에도 그대로 적용한 것입니다.
+     **"용량으로는 4장"이라는 6.4의 논지는 죽지 않습니다** — 3칸과 4칸 사이 이음매는
+     배경이 4칸이든 8칸이든 같은 자리에 있고, 결론 숫자는 아래 facts에 남겼습니다.
+     (0.7GB는 이 배율에서 0.13px이라 애초에 어느 배경에서도 안 보입니다.)
+
+     **옅은 칸은 중립 회색입니다.** 이 트랙에는 앰버(가중치)·시안(KV) 둘이 이미 있어서,
+     18번처럼 채움색을 옅게 깔면 "안 쓴 자리 = 가중치 자리"로 읽힙니다.
+     회색은 19번(budget.html)의 "여유"와 같은 역할입니다.
+
+     **채움은 가로입니다.** 칸이 54.6×20으로 가로가 기니, 경계 칸의 소수부가 가로로
+     30.3px을 갖습니다(세로면 20px 안에서 나뉩니다). 71번이 세로로 채우는 것은 그쪽
+     카드가 16×26으로 세로가 길기 때문입니다 — **칸의 긴 축으로 채운다**가 규칙입니다. */
+  .track .slot { position:absolute; top:0; height:100%;
+                 border-radius:3px; overflow:hidden; background:var(--c-233039); }
+  .track .slot i { position:absolute; top:0; height:100%; }
   .slots { display:none; }
   .mval { font-size:12px; color:var(--c-e6edf3); text-align:right; white-space:nowrap; }
   .mval span { color:var(--c-9aa7b4); font-weight:400; }
@@ -106,12 +128,12 @@
       </div>
 
       <div class="mgrp">
-        <div class="mcap"><span><span class="dot w"></span>가중치 + 1M KV캐시(20명)</span><em>1칸 = B300 1장(288GB) &middot; <b>전체 = 4장 공간(1,152GB)</b></em></div>
+        <div class="mcap"><span><span class="dot w"></span>가중치 + 1M KV캐시(20명)</span><em>옅은 칸 여덟 = <b>B300 8장 한 노드(2,304GB)</b> &middot; 칸 하나 = 288GB</em></div>
         <div class="mrow"><span class="mname">Flash</span>
-          <div class="track" id="v4-flash-track"><span class="slots"></span></div>
+          <div class="track" id="v4-flash-track"></div>
           <span class="mval"><b>159.6</b> <span>GB <span style="color:var(--c-22a7bd)">(+114GB KV)</span></span></span></div>
         <div class="mrow pro"><span class="mname">Pro</span>
-          <div class="track" id="v4-pro-track"><span class="slots"></span></div>
+          <div class="track" id="v4-pro-track"></div>
           <span class="mval"><b>864.7</b> <span>GB <span style="color:var(--c-22a7bd)">(+124GB KV)</span></span></span></div>
       </div>
 
@@ -146,9 +168,10 @@
         <div class="fact"><span>입력 &middot; 캐시 히트</span>
           <span>Flash <b>$0.14 &middot; $0.0028</b>(입력가의 2.0%) &nbsp;&middot;&nbsp;
                 Pro <b>$0.435 &middot; $0.0036</b>(0.83%)</span></div>
-        <div class="fact"><span>3장이 아닌 이유</span>
-          <span>B300 3장은 864GB입니다. Pro가 <b>0.7GB 넘겨서</b> 4장이 됩니다
-                (H200 141GB 기준이면 Flash 2장 &middot; Pro 7장)</span></div>
+        <div class="fact"><span>몇 장이 필요한가</span>
+          <span><b>용량으로는</b> Flash 1장 &middot; Pro <b>4장</b> &mdash; B300 3장(864GB)을 Pro의
+                가중치가 <b>0.7GB 넘깁니다</b>(KV까지면 124.7GB). <b>사는 단위는 8장 한 노드</b>이고
+                위 막대의 옅은 칸이 그것입니다 (H200 141GB면 Flash 2장 &middot; Pro 7장)</span></div>
       </div>
     </div>
   </div>
@@ -191,45 +214,42 @@ for (const [name, score, price, hi] of rows) {
   host.appendChild(d);
 }
 
-/* 18번 슬라이드(vram.html) 스타일: B300 1장(288GB) 단위 독립 블록 조각 + 1M KV캐시 20명 몫(시안) 렌더링 */
-const B300 = 288, TOTAL_B300_GB = 1152, GAP_V4 = 3;
+/* 가중치 트랙 — 18번(vram.html)·19번(budget.html)과 같은 규칙입니다.
+     · 옅은 칸 여덟을 언제나 깔고(= B300 8장 한 노드 2,304GB) 그 위를 가로로 채웁니다.
+     · 칸이 척도이고 틈 3px은 용량이 아닙니다 — 칸 = (트랙폭 − 7×3) / 8.
+     · 채움은 가중치(앰버) → KV(시안) 순이고, **칸 경계에서 잘라** 그립니다.
+       안 자르면 색면이 이음매를 무시하고 흘러 "칸 = GPU 한 장"이 읽히지 않습니다.
+   왜 8칸인지·왜 회색인지·왜 가로인지는 위 CSS 주석에 적어 뒀습니다. */
+const B300_GB = 288, SLOTS_V4 = 8, GAP_V4 = 3;
 
 function renderB300Blocks(vWeight, vKV, containerId) {
-  const container = document.getElementById(containerId);
-  const trackW = container.clientWidth || 470;
-  const pxPerGB_V4 = (trackW - 3 * GAP_V4) / TOTAL_B300_GB;
-  const pitch_V4 = B300 * pxPerGB_V4 + GAP_V4;
+  const c = document.getElementById(containerId);
+  const W = c.clientWidth || 458;
+  const seg = (W - (SLOTS_V4 - 1) * GAP_V4) / SLOTS_V4;
+  const pitch = seg + GAP_V4;
+  const pxGB = seg / B300_GB;
+  const segs = [
+    { k: 'w', from: 0,       to: vWeight },
+    { k: 'k', from: vWeight, to: vWeight + vKV },
+  ];
 
-  const full = Math.floor(vWeight / B300);
-  const rem = vWeight - full * B300;
-  let currentStart = 0;
-
-  for (let i = 0; i < full; i++) {
-    const s = Math.round(i * pitch_V4);
-    const w = Math.round((i + 1) * pitch_V4) - GAP_V4 - s;
-    const block = document.createElement('i');
-    block.className = 'w';
-    block.style.cssText = `position:absolute; top:0; height:100%; left:${s}px; width:${w}px; z-index:1; border-radius:2px;`;
-    container.appendChild(block);
-    currentStart = s + w;
+  let html = '';
+  for (let i = 0; i < SLOTS_V4; i++) {
+    const x = Math.round(i * pitch);
+    const w = Math.round((i + 1) * pitch) - GAP_V4 - x;
+    const cs = i * B300_GB, ce = (i + 1) * B300_GB;
+    let inner = '';
+    segs.forEach(s => {
+      const a = Math.max(s.from, cs), b = Math.min(s.to, ce);
+      if (b <= a) return;
+      /* 칸을 통째로 덮는 몫은 칸 폭에 딱 맞춰 반올림으로 1px이 비지 않게 합니다 */
+      const l = a <= cs ? 0 : (a - cs) * pxGB;
+      const r = b >= ce ? w : (b - cs) * pxGB;
+      inner += '<i class="' + s.k + '" style="left:' + l + 'px; width:' + (r - l) + 'px"></i>';
+    });
+    html += '<span class="slot" style="left:' + x + 'px; width:' + w + 'px">' + inner + '</span>';
   }
-  if (rem > 0) {
-    const s = Math.round(full * pitch_V4);
-    const w = Math.max(Math.round(rem * pxPerGB_V4), 2);
-    const block = document.createElement('i');
-    block.className = 'w';
-    block.style.cssText = `position:absolute; top:0; height:100%; left:${s}px; width:${w}px; z-index:1; border-radius:2px;`;
-    container.appendChild(block);
-    currentStart = s + w;
-  }
-  if (vKV > 0) {
-    const kvStart = currentStart + 2;
-    const kvWidth = Math.max(Math.round(vKV * pxPerGB_V4), 3);
-    const kvBlock = document.createElement('i');
-    kvBlock.className = 'k';
-    kvBlock.style.cssText = `position:absolute; top:0; height:100%; left:${kvStart}px; width:${kvWidth}px; z-index:1; border-radius:2px;`;
-    container.appendChild(kvBlock);
-  }
+  c.innerHTML = html;
 }
 renderB300Blocks(159.6, 114.0, 'v4-flash-track');
 renderB300Blocks(864.7, 124.0, 'v4-pro-track');
