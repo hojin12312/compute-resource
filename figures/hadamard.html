@@ -8,8 +8,13 @@
   .plot { position:relative; width:340px; height:250px;
           border-left:1px solid var(--c-21262d); border-bottom:1px solid var(--c-21262d); }
   .dot { position:absolute; width:7px; height:7px; border-radius:50%; }
+  /* 띠 = 벌크의 ±1σ. 두 패널에서 **띠는 커지고 점의 전체 범위는 좁아집니다** —
+     그 두 방향이 동시에 일어나는 것이 이 그림의 요점입니다(놈 보존). */
   .band { position:absolute; left:0; right:0; background:var(--a-35);
           border-top:1px dashed var(--c-2f6b78); border-bottom:1px dashed var(--c-2f6b78); }
+  /* 4비트 눈금 16칸. 범위는 그 패널의 최댓값이 정합니다 — 이상치가 범위를 벌리면
+     칸 간격이 넓어지고, 그래서 벌크가 한 칸에 뭉갭니다. 이게 이 그림의 결론입니다. */
+  .gline { position:absolute; left:0; right:0; height:1px; background:var(--c-333d47); }
   .ylab { position:absolute; left:-46px; font-size:11px; color:var(--c-5d6773); }
   .plotcap { font-size:12.5px; color:var(--c-7d8896); margin-top:14px; line-height:1.6; }
   .plotcap b { font-weight:700; }
@@ -50,18 +55,20 @@
   <div class="panels" style="margin-top:30px; gap:52px">
     <div class="panel">
       <div class="ptitle" style="color:var(--c-e0912a)">그냥 4비트로 내리면</div>
-      <div class="pdesc">이상치 채널 하나가 눈금을 다 잡아먹습니다</div>
+      <div class="pdesc">이상치 넷이 눈금을 다 잡아먹습니다 &middot; 128채널 &middot; 이상치는 벌크의 20배</div>
       <div class="plot" id="before" style="margin-top:22px"></div>
-      <div class="plotcap">몇 개가 <b class="am">멀리 튀어</b> 있으면, 나머지 값들은<br>가운데에 뭉쳐 <b class="am">구분이 사라집니다.</b></div>
-      <div class="spread am">최대 &minus; 최소 <b>넓음</b><br><span>눈금 대부분이 빈 구간에 쓰입니다</span></div>
+      <div class="plotcap">가로선 열여섯이 <b>4비트 눈금</b>입니다. 이상치가 범위를<br>벌려 놓아 나머지 값들이 <b class="am">한 칸에 뭉갭니다.</b></div>
+      <div class="spread am">벌크가 눈금 <b id="cells-b">&nbsp;</b><br><span id="stat-b">&nbsp;</span>
+        <span>눈금 대부분이 빈 구간에 쓰입니다</span></div>
     </div>
 
     <div class="panel">
       <div class="ptitle" style="color:var(--c-22a7bd)">하다마드 회전 뒤에는</div>
       <div class="pdesc">튀는 값을 여러 채널로 퍼뜨린 다음 양자화</div>
       <div class="plot" id="after" style="margin-top:22px"></div>
-      <div class="plotcap">고르게 퍼지니 <b class="cy">같은 4비트로도</b> 값들이<br>서로 구분됩니다.</div>
-      <div class="spread cy">최대 &minus; 최소 <b>좁음</b><br><span>좌표가 <b style="color:var(--c-c3ccd6)">예측 가능한 분포(베타)</b>를 따릅니다</span></div>
+      <div class="plotcap"><b class="cy">벌크는 오히려 커지고</b> 최댓값이 내려옵니다 &mdash; 놈이<br>보존되니까요. 눈금이 촘촘해져 <b class="cy">값들이 구분됩니다.</b></div>
+      <div class="spread cy">벌크가 눈금 <b id="cells-a">&nbsp;</b><br><span id="stat-a">&nbsp;</span>
+        <span>좌표가 <b style="color:var(--c-c3ccd6)">예측 가능한 분포(베타)</b>를 따릅니다</span></div>
     </div>
 
     <div class="panel" style="width:380px">
@@ -87,35 +94,112 @@
   </div>
 
 <script>
-let seed = 5;
-function rnd(){ seed = (seed*1103515245+12345)%2147483648; return seed/2147483648; }
+/* ── 손으로 그리지 않고 진짜로 회전시킵니다 (2026-08-05 재작성) ──────────────
+   예전에는 두 패널의 퍼짐을 손으로 정한 상수(spread 0.16 / 0.72)로 그렸습니다.
+   그 결과 최대−최소는 234px → 166px(29% 감소)로만 좁아지는데 벌크는 4.5배로
+   부풀어, 화면에서 이기는 인상이 "폭이 좁아졌다"가 아니라 **"전부 커졌다"**
+   였습니다(호진님 지적, 2026-08-05).
 
-function draw(id, spread, outliers) {
+   **방향 자체는 맞았습니다.** 하다마드는 직교 변환이라 놈이 보존되므로, 봉우리에서
+   뺀 에너지는 나머지 좌표로 갈 수밖에 없고 **벌크는 반드시 커집니다.** 문제는
+   폭 축소가 실제(약 55%)의 절반 이하로 그려져 있었다는 것입니다.
+
+   지금은 계산합니다.
+     1. 회전 전 x: 128채널 중 넷이 이상치(±20), 나머지는 N(0,1)
+     2. 무작위 하다마드 = 부호 무작위 뒤집기 → FWHT → ÷√128 (QuaRot이 쓰는 형태)
+     3. 그 결과 y를 그대로 찍습니다 — 놈 보존은 코드가 보장합니다(실측 41.466 동일)
+   화면의 숫자(최댓값·벌크 표준편차·눈금 칸 수)도 전부 이 배열에서 계산해 넣습니다.
+   **손으로 적은 값이 없습니다.** CLAUDE.md "분포 곡선은 손으로 그리지 말고 계산해서
+   찍습니다" — 세션 38에 rotation_geometry를 같은 이유로 고쳤습니다.
+
+   실측(seed 7): 최댓값 20.0 → 8.92(−55.4%) · 벌크 σ 0.98 → 3.67(3.7배) ·
+   4비트 16칸에서 벌크가 차지하는 칸 0.79 → 6.57. **이 그림의 결론은 폭이 아니라
+   "같은 16칸을 알차게 쓰게 됐다"입니다.** */
+const D = 128, K = 4, R = 20;          /* 차원 · 이상치 채널 수 · 이상치 크기(벌크 σ의 20배) */
+const OUT = [17, 53, 88, 119];         /* 이상치가 앉는 채널 — 고정 */
+const VIEW = 22;                       /* 세로축 반폭. 두 패널이 **같은 자로** 그려집니다 */
+const H = 250, W = 340, LEVELS = 16;   /* 4비트 = 16칸 */
+
+let sd = 7 >>> 0;
+function rnd() { sd = (Math.imul(sd, 1664525) + 1013904223) >>> 0; return sd / 4294967296; }
+let spare = null;
+function gauss() {
+  if (spare !== null) { const v = spare; spare = null; return v; }
+  const u = Math.max(rnd(), 1e-12), v = rnd(), m = Math.sqrt(-2 * Math.log(u));
+  spare = m * Math.sin(2 * Math.PI * v);
+  return m * Math.cos(2 * Math.PI * v);
+}
+
+/* 회전 전 — 벌크는 표준정규, 넷만 ±R로 튑니다 */
+const x = new Array(D);
+for (let i = 0; i < D; i++) x[i] = gauss();
+OUT.forEach((j, t) => { x[j] = (t % 2 ? -1 : 1) * R; });
+
+/* 무작위 하다마드: 부호 뒤집기 → 고속 월시–하다마드 변환 → ÷√D.
+   직교 변환이므로 ‖y‖ = ‖x‖ 입니다 (아래에서 실제로 확인합니다). */
+const y = x.slice();
+for (let i = 0; i < D; i++) if (rnd() < 0.5) y[i] = -y[i];
+for (let len = 1; len < D; len <<= 1)
+  for (let i = 0; i < D; i += len << 1)
+    for (let j = i; j < i + len; j++) {
+      const a = y[j], b = y[j + len];
+      y[j] = a + b; y[j + len] = a - b;
+    }
+const rootD = Math.sqrt(D);
+for (let i = 0; i < D; i++) y[i] /= rootD;
+
+const rms = a => Math.sqrt(a.reduce((s, v) => s + v * v, 0) / a.length);
+const amax = a => Math.max(...a.map(Math.abs));
+const bulkX = x.filter((_, i) => OUT.indexOf(i) < 0);   /* 회전 전 벌크 = 이상치를 뺀 것 */
+const maxB = amax(x), maxA = amax(y);
+const sdB = rms(bulkX), sdA = rms(y);                    /* 회전 뒤에는 이상치가 없습니다 */
+/* 눈금 범위는 그 패널의 최댓값이 정합니다 → 칸 간격 = 2·max / 16.
+   벌크가 차지하는 칸 = 벌크 폭(2σ) ÷ 칸 간격. */
+const cells = (sd_, max_) => 2 * sd_ / (2 * max_ / LEVELS);
+
+function draw(id, vals, max_, sd_, outSet, dotVar) {
   const host = document.getElementById(id);
-  const H = 250, W = 340;
-  // 양자화 눈금이 실제로 쓰이는 구간
-  const bandH = spread * H;
+  const px = (H - 16) / (2 * VIEW);        /* 값 1당 픽셀 — 두 패널 공통 */
+  const yOf = v => H / 2 - v * px;
+
+  /* 4비트 눈금 — 칸의 가운데를 선으로 긋습니다 */
+  const step = 2 * max_ / LEVELS;
+  for (let i = 0; i < LEVELS; i++) {
+    const g = document.createElement('div');
+    g.className = 'gline';
+    g.style.top = yOf(-max_ + step * (i + 0.5)) + 'px';
+    host.appendChild(g);
+  }
+
+  /* 벌크 ±1σ 띠 */
   const band = document.createElement('div');
   band.className = 'band';
-  band.style.height = bandH + 'px';
-  band.style.top = (H/2 - bandH/2) + 'px';
+  band.style.top = yOf(sd_) + 'px';
+  band.style.height = (2 * sd_ * px) + 'px';
   host.appendChild(band);
 
-  for (let i = 0; i < 150; i++) {
+  vals.forEach((v, i) => {
     const d = document.createElement('div');
-    const isOut = outliers && i % 30 === 0;
-    let y;
-    if (isOut) y = rnd() < 0.5 ? 8 + rnd()*22 : H - 30 + rnd()*22;
-    else y = H/2 + (rnd()-0.5) * bandH * 0.92;
+    const isOut = outSet && outSet.indexOf(i) >= 0;
     d.className = 'dot';
     d.style.left = (8 + rnd() * (W - 20)) + 'px';
-    d.style.top = y + 'px';
-    d.style.background = isOut ? 'var(--c-c47d15)' : (id === 'after' ? 'var(--c-0e8fa3)' : 'var(--c-3f4c58)');
+    d.style.top = (yOf(v) - 3.5) + 'px';
+    d.style.background = isOut ? 'var(--c-c47d15)' : dotVar;
     host.appendChild(d);
-  }
+  });
 }
-draw('before', 0.16, true);
-draw('after', 0.72, false);
+draw('before', x, maxB, sdB, OUT, 'var(--c-3f4c58)');
+draw('after',  y, maxA, sdA, null, 'var(--c-0e8fa3)');
+
+/* 카드의 숫자도 같은 배열에서 뽑습니다 */
+const f = (n, k) => n.toFixed(k);
+document.getElementById('cells-b').textContent = f(cells(sdB, maxB), 1) + '칸';
+document.getElementById('cells-a').textContent = f(cells(sdA, maxA), 1) + '칸';
+document.getElementById('stat-b').textContent =
+  '최댓값 ±' + f(maxB, 1) + ' · 벌크 표준편차 ' + f(sdB, 2);
+document.getElementById('stat-a').textContent =
+  '최댓값 ±' + f(maxA, 1) + '(−' + f((1 - maxA / maxB) * 100, 0) + '%) · 벌크 표준편차 '
+  + f(sdA, 2) + '(' + f(sdA / sdB, 1) + '배)';
 </script>
 </body>
 </html>

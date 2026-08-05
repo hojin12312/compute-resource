@@ -1,6 +1,6 @@
 {
  "_주석": "assets 이름 → figures 소스와 내용 해시. figures/recapture.js의 MAP에서 생성합니다 (node figures/manifest.js). 직접 고치지 마세요. v는 그림별 캐시 버스터, ver은 캡처본용 한 벌 토큰, css는 base.css 해시입니다.",
- "ver": "114d626d",
+ "ver": "89fdc76a",
  "css": "2a58053d",
  "figures": {
   "stock_shock": "shock.html",
@@ -136,7 +136,7 @@
   "rotation_absorb.html": "9e4d7a9c",
   "rotation_family.html": "db9bfa53",
   "quant_gain.html": "065668da",
-  "hadamard.html": "5f616ec2",
+  "hadamard.html": "27f4c186",
   "rotation_geometry.html": "1424c7c1",
   "parallel_axes.html": "3138410c",
   "pd_tradeoff.html": "8420dfc4",
