@@ -642,6 +642,11 @@ section.fig[data-num]::before {
    시도하고, 기기가 실제로 가로가 되면 아래 회전은 자동으로 풀립니다. */
 html.immersive, html.immersive body { overflow: hidden; overscroll-behavior: none; }
 
+/* iOS Safari의 **더블탭 확대**를 끕니다. 안 끄면 "두 번 탭"이 확대 제스처로 먹혀
+   몰입 모드 토글까지 오지 않습니다(touchend는 passive라 preventDefault를 못 씁니다).
+   manipulation은 스크롤과 핀치 확대는 그대로 두고 더블탭 확대만 뺍니다. */
+html.is-touch, html.is-touch body, html.is-touch .reveal { touch-action: manipulation; }
+
 /* 회전은 좌상단을 축으로 돌린 뒤 화면 오른쪽 끝에서 시작하게 두는 관용구를 씁니다.
    translate와 rotate를 섞으면 translate가 회전된 좌표계에서 적용돼 위아래 여백이
    비대칭이 됩니다(실제로 그렇게 나왔습니다). */
