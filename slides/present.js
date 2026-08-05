@@ -37,6 +37,7 @@
   var figs = [];      /* <img> 들 (후퇴용) */
   var frames = [];    /* <iframe> 들 (실시간 렌더) */
   var figVer = {};    /* 그림 소스 → 내용 해시 */
+  var figMap = null;  /* 에셋 이름 → 그림 소스 (manifest.json) */
 
   /* Pages가 max-age=600으로 내보내므로, 고친 그림을 배포해도 이미 열어 본 브라우저는
      하드 리프레시 없이 10분간 옛 그림을 그립니다. 그림 URL에 내용 해시를 붙여
@@ -56,8 +57,10 @@
       // 파일명만 _light로 바꾸고 쿼리는 그대로 이어 붙입니다. 쿼리를 고려하지 않고
       // /\.webp$/로 검사하면 그림이 전부 걸러져 테마 전환이 조용히 죽습니다.
       var img = imgs[i], src = img.getAttribute('src');
+      if (img.dataset.crInit) continue;          /* 두 번 등록하지 않습니다 */
       var m = /^([^?#]*\.webp)(\?[^#]*)?$/.exec(src);
       if (!m) continue;
+      img.dataset.crInit = '1';
       img.dataset.dark = src;
       img.dataset.light = m[1].replace(/\.webp$/, '_light.webp') + (m[2] || '');
       // 라이트 그림이 없으면 조용히 다크로 되돌립니다 (덱이 깨지지 않게)
@@ -90,20 +93,69 @@
     frame.setAttribute('title', img.getAttribute('alt') || '');
     frame.dataset.fallback = img.getAttribute('src') || '';
 
-    var settled = false;
-    var giveUp = setTimeout(function () { if (!settled) revert(frame, img); }, 8000);
+    /* 폰에서는 71장을 한꺼번에 띄우지 않습니다(2026-08-05).
+       iOS Safari는 화면 밖 iframe의 로드를 미루고 rAF도 재웁니다. 전부 동시에 걸면
+       로드가 끝나지 않은 채 남고(호진님: "렌더링이 완료되지 않고 멈추는 것 같다")
+       moe_anim도 첫 프레임에서 멈춥니다. lazy는 화면에 가까워질 때만 받습니다. */
+    if (TOUCH) frame.setAttribute('loading', 'lazy');
 
+    var settled = false, early = null, giveUp = null;
+
+    function stopEarly() { if (early) { clearInterval(early); early = null; } }
+    function done() { settled = true; stopEarly(); if (giveUp) { clearTimeout(giveUp); giveUp = null; } }
+    function fail() { stopEarly(); if (giveUp) { clearTimeout(giveUp); giveUp = null; } revert(frame, img); }
+
+    /* 테마를 load까지 기다리지 않고 문서가 생기는 **즉시** 심습니다.
+       base.css의 기본이 다크라, load를 기다리면 라이트 테마에서도 그림이 먼저 다크로
+       그려집니다 — 로드가 느리거나 멈추면 그 다크가 그대로 남습니다
+       (호진님: "라이트 테마로 바꿨는데 5·7·8이 여전히 다크"). 로드 중 문서가 갈릴 수
+       있으므로 settle 될 때까지 되풀이해 심습니다. */
+    function startEarly() {
+      if (settled || early) return;
+      var n = 0;
+      early = setInterval(function () {
+        if (settled || ++n > 150) { stopEarly(); return; }
+        paintFrame(frame, root.getAttribute('data-theme') || 'dark');
+      }, 60);
+    }
+    function armGiveUp() {
+      if (settled || giveUp) return;
+      giveUp = setTimeout(function () { if (!settled) fail(); }, 8000);
+    }
+
+    /* ⚠️ 빈 문서를 곧바로 실패로 치면 안 됩니다(2026-08-05).
+       몰입 모드에서 스크롤 뷰를 끄면 reveal이 section들을 .scroll-page 밖으로 **옮깁니다**.
+       iframe은 부모가 바뀌는 순간 브라우저가 처음부터 다시 읽으므로, 그 중간에 빈 문서로
+       load가 한 번 더 뜹니다. 예전 코드는 그것을 실패로 보고 71장을 전부 이미지로
+       되돌렸습니다(실측: iframe 0개). 빈 문서는 **기다리고**, 진짜 실패는 8초 시계에 맡깁니다. */
     frame.addEventListener('load', function () {
       var ok = paintFrame(frame, root.getAttribute('data-theme') || 'dark');
       var body = null;
       try { body = frame.contentDocument && frame.contentDocument.body; } catch (e) {}
-      if (!ok || !body || body.children.length === 0) { clearTimeout(giveUp); revert(frame, img); return; }
-      settled = true;
-      clearTimeout(giveUp);
+      if (ok && body && body.children.length > 0) { done(); return; }
+      /* 문서에 아직 접근이 안 되거나 비어 있으면 **중간 상태**입니다. 되돌리지 않고 기다립니다 —
+         부모가 바뀌는 순간에는 contentDocument가 잠깐 null이 되기도 합니다.
+         진짜 실패 판정은 error 이벤트와 8초 시계에만 맡깁니다. */
+      settled = false;
+      startEarly();
+      armGiveUp();
     });
-    frame.addEventListener('error', function () { clearTimeout(giveUp); revert(frame, img); });
+    frame.addEventListener('error', fail);
 
     frame.src = figUrl(file);
+
+    /* lazy는 화면에 가까워져야 로드를 시작하므로, 8초 시계도 그때 같이 켭니다.
+       바로 켜면 화면 밖 그림이 전부 시간초과로 이미지로 되돌아가 lazy가 무의미해집니다. */
+    if (TOUCH && window.IntersectionObserver) {
+      var io = new IntersectionObserver(function (entries) {
+        for (var k = 0; k < entries.length; k++) {
+          if (entries[k].isIntersecting) { startEarly(); armGiveUp(); io.disconnect(); return; }
+        }
+      }, { rootMargin: '150%' });
+      io.observe(frame);
+    } else {
+      startEarly(); armGiveUp();
+    }
     img.parentNode.replaceChild(frame, img);
     frames.push(frame);
     return frame;
@@ -143,27 +195,42 @@
   try { stored = localStorage.getItem(THEME_KEY); } catch (e) {}
   applyTheme(stored === 'light' ? 'light' : 'dark');
 
+  /* <img>들을 그림 소스 iframe으로 갈아 끼웁니다.
+     ⚠️ **여러 번 불릴 수 있어야 합니다**(2026-08-05). 몰입 모드에서 스크롤 뷰를 껐다 켜면
+     reveal이 .slides 안을 **원본 마크업으로 되돌립니다** — 우리가 끼운 iframe 71개가 통째로
+     사라지고 <img>가 되살아납니다(실측: iframe 71 → 0, img 0 → 71). 그래서 스크롤 뷰를
+     건드린 뒤에는 index.html이 window.CRDeck.refreshFigures()로 다시 겁니다. */
+  function swapFigures() {
+    if (!figMap) return;
+    for (var a = frames.length - 1; a >= 0; a--) if (!frames[a].isConnected) frames.splice(a, 1);
+    for (var b = figs.length - 1; b >= 0; b--) if (!figs[b].isConnected) figs.splice(b, 1);
+    initFigures();                       /* 되살아난 <img>를 다시 등록합니다 */
+    var theme = root.getAttribute('data-theme') || 'dark';
+    var pending = figs.slice();
+    figs.length = 0;
+    for (var i = 0; i < pending.length; i++) {
+      var img = pending[i];
+      var m = /assets\/([a-z0-9_]+)\.webp/i.exec(img.dataset.dark || '');
+      var file = m && figMap[m[1]];
+      if (file) liveFigure(img, file, theme);
+      else figs.push(img);      /* 매핑이 없으면 이미지로 남깁니다 */
+    }
+  }
+
   /* 그림 소스로 갈아 끼웁니다. 매니페스트를 못 읽으면 이미지 그대로 갑니다. */
   if (LIVE_FIGURES) {
     fetch('../figures/manifest.json?t=' + Date.now(), { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
-        var map = (data && data.figures) || null;
+        figMap = (data && data.figures) || null;
         figVer = (data && data.v) || {};
-        if (!map) return;
-        var theme = root.getAttribute('data-theme') || 'dark';
-        var pending = figs.slice();
-        figs.length = 0;
-        for (var i = 0; i < pending.length; i++) {
-          var img = pending[i];
-          var m = /assets\/([a-z0-9_]+)\.webp/i.exec(img.dataset.dark || '');
-          var file = m && map[m[1]];
-          if (file) liveFigure(img, file, theme);
-          else figs.push(img);      /* 매핑이 없으면 이미지로 남깁니다 */
-        }
+        swapFigures();
       })
       .catch(function () { /* 이미지로 갑니다 */ });
   }
+
+  /* index.html의 모바일 몰입 모드가 스크롤 뷰를 껐다 켠 뒤 이걸 부릅니다. */
+  window.CRDeck = { refreshFigures: swapFigures, applyTheme: applyTheme };
 
   /* ── 오버레이 및 키 바인딩 (모바일 포함 활성화) ───────────────────────── */
   var layer = document.createElement('div');
