@@ -4,37 +4,60 @@
 <meta charset="utf-8">
 <link rel="stylesheet" href="base.css?v=2a58053d">
 <style>
-  .panels { gap:30px; margin-top:28px; }
+  /* 패널 셋의 아래끝을 한 줄로 맞춥니다(2026-08-05). 그 전에는 363 / 430 / 354px 로 갈려
+     있었고 foot 여백이 102px이었습니다. 본보기는 expert_parallel. */
+  .panels { gap:30px; margin-top:26px; align-items:stretch; }
   .panel { padding:19px 20px 16px; border:1px solid var(--c-333d47); border-radius:11px;
-           background:var(--c-161b22); }
+           background:var(--c-161b22); display:flex; flex-direction:column; }
   .panel.on { background:var(--c-0f2930); border-color:var(--c-17505c); }
+  .panel > .cap:last-child { margin-top:auto; padding-top:14px; }
 
-  .srow { display:flex; align-items:center; gap:11px; margin-top:19px; }
+  .srow { display:flex; align-items:center; gap:11px; margin-top:28px; }
   .sname { width:96px; font-size:12px; color:var(--c-9aa7b4); flex-shrink:0; line-height:1.35; }
-  .sbar { height:30px; border-radius:3px; flex-shrink:0; display:flex; align-items:center;
+  .sbar { height:40px; border-radius:3px; flex-shrink:0; display:flex; align-items:center;
           justify-content:flex-end; padding-right:9px;
           font:700 12.5px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-0d1117); }
   .sbar.gr { background:var(--c-2b333d); color:var(--c-c3ccd6); }
   .sbar.vi { background:var(--c-8b6ff0); }
   .sbar.am { background:var(--c-c47d15); }
   .sbar.cy { background:var(--c-0e8fa3); }
-  .free { margin-top:16px; padding:11px 13px; border-radius:8px; background:var(--c-12333a);
+  .free { margin-top:auto; padding:13px 14px; border-radius:8px; background:var(--c-12333a);
           border:1px solid var(--c-17505c); font-size:12px; color:var(--c-c3ccd6); line-height:1.6; }
 
-  .util { display:flex; gap:30px; margin-top:18px; }
-  .ucol { text-align:center; }
-  .ubars { display:flex; gap:9px; align-items:flex-end; height:178px; }
-  .ub { width:36px; border-radius:3px 3px 0 0; position:relative; }
-  .ub span { position:absolute; top:-19px; left:-11px; right:-11px; text-align:center;
+  /* 세로축은 0~100%이고 140px = 100%입니다(20%=28 · 30%=42 · 65%=91 · 85%=119).
+     ⚠️ 앰버(SM) 막대를 걷어냈습니다(2026-08-05). HBM 점유는 실측 구간(20~30% · 65~85%)이
+     공개돼 있는데 SM 점유는 "높음/낮음"뿐입니다. 그런데 둘을 같은 축에 세워 두어
+     앰버 152px·50px이 85%·28%라는 측정값처럼 읽혔습니다 — 손으로 정한 높이였습니다.
+     그래서 축에는 실측만 남기고 SM은 막대가 아니라 **점선 칩**으로 내렸습니다.
+     칩은 높이가 둘 다 같으므로 크기 비교를 유도하지 않습니다. */
+  .util { display:flex; gap:16px; margin:16px 0 0; }
+  .uaxis { width:34px; height:140px; position:relative; flex-shrink:0; }
+  .uaxis span { position:absolute; right:0; transform:translateY(-50%);
+                font:400 9.5px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-6b7684); }
+  .uplot { flex:1; }
+  .ubars { display:flex; gap:32px; justify-content:center; align-items:flex-end;
+           height:140px; position:relative; border-bottom:1px solid var(--c-3b4652); }
+  .grid { position:absolute; left:0; right:0; border-top:1px dashed var(--c-232a33); }
+  .ub { width:84px; position:relative; display:flex; flex-direction:column; justify-content:flex-end; }
+  .ub span { position:absolute; top:-19px; left:0; right:0; text-align:center;
              font:700 10.5px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-c3ccd6); }
-  .ub.hbm { background:var(--c-0e8fa3); }
-  .ub.sm { background:var(--c-c47d15); }
-  .utag { margin-top:8px; font-size:11.5px; color:var(--c-9aa7b4); }
-  .utag b { display:block; font-size:13px; color:var(--c-e6edf3); margin-bottom:2px; }
+  .band { background:var(--c-2f6b78); border-radius:3px 3px 0 0; }   /* 구간의 위쪽 — 같은 색조를 옅게 */
+  .solid { background:var(--c-0e8fa3); }
+  .ucols { display:flex; gap:32px; justify-content:center; margin-top:9px; }
+  .ucol { width:84px; text-align:center; }
+  .utag { font-size:13px; font-weight:700; color:var(--c-e6edf3); }
+  .smchip { margin-top:7px; padding:4px 0 5px; border-radius:6px; line-height:1.3;
+            border:1px dashed var(--c-96590a); background:var(--c-221a0d);
+            font-size:10px; color:var(--c-8b96a3); }
+  .smchip b { display:inline; font-size:11.5px; font-weight:700; color:var(--c-e0912a); }
+  .unote { margin-top:11px; font-size:11px; color:var(--c-6b7684); line-height:1.6; }
 
-  .wl { margin-top:16px; }
-  .wrow { display:flex; align-items:baseline; gap:10px; padding:17px 0;
+  .wl { margin:auto 0; }
+  .wrow { display:flex; align-items:baseline; gap:10px; padding:26px 0;
           border-bottom:1px solid var(--c-1b2027); }
+  .whead { display:flex; gap:10px; padding-bottom:9px; border-bottom:1px solid var(--c-333d47);
+           font-size:10.5px; color:var(--c-6b7684); letter-spacing:.02em; }
+  .whead span:first-child { width:132px; } .whead span:nth-child(2) { width:62px; }
   .wrow:last-child { border-bottom:0; }
   .wname { width:132px; font-size:12px; color:var(--c-c3ccd6); line-height:1.45; }
   .wgain { width:62px; font:700 15px "IBM Plex Mono", "Pretendard Variable", monospace; }
@@ -74,26 +97,35 @@
       <div class="ptitle">두 단계는 다른 자원을 씁니다</div>
       <div class="pdesc">8×H200 실측 &mdash; 추론 워크로드 텔레메트리</div>
       <div class="util">
-        <div class="ucol">
-          <div class="ubars">
-            <div class="ub hbm" style="height:53px"><span>20~30%</span></div>
-            <div class="ub sm" style="height:152px"><span>높음</span></div>
-          </div>
-          <div class="utag"><b>프리필</b>HBM / SM 점유</div>
+        <div class="uaxis">
+          <span style="top:0">100%</span><span style="top:50%">50%</span><span style="top:100%">0</span>
         </div>
-        <div class="ucol">
+        <div class="uplot">
           <div class="ubars">
-            <div class="ub hbm" style="height:152px"><span>65~85%</span></div>
-            <div class="ub sm" style="height:50px"><span>낮음</span></div>
+            <div class="grid" style="bottom:70px"></div>
+            <div class="ub"><span>20~30%</span>
+              <div class="band" style="height:14px"></div>
+              <div class="solid" style="height:28px"></div></div>
+            <div class="ub"><span>65~85%</span>
+              <div class="band" style="height:28px"></div>
+              <div class="solid" style="height:91px"></div></div>
           </div>
-          <div class="utag"><b>디코딩</b>HBM / SM 점유</div>
+          <div class="ucols">
+            <div class="ucol"><div class="utag">프리필</div>
+              <div class="smchip">SM 점유 <b>&#9650; 높음</b></div></div>
+            <div class="ucol"><div class="utag">디코딩</div>
+              <div class="smchip">SM 점유 <b>&#9660; 낮음</b></div></div>
+          </div>
         </div>
       </div>
-      <div class="cap" style="margin-top:20px; line-height:1.65">
+      <div class="unote">
+        막대는 <b>HBM(대역폭) 점유 실측</b>이고 진한 칸이 구간의 아래끝입니다. SM(연산) 점유는 방향만 공개돼 막대로 세우지 않았습니다.
+      </div>
+      <div class="cap" style="margin-top:14px; line-height:1.65">
         논문 표현으로 <b>"두 대의 서로 다른 기계처럼 동작한다"</b>.
         프리필 중에는 4.8TB/s가 남고, 디코딩 중에는 연산이 남습니다.
       </div>
-      <div class="cap" style="margin-top:10px; line-height:1.65">
+      <div class="cap" style="line-height:1.65">
         나눠 두면 각자 자기 병목에서 포화하지만, <b class="am">클러스터 전체로는 두 자원이 모두
         부분적으로 놉니다.</b>
       </div>
@@ -103,6 +135,7 @@
       <div class="ptitle">그래서 워크로드가 답을 정합니다</div>
       <div class="pdesc">혼합의 이득은 출력 대 입력의 비율에 붙습니다</div>
       <div class="wl">
+        <div class="whead"><span>워크로드</span><span>혼합의 이득</span><span>답</span></div>
         <div class="wrow">
           <span class="wname">짧고 균일한 오프라인 배치<br>입력 2,000 : 출력 500</span>
           <span class="wgain vi">1.8배</span>
@@ -118,7 +151,7 @@
         장문에서는 청크 수십 개가 상시로 디코드에 끼어들어 <b class="am">TPOT 열화가 정상 상태</b>가
         됩니다. 사람이 안 보는 배치라면 그 열화는 값이 없습니다.
       </div>
-      <div class="cap" style="margin-top:10px; line-height:1.65">
+      <div class="cap" style="line-height:1.65">
         그리고 <b>캐시 히트율이 이 비율을 다시 움직입니다</b> &mdash; 히트가 오르면 프리필 몫이 줄어
         두 풀의 비율도 바뀝니다.
       </div>

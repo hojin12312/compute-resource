@@ -4,11 +4,17 @@
 <meta charset="utf-8">
 <link rel="stylesheet" href="base.css?v=2a58053d">
 <style>
-  .panels { gap:34px; margin-top:28px; }
+  /* 패널 셋의 아래끝을 한 줄로 맞춥니다(2026-08-05).
+     그 전에는 422 / 272 / 394px 로 150px이나 갈려 있었고, 가운데 "분리" 패널이
+     이 그림의 결론인데 가장 짧아서 눈이 먼저 가지 않았습니다.
+     본보기는 expert_parallel — align-items:stretch + 캡션 margin-top:auto. */
+  .panels { gap:28px; margin-top:26px; align-items:stretch; }
   .panel { padding:19px 20px 16px; border:1px solid var(--c-333d47); border-radius:11px;
-           background:var(--c-161b22); }
+           background:var(--c-161b22); display:flex; flex-direction:column; }
   .panel.on { background:var(--c-0f2930); border-color:var(--c-17505c); }
+  .panel > .cap:last-child { margin-top:auto; padding-top:14px; }
 
+  .lanes { margin:auto 0; }
   .lane { display:flex; align-items:center; gap:6px; margin-top:14px; }
   .lname { width:58px; font-size:11.5px; color:var(--c-9aa7b4); flex-shrink:0; }
   .blk { height:42px; border-radius:3px; flex-shrink:0; display:flex; align-items:center;
@@ -17,24 +23,39 @@
   .blk.pre { background:var(--c-c47d15); }
   .blk.gap { background:var(--c-2b333d); }
 
-  .node { width:112px; padding:18px 10px; border-radius:7px; background:var(--c-0d1117);
+  /* 용어 상자 — 8.1이 TP·DP·PP·EP를 축약어로 세웠는데 PD만 영문 용어가 한 번도
+     나오지 않아 여기서 못 박습니다(호진님 지적, 2026-08-05). */
+  .term { margin-top:15px; padding:12px 14px 13px; border-radius:8px;
+          background:var(--c-0d1117); border:1px solid var(--c-2f6b78); }
+  .tname { font:700 13.5px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-22a7bd); }
+  .tname i { font-style:normal; font-weight:400; font-size:11px; color:var(--c-8b96a3); margin-left:9px; }
+  .tdef { margin-top:9px; font-size:11.5px; color:var(--c-c3ccd6); line-height:1.8; }
+  .tdef em { font-style:normal; font:700 11.5px "IBM Plex Mono", "Pretendard Variable", monospace;
+             color:var(--c-e6edf3); }
+
+  .node { width:112px; padding:16px 10px; border-radius:7px; background:var(--c-0d1117);
           border:1px solid var(--c-3f4c58); text-align:center; }
   .node.p { border-color:var(--c-96590a); }
   .node.d { border-color:var(--c-17505c); }
   .nname { font:700 11.5px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-e6edf3); }
   .nsub { margin-top:4px; font-size:10.5px; color:var(--c-7d8896); line-height:1.45; }
-  .topo { display:flex; align-items:center; gap:11px; margin-top:16px; }
+  .topo { display:flex; align-items:center; justify-content:center; gap:11px; margin:16px 0 0; }
   .kvarr { text-align:center; font-size:11.5px; color:var(--c-22a7bd); font-weight:700; line-height:1.4; }
   .kvarr small { display:block; font-weight:400; color:var(--c-7d8896); font-size:10px; }
 
-  .steps { margin-top:20px; }
-  .st { display:flex; align-items:center; gap:10px; margin-top:20px; }
-  .sname { width:150px; font-size:11.5px; color:var(--c-c3ccd6); }
-  .sbar { height:38px; border-radius:3px; background:var(--c-2b333d); flex-shrink:0;
-          display:flex; align-items:center; justify-content:flex-end; padding-right:7px;
-          font:700 11px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-c3ccd6); }
-  .sbar.am { background:var(--c-c47d15); color:var(--c-0d1117); }
-  .sbar.cy { background:var(--c-0e8fa3); color:var(--c-0d1117); }
+  /* 네 막대는 전부 같은 것을 잽니다 — 디코딩의 토큰 간 지연(TPOT). 그래서 색도 하나입니다.
+     예전에는 40ms가 앰버·17ms가 시안이었는데, 이 그림의 범례에서 앰버는 프리필,
+     시안은 디코딩이라 같은 색이 두 가지를 뜻하고 있었습니다.
+     트랙(전체 폭)을 늘 깔아 두어 "깎여 나간 몫"이 남은 어둠으로 읽히게 했습니다. */
+  .steps { margin:auto 0; }   /* 남는 세로를 위아래로 나눠 갖습니다 */
+  .st { margin-top:17px; }
+  .sh { display:flex; align-items:baseline; gap:9px; margin-bottom:5px; }
+  .sname { flex:1; font-size:11.5px; color:var(--c-c3ccd6); }
+  .sdelta { font:700 11px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-7d8896); }
+  .sdelta.big { color:var(--c-22a7bd); }
+  .sval { font:700 12.5px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-e6edf3); }
+  .strack { width:352px; height:22px; border-radius:3px; background:var(--c-1c222a); }
+  .sfill { height:22px; border-radius:3px; background:var(--c-0e8fa3); }
 </style>
 </head>
 <body>
@@ -47,54 +68,63 @@
   </div>
 
   <div class="panels">
-    <div class="panel" style="width:436px">
+    <div class="panel" style="width:420px">
       <div class="ptitle">병치 &mdash; 한 GPU가 둘을 나눠 씁니다</div>
       <div class="pdesc">토큰 간 지연이 들어오는 프롬프트 길이의 함수가 됩니다</div>
-      <div class="lane"><span class="lname">요청 A</span>
-        <div class="blk dec" style="width:34px"></div>
-        <div class="blk pre" style="width:96px">새 요청의 프리필</div>
-        <div class="blk gap" style="width:26px"></div>
-        <div class="blk dec" style="width:34px"></div>
-        <div class="blk gap" style="width:26px"></div>
-        <div class="blk dec" style="width:34px"></div>
+      <div class="lanes">
+        <div class="lane"><span class="lname">요청 A</span>
+          <div class="blk dec" style="width:34px"></div>
+          <div class="blk pre" style="width:96px">새 요청의 프리필</div>
+          <div class="blk gap" style="width:26px"></div>
+          <div class="blk dec" style="width:34px"></div>
+          <div class="blk gap" style="width:26px"></div>
+          <div class="blk dec" style="width:34px"></div>
+        </div>
+        <div class="lane"><span class="lname">요청 B</span>
+          <div class="blk dec" style="width:34px"></div>
+          <div class="blk gap" style="width:96px"></div>
+          <div class="blk dec" style="width:34px"></div>
+          <div class="blk gap" style="width:26px"></div>
+          <div class="blk dec" style="width:34px"></div>
+        </div>
+        <div class="lane"><span class="lname">요청 C</span>
+          <div class="blk dec" style="width:34px"></div>
+          <div class="blk gap" style="width:96px"></div>
+          <div class="blk dec" style="width:34px"></div>
+          <div class="blk gap" style="width:26px"></div>
+          <div class="blk dec" style="width:34px"></div>
+        </div>
+        <div class="lane"><span class="lname">요청 D</span>
+          <div class="blk dec" style="width:34px"></div>
+          <div class="blk gap" style="width:96px"></div>
+          <div class="blk dec" style="width:34px"></div>
+          <div class="blk gap" style="width:26px"></div>
+          <div class="blk dec" style="width:34px"></div>
+        </div>
+        <div class="lane"><span class="lname">요청 E</span>
+          <div class="blk dec" style="width:34px"></div>
+          <div class="blk gap" style="width:96px"></div>
+          <div class="blk dec" style="width:34px"></div>
+          <div class="blk gap" style="width:26px"></div>
+          <div class="blk dec" style="width:34px"></div>
+        </div>
       </div>
-      <div class="lane"><span class="lname">요청 B</span>
-        <div class="blk dec" style="width:34px"></div>
-        <div class="blk gap" style="width:96px"></div>
-        <div class="blk dec" style="width:34px"></div>
-        <div class="blk gap" style="width:26px"></div>
-        <div class="blk dec" style="width:34px"></div>
-      </div>
-      <div class="lane"><span class="lname">요청 C</span>
-        <div class="blk dec" style="width:34px"></div>
-        <div class="blk gap" style="width:96px"></div>
-        <div class="blk dec" style="width:34px"></div>
-        <div class="blk gap" style="width:26px"></div>
-        <div class="blk dec" style="width:34px"></div>
-      </div>
-      <div class="lane"><span class="lname">요청 D</span>
-        <div class="blk dec" style="width:34px"></div>
-        <div class="blk gap" style="width:96px"></div>
-        <div class="blk dec" style="width:34px"></div>
-        <div class="blk gap" style="width:26px"></div>
-        <div class="blk dec" style="width:34px"></div>
-      </div>
-      <div class="lane"><span class="lname">요청 E</span>
-        <div class="blk dec" style="width:34px"></div>
-        <div class="blk gap" style="width:96px"></div>
-        <div class="blk dec" style="width:34px"></div>
-        <div class="blk gap" style="width:26px"></div>
-        <div class="blk dec" style="width:34px"></div>
-      </div>
-      <div class="cap" style="margin-top:18px; line-height:1.7">
+      <div class="cap" style="line-height:1.7">
         내가 아무것도 하지 않아도 <b class="am">남의 긴 프롬프트가 내 토큰을 늦춥니다.</b>
         서빙 시스템이 통제할 수 없는 값이라 SLA를 걸 수 없습니다.
       </div>
     </div>
 
-    <div class="panel on" style="width:352px">
+    <div class="panel on" style="width:396px">
       <div class="ptitle">분리 &mdash; 다른 GPU에 맡깁니다</div>
       <div class="pdesc">디코딩의 토큰 간 지연이 디코드 배치만의 함수가 됩니다</div>
+      <div class="term">
+        <div class="tname">PD Disaggregation<i>프리필&middot;디코딩 분리</i></div>
+        <div class="tdef">
+          <em>P</em> = Prefill 프리필 &middot; <em>D</em> = Decode 디코딩<br>
+          <em>Disaggregation</em> = 한 GPU가 겸하던 두 단계를 떼어 각각 전용 GPU에 맡기는 것
+        </div>
+      </div>
       <div class="topo">
         <div class="node p">
           <div class="nname">프리필 노드</div>
@@ -106,28 +136,43 @@
           <div class="nsub">받은 KV로<br>토큰만 뽑습니다</div>
         </div>
       </div>
-      <div class="cap" style="margin-top:20px; line-height:1.7">
+      <div class="cap" style="margin-top:17px; line-height:1.7">
+        8.1의 <b>TP&middot;DP&middot;PP&middot;EP</b>가 한 가지 일을 여러 장이 나누는 <b>축</b>이라면,
+        PD는 성격이 다른 두 일을 서로 다른 장에 갈라 놓는 <b class="cy">배치</b>입니다.
+      </div>
+      <div class="cap" style="line-height:1.7">
         실제 배포 예는 <b>B300 24장을 프리필 4인스턴스(16장) + 디코딩 1인스턴스(8장)</b>로
         가른 구성입니다. 두 자원 풀을 <b class="cy">따로 늘릴 수 있다</b>는 것이 이 방식의 값입니다.
       </div>
     </div>
 
-    <div class="panel" style="width:352px">
+    <div class="panel" style="width:392px">
       <div class="ptitle">그 대가는 경계에서 나왔습니다</div>
-      <div class="pdesc">16K 입력의 평균 TPOT를 내린 단계별 기여</div>
+      <div class="pdesc">16K 입력의 평균 TPOT &mdash; 디코딩 토큰 간 지연을 내린 단계별 기여</div>
       <div class="steps">
-        <div class="st"><span class="sname">처음</span>
-          <div class="sbar am" style="width:150px">40ms</div></div>
-        <div class="st"><span class="sname">경계의 혼합 배치 수정</span>
-          <div class="sbar" style="width:83px">22ms</div></div>
-        <div class="st"><span class="sname">런타임 교체(11%)</span>
-          <div class="sbar" style="width:74px">20ms</div></div>
-        <div class="st"><span class="sname">all-to-all 백엔드(4%)</span>
-          <div class="sbar cy" style="width:64px">17ms</div></div>
+        <div class="st">
+          <div class="sh"><span class="sname">처음</span><span class="sval">40ms</span></div>
+          <div class="strack"><div class="sfill" style="width:344px"></div></div>
+        </div>
+        <div class="st">
+          <div class="sh"><span class="sname">경계의 혼합 배치 수정</span>
+            <span class="sdelta big">&minus;18ms</span><span class="sval">22ms</span></div>
+          <div class="strack"><div class="sfill" style="width:189px"></div></div>
+        </div>
+        <div class="st">
+          <div class="sh"><span class="sname">런타임 교체(11%)</span>
+            <span class="sdelta">&minus;2ms</span><span class="sval">20ms</span></div>
+          <div class="strack"><div class="sfill" style="width:172px"></div></div>
+        </div>
+        <div class="st">
+          <div class="sh"><span class="sname">all-to-all 백엔드(4%)</span>
+            <span class="sdelta">&minus;3ms</span><span class="sval">17ms</span></div>
+          <div class="strack"><div class="sfill" style="width:146px"></div></div>
+        </div>
       </div>
-      <div class="cap" style="margin-top:18px; line-height:1.7">
-        가장 큰 개선은 커널이 아니라 <b>전송받은 요청과 투기적 디코딩이 만나는 경계</b>에서
-        나왔습니다. 첫 스텝의 모양을 맞추기만 했습니다.
+      <div class="cap" style="line-height:1.7">
+        내린 23ms 가운데 <b class="cy">18ms가 첫 줄 하나</b>에서 나왔습니다 &mdash; 커널이 아니라
+        <b>전송받은 요청과 투기적 디코딩이 만나는 경계</b>에서, 첫 스텝의 모양을 맞추기만 했습니다.
       </div>
     </div>
   </div>

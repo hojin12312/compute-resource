@@ -4,33 +4,50 @@
 <meta charset="utf-8">
 <link rel="stylesheet" href="base.css?v=2a58053d">
 <style>
-  .panels { gap:40px; margin-top:30px; }
+  /* 두 패널의 아래끝을 맞춥니다(2026-08-05) — 그 전에는 466 / 393px 로 73px 갈려 있었습니다. */
+  .panels { gap:40px; margin-top:28px; align-items:stretch; }
   .panel { padding:20px 22px 18px; border:1px solid var(--c-333d47); border-radius:11px;
-           background:var(--c-161b22); }
+           background:var(--c-161b22); display:flex; flex-direction:column; }
+  .panel > .cap:last-child { margin-top:auto; padding-top:16px; }
 
-  .row { display:flex; align-items:center; gap:12px; margin-top:18px; }
-  .rl { width:74px; font-size:12.5px; color:var(--c-9aa7b4); flex-shrink:0; }
-  .bar { height:34px; border-radius:3px; flex-shrink:0; display:flex;
+  /* 세 지표를 TP1/TP2 **한 쌍**으로 묶습니다(2026-08-05).
+     그 전에는 기준 막대와 값 막대가 각각 자기 줄에 있고 둘째 줄의 라벨이 비어 있어서,
+     막대 여섯 개가 서로 무관한 줄로 읽혔습니다. 어느 쪽이 TP1인지도 화면에 없었습니다.
+     척도는 셋이 공유합니다 — 1× = 32px. 그래서 0.5×는 16px, 13.9×는 445px입니다.
+     라벨은 막대가 짧으면 밖, 길면 안입니다(100px 경계). */
+  .mgrp { margin-top:16px; }
+  .mgrp:first-of-type { margin-top:0; }
+  .ml { font-size:12.5px; color:var(--c-9aa7b4); margin-bottom:6px; }
+  .mrow { display:flex; align-items:center; gap:9px; margin-top:6px; padding-left:12px; }
+  .tp { width:30px; flex-shrink:0;
+        font:700 10.5px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-6b7684); }
+  .mrow.now .tp { color:var(--c-c3ccd6); }
+  .bar { height:30px; border-radius:3px; flex-shrink:0; display:flex;
          align-items:center; justify-content:flex-end; padding-right:8px;
          font:700 12.5px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-0d1117); }
   .bar.base { background:var(--c-2b333d); color:var(--c-c3ccd6); }
   .bar.cy { background:var(--c-0e8fa3); }
   .bar.vi { background:var(--c-8b6ff0); }
-  .bar.am { background:var(--c-c47d15); }
+  .v { font:700 12.5px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-c3ccd6); }
+  .v.cy { color:var(--c-22a7bd); }
 
-  .cards { display:flex; gap:14px; margin-top:16px; }
-  .card { width:180px; min-height:200px; padding:16px 15px 14px; border-radius:9px; border:1px solid var(--c-3f4c58);
-          background:var(--c-0d1117); position:relative; }
+  /* 왼쪽 패널이 더 길어 오른쪽에 남는 세로가 생깁니다. 전부 카드에 주면 카드 안이
+     텅 비고, 전부 캡션 앞에 두면 구멍이 됩니다 — 카드를 조금 키우고 나머지만 나눕니다. */
+  .cards { display:flex; gap:14px; margin-top:16px; margin-bottom:auto; }
+  .card { width:180px; min-height:252px; padding:16px 15px 14px; border-radius:9px; border:1px solid var(--c-3f4c58);
+          background:var(--c-0d1117); position:relative; display:flex; flex-direction:column; }
   .card.pick { border-color:var(--c-17505c); background:var(--c-0f2930); }
   .cname { font:700 13px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-e6edf3); }
   .cnote { margin-top:10px; font-size:11.5px; color:var(--c-8b96a3); line-height:1.6; }
-  .cmetric { margin-top:12px; padding-top:10px; border-top:1px solid var(--c-21262d);
+  .cmetric { margin-top:auto; padding-top:10px; border-top:1px solid var(--c-21262d);
              font-size:11px; color:var(--c-7d8896); }
   .cmetric b { font:700 15px "IBM Plex Mono", "Pretendard Variable", monospace; display:block; margin-top:3px; }
   .cbadge { position:absolute; top:-9px; right:11px; padding:1px 8px; border-radius:20px;
             font-size:10.5px; font-weight:700; }
   .cbadge.win { background:var(--c-4a3a1c); color:var(--c-e0912a); }
   .cbadge.ship { background:var(--c-17505c); color:var(--ink-on-cy-fill); }
+  /* "참고"는 우승도 채택도 아닌 반례입니다 — 앰버 배지를 1위와 나눠 쓰면 같은 뜻으로 읽힙니다. */
+  .cbadge.note { background:var(--c-2b333d); color:var(--c-9aa7b4); }
 </style>
 </head>
 <body>
@@ -46,20 +63,28 @@
     <div class="panel" style="width:558px">
       <div class="ptitle">TP1 &rarr; TP2로 쪼갰을 때</div>
       <div class="pdesc">가중치가 절반으로 줄어 그만큼 KV캐시가 들어갑니다 &mdash; vLLM 보고 사례</div>
-      <div class="row"><span class="rl">가중치<br>GPU당</span>
-        <div class="bar base" style="width:32px">1×</div></div>
-      <div class="row"><span class="rl"></span>
-        <div class="bar cy" style="width:16px"></div>
-        <span style="font:700 12.5px 'IBM Plex Mono',monospace; color:var(--c-22a7bd)">0.5×</span></div>
-      <div class="row" style="margin-top:24px"><span class="rl">KV 블록</span>
-        <div class="bar base" style="width:32px">1×</div></div>
-      <div class="row"><span class="rl"></span>
-        <div class="bar cy" style="width:445px">13.9×</div></div>
-      <div class="row" style="margin-top:22px"><span class="rl">처리량</span>
-        <div class="bar base" style="width:32px">1×</div></div>
-      <div class="row"><span class="rl"></span>
-        <div class="bar vi" style="width:125px">3.9×</div></div>
-      <div class="cap" style="margin-top:18px; line-height:1.7">
+      <div class="mgrp">
+        <div class="ml">가중치 · GPU당</div>
+        <div class="mrow"><span class="tp">TP1</span>
+          <div class="bar base" style="width:32px"></div><span class="v">1×</span></div>
+        <div class="mrow now"><span class="tp">TP2</span>
+          <div class="bar cy" style="width:16px"></div><span class="v cy">0.5×</span></div>
+      </div>
+      <div class="mgrp">
+        <div class="ml">KV 블록</div>
+        <div class="mrow"><span class="tp">TP1</span>
+          <div class="bar base" style="width:32px"></div><span class="v">1×</span></div>
+        <div class="mrow now"><span class="tp">TP2</span>
+          <div class="bar cy" style="width:445px">13.9×</div></div>
+      </div>
+      <div class="mgrp">
+        <div class="ml">처리량</div>
+        <div class="mrow"><span class="tp">TP1</span>
+          <div class="bar base" style="width:32px"></div><span class="v">1×</span></div>
+        <div class="mrow now"><span class="tp">TP2</span>
+          <div class="bar vi" style="width:125px">3.9×</div></div>
+      </div>
+      <div class="cap" style="line-height:1.7">
         장수 2배로 기대할 <b>2배를 크게 넘습니다.</b> 원래 한 장에서는 가중치가 HBM을 거의
         다 먹어 KV에 남는 자리가 적었기 때문이고, 그래서 <b>배수는 구성마다 다릅니다.</b>
       </div>
@@ -82,17 +107,17 @@
           <div class="cmetric">GPU당 처리량<b class="cy">약 92%</b></div>
         </div>
         <div class="card">
-          <span class="cbadge win">참고</span>
+          <span class="cbadge note">참고</span>
           <div class="cname">TP2 + EP</div>
           <div class="cnote">2장 규모에서는 all-to-all 비용이 이득을 넘어 <b class="am">그냥 TP2보다 느렸습니다.</b></div>
           <div class="cmetric">EP를 켠 값<b class="am">마이너스</b></div>
         </div>
       </div>
-      <div class="cap" style="margin-top:20px; line-height:1.7">
+      <div class="cap" style="margin-top:18px; line-height:1.7">
         절대 처리량 1위는 GPU를 두 배 쓴 구성이었습니다 &mdash; <b>장수가 다른 구성을 절대값으로
         비교하면 안 된다</b>는 것을 출처가 직접 경고합니다.
       </div>
-      <div class="cap" style="margin-top:8px; line-height:1.7">
+      <div class="cap" style="line-height:1.7">
         같은 사례에서 동시성은 SLA가 정합니다 &mdash; 8K 입력에서 약 700, 16K에서 300,
         <b class="am">256K에서 25.</b></div>
     </div>

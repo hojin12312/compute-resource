@@ -12,14 +12,17 @@
 
   /* 패널을 세로로 맞추면(align-items:stretch) 짧은 패널에 빈자리가 생깁니다.
      본문 블록에도 margin-bottom:auto를 줘서 캡션과 남는 공간을 나눠 갖게 했습니다. */
-  .flow { display:flex; align-items:center; gap:9px; margin:auto 0; }
-  .tok { width:34px; height:62px; border-radius:5px; background:var(--c-2b333d);
+  .flow { display:flex; align-items:center; justify-content:center; gap:14px; margin:auto 0; }
+  .tok { width:44px; height:62px; border-radius:5px; background:var(--c-2b333d);
          display:flex; align-items:center; justify-content:center;
          font:700 11px "IBM Plex Mono", "Pretendard Variable", monospace; color:var(--c-c3ccd6); }
-  .arr { font-size:12px; color:var(--c-22a7bd); font-weight:700; text-align:center; line-height:1.4; }
+  .arr { font-size:13px; color:var(--c-22a7bd); font-weight:700; text-align:center; line-height:1.4; }
+  /* 화면에 없던 값입니다 — 발표자 노트에만 있던 "레이어마다 두 번"의 총합을 올렸습니다. */
+  .trip { margin-top:20px; padding:10px 13px; border-radius:8px; background:var(--c-12333a);
+          border:1px solid var(--c-17505c); font-size:12px; color:var(--c-c3ccd6); line-height:1.6; }
   .arr small { display:block; color:var(--c-7d8896); font-weight:400; font-size:10px; }
-  .ecol { display:flex; flex-direction:column; gap:5px; }
-  .ebox { width:82px; height:44px; border-radius:4px; background:var(--c-8b6ff0); color:var(--c-0d1117);
+  .ecol { display:flex; flex-direction:column; gap:8px; }
+  .ebox { width:104px; height:52px; border-radius:4px; background:var(--c-8b6ff0); color:var(--c-0d1117);
           display:flex; align-items:center; justify-content:center;
           font:700 10.5px "IBM Plex Mono", "Pretendard Variable", monospace; }
   .ebox.dim { background:var(--c-3f4c58); color:var(--c-c3ccd6); }
@@ -31,7 +34,7 @@
   .ltag { display:flex; gap:6px; margin-top:6px; }
   .ltag span { width:28px; font-size:9px; color:var(--c-7d8896); text-align:center; }
 
-  .scale { display:flex; gap:26px; margin:auto 0; }
+  .scale { display:flex; gap:26px; margin:auto 0; align-items:flex-end; }
   .sc { }
   /* 점은 SVG로 그립니다(2026-08-03). 9px 점이 캡처 배율(zoom 1.395 × DPR 2 = 2.79)에서
      25.11 디바이스픽셀이라 크로미움이 박스마다 정수로 스냅해 점 크기가 갈렸습니다.
@@ -59,8 +62,8 @@
       <div class="pdesc">보내기(dispatch)와 모으기(combine)</div>
       <div class="flow">
         <div class="ecol">
-          <div class="tok" style="height:44px">토큰</div>
-          <div class="tok" style="height:44px">토큰</div>
+          <div class="tok" style="height:52px">토큰</div>
+          <div class="tok" style="height:52px">토큰</div>
         </div>
         <div class="arr">&rarr;<small>보내기</small></div>
         <div class="ecol">
@@ -70,9 +73,13 @@
         </div>
         <div class="arr">&rarr;<small>모으기</small></div>
         <div class="ecol">
-          <div class="tok" style="height:44px">결과</div>
-          <div class="tok" style="height:44px">결과</div>
+          <div class="tok" style="height:52px">결과</div>
+          <div class="tok" style="height:52px">결과</div>
         </div>
+      </div>
+      <div class="trip">
+        왕복은 <b>레이어마다 두 번</b>입니다 &mdash; DeepSeek V3의 61개 레이어면
+        토큰 하나가 <b class="cy">122번</b> 오갑니다.
       </div>
       <div class="cap" style="line-height:1.7">
         노드 안은 <b>NVLink 160GB/s</b>, 노드 사이는 <b>IB 50GB/s</b>로 <b class="am">3배 넘게</b>

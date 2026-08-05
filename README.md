@@ -7,7 +7,7 @@ LLM 컴퓨트 리소스 관련 잡상식을 얻어가는 자료입니다.
 
 **▶ [읽기용 문서로 보기](https://hojin12312.github.io/compute-resource/document/)** — 같은 글을 이어서 읽는 판입니다. 왼쪽에 목차가 늘 붙어 있고, **그림은 이미지가 아니라 그 자리에서 렌더한 것**이라 **클릭하면 전체화면**으로 커져도 글자가 선명합니다(다시 클릭 또는 `Esc`로 닫힘). 라이트/다크는 오른쪽 위 버튼이나 `T`로 바꾸며, 그림도 함께 바뀝니다.
 
-*마지막 업데이트: 2026-08-05 09:33 (KST)*
+*마지막 업데이트: 2026-08-05 12:19 (KST)*
 
 ## 목차
 
@@ -962,7 +962,17 @@ GPU를 나눠 쓰는 것**입니다.
 만들고, 그것을 디코딩 전용 노드로 전송합니다. 디코딩의 토큰 간 지연이 남의 프롬프트
 길이에 흔들리지 않게 되는 것이 요점입니다[^pd-disagg].
 
-![프리필·디코딩 분리 — 병치에서는 긴 프롬프트의 프리필이 디코딩 배치에 끼어들어 모든 요청의 토큰 간 지연을 늘리지만, 분리하면 프리필 전용 노드가 KV캐시를 만들어 디코딩 노드로 전송한다](./assets/pd_split.webp)
+이 기법의 이름이 **PD 분리**(PD Disaggregation)입니다. **P는 Prefill(프리필), D는
+Decode(디코딩)** 이고, **disaggregation은 "붙어 있던 것을 떼어 놓는다"** 는 뜻입니다.
+반대말은 **병치**(colocated 또는 aggregated serving) — 지금까지 이야기해 온, 한 GPU가
+둘을 겸하는 기본 구성입니다[^pd-term].
+
+[8.1](#81-나누는-4가지-방식)의 축약어와는 성격이 다르니 한 번 갈라 두겠습니다.
+**TP·DP·PP·EP는 한 가지 일을 여러 장이 나누는 축**이고, **PD는 성격이 다른 두 일을 서로
+다른 장에 갈라 놓는 배치**입니다. 병렬화 축이 다섯 개가 된 것이 아닙니다 — 나눈 각 풀
+**안에서** 여전히 TP·DP·EP를 씁니다.
+
+![프리필·디코딩 분리(PD Disaggregation) — 병치에서는 긴 프롬프트의 프리필이 디코딩 배치에 끼어들어 모든 요청의 토큰 간 지연을 늘리지만, 분리하면 프리필 전용 노드가 KV캐시를 만들어 디코딩 노드로 전송한다](./assets/pd_split.webp)
 
 대신 청구서가 하나 더 생깁니다. **KV캐시를 노드 사이로 옮겨야** 하고, 두 자원 풀의 비율을
 맞춰야 하며, 어느 쪽이 막혔는지 따로 봐야 합니다. 실제로 가장 큰 손실이 커널이 아니라
@@ -1618,6 +1628,8 @@ NVL72 공식 수치, Groq 3 LPU 통합 등)는 복수 출처로 재확인됐습�
 [^k3-supernode]: [6.6](#66-kimi-k3---kimi-delta-attention-kda)의 각주에 적은 Moonshot 공식 블로그 문장이 여기서 회수됩니다 — *"Since inference efficiency likewise benefits from larger high-bandwidth communication domains, we recommend deploying Kimi K3 on supernode configurations with 64 or more accelerators."* 두 가지를 분명히 해 둡니다. **첫째, 칩을 특정하지 않습니다** — 표현이 "accelerators"이고, 같은 글이 MXFP4/MXFP8을 고른 이유를 "broad hardware compatibility"라고 밝힙니다. B300 전용 권장이 아닙니다. **둘째, 근거가 용량이 아니라 통신 도메인입니다.** 그래서 6.6의 "가중치가 들어가는 최소 8장"과 이 64장은 서로 다른 것을 재는 숫자입니다. 대역폭 차이의 근거는 DeepSeek V3 리포트에 있습니다 — NVLink 160GB/s는 IB 50GB/s의 약 3.2배이고, 그래서 V3는 토큰 하나가 닿는 노드를 최대 4개로 제한해 IB 트래픽을 줄입니다.
 
 [^pd-disagg]: vLLM의 GLM-5.2 사례(위 `[^glm-b300]`) §1 원문: *"In colocated serving, prefill chunks are interleaved into decode batches, and every long prompt entering a batch stretches the inter-token latency of every request already decoding. TPOT tail latency therefore becomes a function of the incoming prompt length distribution — something a serving system does not control. Disaggregation removes prefill work from the decode critical path entirely, making TPOT a function of decode batch composition alone."* [5장](#5-llm-모델의-연산-프리필과-디코딩)의 배치 트레이드오프가 서버 쪽에서 해결되는 지점입니다. 다만 **분리가 항상 이득이라는 뜻은 아닙니다.** [NVIDIA Dynamo의 GLM-5.2 레시피](https://docs.nvidia.com/dynamo/dev/recipes/glm-5-2)에서 H200 8장 aggregated는 동시 32에서 GPU당 54.55 tok/s·TTFT P50 1,790ms이고, 8+8장 disaggregated는 동시 24에서 68.86 tok/s·1,874ms입니다 — GPU당 처리량은 26% 좋아지지만 **GPU를 두 배 쓴 구성이라 같은 자원의 A/B가 아닙니다.** 분리는 두 자원 풀을 따로 늘릴 수 있게 하는 선택이고, 그 대가로 KV 전송과 비율 조정이 붙습니다.
+
+[^pd-term]: 용어 표기. 영어 문서는 분리를 **disaggregated serving**, 병치를 **colocated serving** 또는 **aggregated serving**으로 씁니다 &mdash; 위 `[^pd-disagg]`에 인용한 vLLM 원문이 *"In colocated serving, prefill chunks are interleaved into decode batches…"* 로 시작하고, [NVIDIA Dynamo의 GLM-5.2 레시피](https://docs.nvidia.com/dynamo/dev/recipes/glm-5-2)는 같은 대조를 `aggregated`(H200 8장)와 `disaggregated`(8+8장) 두 구성으로 표에 올립니다. 한국어로는 "PD 분리"가 굳어져 있어 이 문서도 그렇게 씁니다. 이 배치를 goodput 지표와 함께 정식화한 논문은 [DistServe](https://arxiv.org/abs/2401.09670)(OSDI'24)이고, 거기서의 표현은 *prefill/decoding disaggregation*입니다.
 
 [^pd-boundary]: 같은 사례에서 가장 큰 개선은 커널이 아니라 **경계**에서 나왔습니다. 전송받은 요청의 첫 디코드 스텝은 토큰 1개인데 이미 디코딩 중인 요청은 투기적 디코딩(MTP)으로 1+N개라, 둘이 섞이면 **혼합 배치**가 되어 uniform decode 전용 CUDA Graph 빠른 경로를 못 탑니다. 데이터 병렬에서는 한 랭크만 새 요청을 받아도 나머지 랭크가 같은 느린 경로를 따라가고, PD 분리에서는 새 요청이 계속 들어오니 그 상태가 상시화됩니다. 해법은 첫 스텝에 더미 투기 토큰으로 모양을 맞추는 것이었고(vLLM PR #45237), 이것만으로 평균 TPOT가 약 40ms에서 약 22ms로 내려갔습니다. 원문 표현: *"the largest performance loss may not live in any individual kernel. It can arise at the boundary between subsystems."* 이후 Model Runner V2가 11%, all-to-all 백엔드 교체가 4%를 더 줄여 17ms에 도달했습니다. [5.4장의 투기적 디코딩](#54-투기적-디코딩-순차-병목을-우회하는-법)과 이 장의 분리가 만나는 자리라, 두 기법을 함께 켤 때 특히 살펴야 하는 지점입니다.
 
