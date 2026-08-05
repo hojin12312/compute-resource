@@ -89,10 +89,12 @@
      이름이 다른 것이 33개라(prices.html → memory_price_chain.webp) 손으로 적으면 틀립니다.
   4. README에 이미지를 넣고 캡처 두 번.
 
-파일 ↔ 그림 대응 (72장 — glm_bench·k3_bench·refusal_gate·quant_calib·rotation_absorb·
+파일 ↔ 그림 대응 (73장 — moe_anim·glm_bench·k3_bench·refusal_gate·quant_calib·rotation_absorb·
                     rotation_family·quant_gain·kr_infra·kr_bench·sov_boundary·
-                    sov_personal·sov_stack 열둘은 덱 전용, README 미편입 ·
+                    sov_personal·sov_stack 열셋은 덱 전용, README 미편입 ·
                     덱 미편입은 sovereign 하나 — 8장 다섯은 세션 42에 덱으로 들어갔습니다)
+                 moe_anim은 **움직이는 그림**입니다 — 실시간 렌더(iframe)에서만 재생되고
+                 캡처본은 마지막 프레임입니다. file://에서 멈추는 장치가 소스 안에 있습니다.
   shock.html             → assets/stock_shock.webp               1. Kimi K3는 어떻게 미국 증시를 흔들었나?
   capex.html             → assets/us_china_capex.webp            1.1 미국과 중국, 인프라는 8배 차이입니다
   bench.html             → assets/frontier_bench.webp            1.2 그런데 모델의 격차는 3.6점입니다
@@ -116,6 +118,7 @@
   speculative.html       → assets/speculative_decoding.webp      5.4 투기적 디코딩: 순차 병목을 우회하는 법
   architecture_map.html  → assets/architecture_efficiency_map.webp 6. 아키텍처 살펴보기
   moe.html               → assets/moe_active.webp                6.1 DeepSeek R1 - Mixture of Experts (MoE) +
+  moe_anim.html          → assets/moe_anim.webp                  6.1 Dense 대 MoE 애니메이션 (덱 전용 · 실시간 렌더에서만 움직임)
   moe_scope.html         → assets/moe_scope.webp                 어텐션은 담는 값의 1.7%, 읽는 양의 31%입니다
   sparse_map.html        → assets/sparse_attention_map.webp      6.1을 빼면 전부 어텐션 이야기입니다
   swa.html               → assets/swa_layers.webp                6.2 Gemma 4 - Sliding Window Attention (SWA)

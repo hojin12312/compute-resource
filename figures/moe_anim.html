@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css?v=2a58053d">
+<style>
+  /* 6.1 · MoE가 왜 빠른가를 **시간으로** 보이는 애니메이션 그림 (2026-08-05 신설).
+     44쪽 moe.html의 16×16 격자를 그대로 가져다 시간축을 붙인 것입니다.
+
+     읽는 규칙 하나로 두 패널이 굴러갑니다 —
+       "이번 토큰이 켠 칸"을 **한 칸씩 순서대로** 읽고, 다 읽으면 토큰 하나가 나옵니다.
+     칸 하나 읽는 시간(1틱)은 양쪽이 같습니다. 그래서 Dense는 256틱, MoE는 14틱이고
+     같은 시간 안에서 나오는 토큰 수가 18배로 갈립니다.
+
+     **칸은 전문가가 아니라 파라미터 몫입니다.** 격자 모양은 44쪽과 같지만 의미가 다릅니다 —
+     R1이 켜는 전문가는 256개 중 8개(3.1%)인데 실제로 읽는 파라미터는 37B/671B(5.5%)입니다.
+     전문가 칸으로 그리면 배수가 32배로 부풀어 본문의 "이론상 약 18배"와 어긋납니다.
+     그래서 칸 = 2.62B로 놓고 14칸(=37B)을 켭니다. 캡션에 그대로 적어 뒀습니다.
+
+     **반복되는 작은 칸은 SVG로 그립니다** — div 격자는 캡처 배율(zoom 1.395 × DPR 2)에서
+     칸마다 페인트 좌표가 정수로 스냅돼 크기가 갈립니다. moe.html 주석 참고.
+     여기서는 격자 512칸 + 토큰 칸 120칸이 전부 SVG입니다. div로 되돌리지 마세요.
+
+     **레이아웃은 시간에 따라 변하지 않습니다.** 토큰 칸 60개를 처음부터 그려 두고 색만
+     채웁니다. 칸을 하나씩 append하면 slides/check.js가 재는 순간마다 높이가 달라져
+     넘침 검사가 들쭉날쭉해집니다.
+
+     **file://에서는 멈춥니다.** recapture.js·check.js·fontcheck.js가 전부 file://로 열므로,
+     그 경우 마지막 프레임(Dense 3토큰 · MoE 54토큰)을 한 번만 그리고 rAF를 돌리지 않습니다.
+     캡처본(assets/moe_anim.webp)이 결론이 다 찍힌 정지 화면이 되고, 넘침 검사도
+     토큰 칸이 가장 많이 찬 상태에서 재게 됩니다. */
+
+  body { padding-top:44px; }
+  h1 { font-size:29px; }
+
+  /* 같은 시간 축 — 두 패널이 하나의 시계를 공유한다는 것이 이 그림의 전제입니다 */
+  .clock {
+    display:flex; align-items:center; gap:14px;
+    margin-top:20px;
+  }
+  .clock .lab {
+    font:700 10.5px "IBM Plex Mono", "Pretendard Variable", monospace;
+    color:var(--c-8b96a3); letter-spacing:.08em; white-space:nowrap;
+  }
+  .clock .track {
+    flex:1; height:6px; border-radius:3px;
+    background:var(--c-233039); overflow:hidden;
+  }
+  .clock .fill {
+    height:100%; width:0%; border-radius:3px;
+    background:var(--c-c3ccd6);
+  }
+  .clock .tick {
+    font:700 11px "IBM Plex Mono", "Pretendard Variable", monospace;
+    color:var(--c-c3ccd6); font-variant-numeric:tabular-nums;
+    width:76px; text-align:right;
+  }
+
+  .duo { display:grid; grid-template-columns:1fr 1fr; gap:36px; margin-top:18px; }
+  .panel {
+    padding:18px;
+    border-radius:12px;
+    border:1px solid var(--c-333d47);
+    background:var(--c-161b22);
+  }
+  .panel.dense { background:var(--c-221a0d); border-color:var(--c-4a3a1c); }
+  .panel.moe   { background:var(--c-0f2930); border-color:var(--c-17505c); }
+  .kicker {
+    font:700 10.5px "IBM Plex Mono", "Pretendard Variable", monospace;
+    color:var(--c-8b96a3); letter-spacing:.08em;
+  }
+  .panel h2 { margin-top:5px; font-size:19px; letter-spacing:-.02em; }
+
+  .row { display:flex; gap:18px; margin-top:12px; align-items:flex-start; }
+  .grid { display:block; width:300px; height:300px; flex:0 0 300px; }
+
+  /* 칸 넷 — 꺼짐 / 이번 토큰이 켬(아직 안 읽음) / 읽었음 / 지금 읽는 중.
+     **"켬"과 "읽었음"의 차이는 색이 아니라 fill-opacity로 냅니다.** 앰버 두 단계
+     (c47d15 → e0912a)는 나란히 놓으면 구별이 안 돼 격자가 통짜로 보였습니다 —
+     그러면 "순서대로 훑는다"가 사라집니다. 흐린 판이 진하게 차오르는 쪽이
+     뒷자리에서도 진행이 읽힙니다. fill-opacity는 색 리터럴이 아니라 check.js도 통과합니다.
+     지금 읽는 한 칸만 잉크색으로 빼서 훑는 머리가 보이게 합니다. */
+  .cell      { fill:var(--c-4d5661); }
+  .dense .cell.on   { fill:var(--c-c47d15); fill-opacity:.30; }
+  .dense .cell.read { fill:var(--c-e0912a); }
+  .moe   .cell.on   { fill:var(--c-0e8fa3); fill-opacity:.55; }
+  .moe   .cell.read { fill:var(--c-22a7bd); }
+  .cell.now  { fill:var(--c-e6edf3); fill-opacity:1; }
+
+  .side { flex:1; display:flex; flex-direction:column; gap:9px; }
+  .metric {
+    padding:9px 11px; border-radius:7px;
+    border:1px solid var(--c-333d47);
+    color:var(--c-9aa7b4); font-size:10px; white-space:nowrap;
+  }
+  .metric strong {
+    display:block; margin-top:3px;
+    color:var(--c-e6edf3); font-size:17px;
+    font-variant-numeric:tabular-nums;
+  }
+  .dense .metric.hi { border-color:var(--c-4a3a1c); }
+  .dense .metric.hi strong { color:var(--c-e0912a); }
+  .moe .metric.hi { border-color:var(--c-17505c); }
+  .moe .metric.hi strong { color:var(--c-22a7bd); }
+  .metric .sm { font-size:10px; color:var(--c-8b96a3); font-weight:400; }
+
+  .count { margin-top:auto; padding-top:4px; }
+  .count .lab { font-size:10px; color:var(--c-8b96a3); }
+  .count .n {
+    font:800 40px "Pretendard Variable", sans-serif;
+    letter-spacing:-.03em; font-variant-numeric:tabular-nums;
+    line-height:1.05;
+  }
+  .dense .count .n { color:var(--c-e0912a); }
+  .moe   .count .n { color:var(--c-22a7bd); }
+
+  .gcap { margin-top:9px; font-size:10.5px; color:var(--c-7d8896); }
+  .gcap b { color:var(--c-c3ccd6); font-weight:700; }
+
+  .tray { margin-top:13px; }
+  .tray .lab {
+    font:700 10px "IBM Plex Mono", "Pretendard Variable", monospace;
+    color:var(--c-8b96a3); letter-spacing:.08em; margin-bottom:7px;
+  }
+  .tray svg { display:block; width:100%; height:52px; }
+  .slot { fill:var(--c-233039); }
+  .dense .slot.fill { fill:var(--c-c47d15); }
+  .moe   .slot.fill { fill:var(--c-0e8fa3); }
+</style>
+</head>
+<body>
+  <h1>같은 시간에 토큰 몇 개가 나오는가 &mdash; <span class="am">Dense</span> 대 <span class="cy">MoE</span></h1>
+  <div class="sub">규칙은 하나입니다 &mdash; <b>이번 토큰이 켠 칸을 한 칸씩 다 읽어야</b> 토큰 하나가 나옵니다.
+    칸 하나 읽는 시간(1틱)은 양쪽이 같습니다.</div>
+
+  <div class="clock">
+    <div class="lab">같은 시계</div>
+    <div class="track"><div class="fill" id="clockfill"></div></div>
+    <div class="tick" id="clocktick">0틱</div>
+  </div>
+
+  <div class="duo">
+    <div class="panel dense" id="p-dense">
+      <div class="kicker">가정 · DENSE 671B</div>
+      <h2>토큰마다 <span class="am">전부</span> 읽습니다</h2>
+      <div class="row">
+        <svg class="grid" viewBox="0 0 300 300" role="img"
+             aria-label="16×16 격자 256칸이 전부 켜져 있고, 왼쪽 위부터 오른쪽 아래까지 한 칸씩 순서대로 읽혀 나간다"></svg>
+        <div class="side">
+          <div class="metric hi">이번 토큰이 읽는 양<strong>671B</strong><span class="sm">256칸 전부</span></div>
+          <div class="metric">토큰 하나에 드는 시간<strong>256틱</strong></div>
+          <div class="count"><div class="lab">나온 토큰</div><div class="n" id="n-dense">0</div></div>
+        </div>
+      </div>
+      <div class="gcap">칸 하나 = 파라미터 <b>2.62B</b> · 256칸 = <b>671B</b></div>
+      <div class="tray">
+        <div class="lab">출력</div>
+        <svg viewBox="0 0 578 52" preserveAspectRatio="none" role="img" aria-label="나온 토큰이 쌓이는 칸 60개"></svg>
+      </div>
+    </div>
+
+    <div class="panel moe" id="p-moe">
+      <div class="kicker">실제 · MoE 671B (활성 37B)</div>
+      <h2>토큰마다 <span class="cy">일부만</span> 읽습니다</h2>
+      <div class="row">
+        <svg class="grid" viewBox="0 0 300 300" role="img"
+             aria-label="같은 16×16 격자에서 토큰마다 14칸씩만 흩어져 켜지고, 그 14칸만 순서대로 읽힌 뒤 곧바로 다음 토큰으로 넘어간다"></svg>
+        <div class="side">
+          <div class="metric hi">이번 토큰이 읽는 양<strong>37B</strong><span class="sm">256칸 중 14칸 · 5.5%</span></div>
+          <div class="metric">토큰 하나에 드는 시간<strong>14틱</strong></div>
+          <div class="count"><div class="lab">나온 토큰</div><div class="n" id="n-moe">0</div></div>
+        </div>
+      </div>
+      <div class="gcap">격자는 왼쪽과 <b>똑같이 256칸</b>입니다 &mdash; 줄어든 것은 <b>이번에 읽는 칸</b>뿐</div>
+      <div class="tray">
+        <div class="lab">출력</div>
+        <svg viewBox="0 0 578 52" preserveAspectRatio="none" role="img" aria-label="나온 토큰이 쌓이는 칸 60개"></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot"><b>깎인 것은 읽는 양이지 담는 양이 아닙니다</b> &mdash; 격자 256칸은 양쪽 다 그대로 메모리에 올라가 있습니다.
+    18배는 <b>대역폭</b> 쪽 이야기입니다.</div>
+
+<script>
+/* ── 시간 모델 ───────────────────────────────────────────────────────────
+   전부 "틱" 하나로 굴러갑니다. 1틱 = 칸 하나 읽는 시간 = TICK_MS.
+     Dense  토큰 하나 = 256틱      MoE  토큰 하나 = 14틱
+   한 바퀴는 Dense가 세 토큰을 낼 때까지(768틱)이고, 그 끝에서 잠깐 멈췄다 되돌아갑니다.
+   그동안 MoE는 768/14 = 54.86 → 54개를 냅니다. 54/3 = 18배로, README 6.1의
+   "이론상 약 18배"와 같은 자리에 떨어집니다.
+
+   렌더는 **시각 t의 순수 함수**입니다(누적 상태 없음). 그래야 file:// 정지 프레임과
+   실시간 재생이 같은 코드로 나옵니다. */
+const TICK_MS   = 16;
+const DENSE_TCK = 256;
+const MOE_TCK   = 14;
+const MOE_CELLS = 14;
+const CYCLE_TCK = DENSE_TCK * 3;      /* 768틱 = 한 바퀴 */
+const HOLD_MS   = 1700;               /* 끝에서 결과를 보여주는 시간 */
+const NS = 'http://www.w3.org/2000/svg';
+
+/* 16×16 격자 — 칸 15 · 간격 4 → 16×19−4 = 300 */
+function buildGrid(svg) {
+  const cells = [];
+  for (let i = 0; i < 256; i++) {
+    const r = document.createElementNS(NS, 'rect');
+    r.setAttribute('x', (i % 16) * 19);
+    r.setAttribute('y', Math.floor(i / 16) * 19);
+    r.setAttribute('width', 15);
+    r.setAttribute('height', 15);
+    r.setAttribute('rx', 3);
+    r.setAttribute('class', 'cell');
+    svg.appendChild(r);
+    cells.push(r);
+  }
+  return cells;
+}
+
+/* 출력 칸 60개 — 20열 × 3행. 처음부터 다 그려 두고 색만 채웁니다(레이아웃 고정) */
+function buildTray(svg) {
+  const slots = [];
+  for (let i = 0; i < 60; i++) {
+    const r = document.createElementNS(NS, 'rect');
+    r.setAttribute('x', (i % 20) * 29);
+    r.setAttribute('y', Math.floor(i / 20) * 19);
+    r.setAttribute('width', 24);
+    r.setAttribute('height', 14);
+    r.setAttribute('rx', 3);
+    r.setAttribute('class', 'slot');
+    svg.appendChild(r);
+    slots.push(r);
+  }
+  return slots;
+}
+
+const dense = {
+  cells: buildGrid(document.querySelector('#p-dense .grid')),
+  slots: buildTray(document.querySelector('#p-dense .tray svg')),
+  n: document.getElementById('n-dense'),
+  state: new Array(256).fill(-1),
+  filled: -1
+};
+const moe = {
+  cells: buildGrid(document.querySelector('#p-moe .grid')),
+  slots: buildTray(document.querySelector('#p-moe .tray svg')),
+  n: document.getElementById('n-moe'),
+  state: new Array(256).fill(-1),
+  filled: -1
+};
+const clockFill = document.getElementById('clockfill');
+const clockTick = document.getElementById('clocktick');
+
+/* 토큰 번호로 켤 칸 14개를 정합니다. 고정 시드라 재생할 때마다 같은 순서가 나오고,
+   file:// 정지 프레임도 실시간과 같은 그림이 됩니다.
+
+   **Math.imul과 상위 비트를 씁니다.** 처음에는 `s * 1103515245`와 `(s >>> 8) % 256`으로
+   썼는데 둘 다 틀렸습니다 — 곱이 2^53을 넘어 부동소수점에서 하위 비트가 뭉개지고,
+   2의 거듭제곱 모듈러 LCG는 하위 비트의 주기가 짧아 `% 256`이 값을 몰아 줍니다.
+   실제로 14칸이 **한 열에 세로로 줄지어** 켜졌습니다(2026-08-05에 화면에서 발견).
+   imul은 32비트 곱을 정확히 내고, 상위 8비트(s >>> 24)는 주기가 가장 깁니다. */
+function pick(token) {
+  const set = new Set();
+  let s = (Math.imul(token, 2654435761) ^ 0x9e3779b9) >>> 0;
+  while (set.size < MOE_CELLS) {
+    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+    set.add(s >>> 24);
+  }
+  return [...set].sort((a, b) => a - b);
+}
+
+const CLS = ['cell', 'cell on', 'cell read', 'cell now'];
+function paint(panel, want) {          /* want: 칸마다 0~3 */
+  for (let i = 0; i < 256; i++) {
+    if (panel.state[i] !== want[i]) {
+      panel.cells[i].setAttribute('class', CLS[want[i]]);
+      panel.state[i] = want[i];
+    }
+  }
+}
+function fillTray(panel, count) {
+  if (panel.filled === count) return;
+  for (let i = 0; i < 60; i++) panel.slots[i].setAttribute('class', i < count ? 'slot fill' : 'slot');
+  panel.n.textContent = count;
+  panel.filled = count;
+}
+
+/* 시각 t(틱)에서의 화면. 누적 없이 t 하나로 전부 결정됩니다. */
+function render(tick) {
+  clockFill.style.width = (100 * tick / CYCLE_TCK).toFixed(2) + '%';
+  clockTick.textContent = Math.floor(tick) + '틱';
+
+  /* 한 바퀴 끝에서는 "다 읽고 막 토큰이 나온" 상태로 못박습니다. 그냥 두면 tick이
+     768에 닿는 순간 다음 토큰의 0번째 칸으로 넘어가 격자가 통째로 흐려지는데,
+     멈춰 서서 결론을 보여주는 자리(HOLD)이자 file:// 캡처 프레임이라 그러면 안 됩니다. */
+  const done = tick >= CYCLE_TCK;
+
+  /* Dense — 256칸이 전부 켜져 있고 왼쪽 위부터 순서대로 읽힙니다 */
+  const dTok  = Math.floor(tick / DENSE_TCK);
+  const dRead = done ? DENSE_TCK : Math.floor(tick - dTok * DENSE_TCK);
+  const dWant = new Array(256);
+  for (let i = 0; i < 256; i++) dWant[i] = i < dRead ? 2 : (i === dRead ? 3 : 1);
+  paint(dense, dWant);
+  fillTray(dense, Math.min(60, dTok));
+
+  /* MoE — 토큰마다 14칸만 켜지고 그 14칸만 읽힙니다 */
+  const mTok  = Math.floor(tick / MOE_TCK);
+  const mRead = done ? MOE_CELLS : Math.floor(tick - mTok * MOE_TCK);
+  const mWant = new Array(256).fill(0);
+  const on = pick(mTok);
+  for (let k = 0; k < on.length; k++) mWant[on[k]] = k < mRead ? 2 : (k === mRead ? 3 : 1);
+  paint(moe, mWant);
+  fillTray(moe, Math.min(60, mTok));
+}
+
+/* file://로 열렸으면 마지막 프레임만 그리고 멈춥니다 — recapture·check·fontcheck가
+   전부 file://입니다. 캡처본은 결론(3 대 54)이 찍힌 정지 화면이 됩니다. */
+if (location.protocol === 'file:') {
+  render(CYCLE_TCK);
+} else {
+  const t0 = performance.now();
+  const span = CYCLE_TCK * TICK_MS + HOLD_MS;
+  (function frame(now) {
+    const ms = (now - t0) % span;
+    render(Math.min(CYCLE_TCK, ms / TICK_MS));
+    requestAnimationFrame(frame);
+  })(t0);
+}
+</script>
+</body>
+</html>

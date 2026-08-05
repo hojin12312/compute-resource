@@ -66,6 +66,7 @@ const MAP = {
   'speculative.html':'speculative_decoding',
   'architecture_map.html':'architecture_efficiency_map',
   'moe.html':        'moe_active',
+  'moe_anim.html':   'moe_anim',
   'moe_scope.html':  'moe_scope',
   'sparse_map.html': 'sparse_attention_map',
   'swa.html':        'swa_layers',

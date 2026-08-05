@@ -1,6 +1,6 @@
 {
  "_주석": "assets 이름 → figures 소스와 내용 해시. figures/recapture.js의 MAP에서 생성합니다 (node figures/manifest.js). 직접 고치지 마세요. v는 그림별 캐시 버스터, ver은 캡처본용 한 벌 토큰, css는 base.css 해시입니다.",
- "ver": "8fe03bae",
+ "ver": "fbea4913",
  "css": "2a58053d",
  "figures": {
   "stock_shock": "shock.html",
@@ -26,6 +26,7 @@
   "speculative_decoding": "speculative.html",
   "architecture_efficiency_map": "architecture_map.html",
   "moe_active": "moe.html",
+  "moe_anim": "moe_anim.html",
   "moe_scope": "moe_scope.html",
   "sparse_attention_map": "sparse_map.html",
   "swa_layers": "swa.html",
@@ -100,6 +101,7 @@
   "speculative.html": "23b75d70",
   "architecture_map.html": "ea7ad722",
   "moe.html": "1dd34767",
+  "moe_anim.html": "c146e43e",
   "moe_scope.html": "0aa31c02",
   "sparse_map.html": "5c2d8340",
   "swa.html": "b7ab0925",

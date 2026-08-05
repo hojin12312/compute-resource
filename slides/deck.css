@@ -475,6 +475,25 @@ section.fig iframe {
 /* 그림에는 캡션을 얹지 않습니다 — webp 하단에 이미 결론 한 줄(.foot)이 들어 있어
    겹칩니다. 발표자가 짚을 말은 <aside class="notes">로 갑니다. */
 
+/* ── 화면 녹화 슬라이드 (2026-08-05 신설 · 6.1의 CoT 시연) ──────────────
+   그림(figures/*.html)이 아니라 실제 터미널을 찍은 영상이라 section.fig가 아닙니다.
+   그래서 present.js의 iframe 교체 대상이 아니고, 제목·결론 한 줄을 얹어도 됩니다
+   (그림과 달리 영상 안에 제목이 없습니다).
+
+   포맷은 **MP4(H.264)** 입니다. 애니메이션 WebP도 되지만 같은 해상도·프레임에서
+   두 배가 넘고(2100×636 30fps 15초 기준 999KB 대 468KB) 재생 제어가 없습니다.
+   원본 .mov는 로컬에만 둡니다 — .gitignore에 규칙이 있습니다. */
+.reveal .slides section video.demo {
+  display: block;
+  width: 1232px; height: auto;      /* 원본 2100×636 → 1232×373 (본문 폭 전부) */
+  margin: auto;                     /* 제목 아래 남은 높이 안에서 세로 가운데 */
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #0d1117;              /* 터미널 배경 — 라이트 테마에서도 영상 그대로 */
+  flex-shrink: 0;                   /* 슬라이드가 flex 컨테이너라 눌리지 않게 */
+  pointer-events: none;             /* 클릭이 영상에 먹히면 슬라이드가 안 넘어갑니다 */
+}
+
 /* ── 표지 ───────────────────────────────────────────────────────────────── */
 .reveal .slides section.cover { justify-content: center; }
 /* 오른쪽 여백을 잡아주는 워터마크 — 부제의 "2.8조"와 호응합니다 */
